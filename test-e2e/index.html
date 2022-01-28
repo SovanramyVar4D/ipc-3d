@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>3D IPC</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script
+      crossorigin
+      src="../node_modules/@zeainc/zea-engine/dist/index.umd.js"
+    ></script>
+    <script src="../dist/ipc3d.umd.development.js"></script>
+    <script async src="index.js"></script>
+  </head>
+  <body class="h-full">
+    <div class="flex-col h-full overflow-hidden">
+      <header class="flex space-x-2 py-2">
+        <h1>3D IPC</h1>
+
+        <button id="newProject" class="border rounded bg-gray-300 px-2">
+          New Project
+        </button>
+        <button id="loadAsset" class="border rounded bg-gray-300 px-2">
+          Load Asset
+        </button>
+        <button id="frameView" class="border rounded bg-gray-300 px-2">
+          Frame View
+        </button>
+        <button id="save" class="border rounded bg-gray-300 px-2">
+          Save
+        </button>
+        <button id="load" class="border rounded bg-gray-300 px-2">
+          Load
+        </button>
+      </header>
+      <main class="flex flex-1 h-full">
+        <ipc-3d id="ipc-3d" class="h-full"></ipc-3d>
+      </main>
+    </div>
+  </body>
+</html>
