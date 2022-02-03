@@ -13,6 +13,7 @@
   "scripts": {
     "build": "tsdx build --format umd --name ipc3D",
     "build:watch": "tsdx watch --format umd --name ipc3D",
+    "start": "tsdx watch --format umd --name ipc3D",
     "test": "tsdx test",
     "lint": "tsdx lint",
     "prepare": "tsdx build",
