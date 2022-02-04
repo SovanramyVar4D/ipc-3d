@@ -1,4 +1,12 @@
-import { CADAsset, EnvMap, GLRenderer, Scene, Vec3 } from '@zeainc/zea-engine'
+import {
+  CADAsset,
+  Camera,
+  EnvMap,
+  GLRenderer,
+  Scene,
+  Vec3,
+  Xfo
+} from '@zeainc/zea-engine'
 
 interface AssetJson {
   url: string
@@ -8,11 +16,29 @@ interface ProjectJson {
   assets: AssetJson[]
 }
 
+class View {
+  name = 'View'
+  cameraXfo: Xfo = new Xfo()
+  cameraTarget: Vec3 = new Vec3()
+  constructor(name: string) {
+    this.name = name
+  }
+
+  setCameraParams(camera: Camera) {
+    this.cameraXfo = camera.globalXfoParam.value.clone()
+    this.cameraTarget = camera.getTargetPosition()
+  }
+
+  activate(camera: Camera) {
+    camera.globalXfoParam.value = this.cameraXfo.clone()
+  }
+}
+
 class IPC_3D extends HTMLElement {
   private scene: Scene
   private renderer: GLRenderer
-
   private assets: CADAsset[] = []
+  private views: View[] = []
   constructor() {
     super()
 
@@ -66,6 +92,20 @@ class IPC_3D extends HTMLElement {
   frameView() {
     this.renderer.frameAll()
   }
+
+  createView() {
+    const view = new View('View' + this.views.length)
+    view.setCameraParams(this.renderer.getViewport().getCamera())
+    this.views.push(view)
+  }
+
+  activateView(index: number) {
+    const view = this.views[index]
+    view.activate(this.renderer.getViewport().getCamera())
+  }
+
+  // /////////////////////////////////////////
+  // Persistence
 
   saveJson(): ProjectJson {
     const projectJson: ProjectJson = { assets: [] }

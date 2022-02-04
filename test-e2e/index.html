@@ -16,7 +16,7 @@
   </head>
   <body class="h-full">
     <div class="flex-col h-full overflow-hidden">
-      <header class="flex space-x-2 py-2">
+      <header class="flex space-x-2 py-2 border-b">
         <h1>3D IPC</h1>
 
         <button id="newProject" class="border rounded bg-gray-300 px-2">
@@ -36,9 +36,21 @@
         </button>
       </header>
 
-      <main class="flex flex-1 h-full">
-        <ipc-3d id="ipc-3d" class="h-full w-full"></ipc-3d>
-      </main>
+      <div class="flex flex-1 h-full">
+        <nav class="flex flex-col px-2 pt-2 space-y-2">
+          <button id="createView" class="border rounded bg-gray-300 px-2">
+            Create View
+          </button>
+
+          <hr />
+
+          <div id="viewButtons" class="flex flex-col space-y-2"></div>
+        </nav>
+
+        <main class="flex flex-1 h-full">
+          <ipc-3d id="ipc-3d" class="h-full w-full"></ipc-3d>
+        </main>
+      </div>
     </div>
   </body>
 </html>
