@@ -40,6 +40,7 @@ class View {
     // camera.globalXfoParam.value = this.cameraXfo.clone()
 
     const startXfo = camera.globalXfoParam.value.clone()
+    startXfo.ori.alignWith(this.cameraXfo.ori)
     const startTarget = camera.getTargetPosition()
     const startDist = startXfo.tr.distanceTo(startTarget)
     const endDist = this.cameraXfo.tr.distanceTo(this.cameraTarget)
@@ -50,17 +51,19 @@ class View {
       stepId++
 
       const t = stepId / steps
-      const cameraTarg = startTarget.lerp(this.cameraTarget, t)
-      const dist = MathFunctions.lerp(startDist, endDist, t)
+      const smooth_t = MathFunctions.smoothStep(0, 1, t)
+      const cameraTarg = startTarget.lerp(this.cameraTarget, smooth_t)
+      const dist = MathFunctions.lerp(startDist, endDist, smooth_t)
 
       // console.log(startDist, endDist, dist)
 
-      const cameraOri = startXfo.ori.slerp(this.cameraXfo.ori, t * 2)
+      const cameraOri = startXfo.ori.slerp(this.cameraXfo.ori, smooth_t * 2)
       const cameraPos = cameraTarg.add(cameraOri.getZaxis().scale(dist))
       const xfo = new Xfo()
       xfo.ori = cameraOri
       xfo.tr = cameraPos
       camera.globalXfoParam.value = xfo
+      camera.setFocalDistance(dist)
 
       // const cameraPos = startXfo.tr.lerp(this.cameraXfo.tr, t)
       // camera.setPositionAndTarget(cameraPos, cameraTarg)
