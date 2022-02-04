@@ -11,16 +11,22 @@ import {
 interface AssetJson {
   url: string
 }
+interface ViewJson {
+  name: string
+  cameraXfo: Record<string, any>
+  cameraTarget: Record<string, any>
+}
 
 interface ProjectJson {
   assets: AssetJson[]
+  views: ViewJson[]
 }
 
 class View {
   name = 'View'
   cameraXfo: Xfo = new Xfo()
   cameraTarget: Vec3 = new Vec3()
-  constructor(name: string) {
+  constructor(name: string = '') {
     this.name = name
   }
 
@@ -30,7 +36,41 @@ class View {
   }
 
   activate(camera: Camera) {
-    camera.globalXfoParam.value = this.cameraXfo.clone()
+    // camera.globalXfoParam.value = this.cameraXfo.clone()
+
+    const startXfo = camera.globalXfoParam.value.clone()
+    const startTarget = camera.getTargetPosition()
+
+    const steps = 30
+    let stepId = 0
+    const id = setInterval(() => {
+      stepId++
+
+      const t = stepId / steps
+
+      const cameraPos = startXfo.tr.lerp(this.cameraXfo.tr, t)
+      const cameraTarg = startTarget.lerp(this.cameraTarget, t)
+      camera.setPositionAndTarget(cameraPos, cameraTarg)
+
+      if (stepId == steps) clearInterval(id)
+    }, 20)
+  }
+
+  // /////////////////////////////////////////
+  // Persistence
+
+  saveJson(): ViewJson {
+    return {
+      name: this.name,
+      cameraXfo: this.cameraXfo.toJSON(),
+      cameraTarget: this.cameraTarget.toJSON()
+    }
+  }
+
+  loadJson(viewJson: ViewJson) {
+    this.name = viewJson.name
+    this.cameraXfo.fromJSON(viewJson.cameraXfo)
+    this.cameraTarget.fromJSON(viewJson.cameraTarget)
   }
 }
 
@@ -108,7 +148,7 @@ class IPC_3D extends HTMLElement {
   // Persistence
 
   saveJson(): ProjectJson {
-    const projectJson: ProjectJson = { assets: [] }
+    const projectJson: ProjectJson = { assets: [], views: [] }
     this.assets.forEach((asset: CADAsset) => {
       const assetJson: AssetJson = {
         url: asset.url
@@ -116,12 +156,22 @@ class IPC_3D extends HTMLElement {
 
       projectJson.assets.push(assetJson)
     })
+    this.views.forEach((view: View) => {
+      projectJson.views.push(view.saveJson())
+    })
     return projectJson
   }
 
   loadJson(projectJson: ProjectJson) {
     projectJson.assets.forEach((assetJson: AssetJson) => {
       this.loadAsset(assetJson.url)
+    })
+
+    this.views = []
+    projectJson.views.forEach((viewJson: ViewJson) => {
+      const view = new View()
+      view.loadJson(viewJson)
+      this.views.push(view)
     })
   }
 }

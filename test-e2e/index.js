@@ -2,6 +2,7 @@ const $ipc3d = document.getElementById('ipc-3d')
 
 document.getElementById('newProject').addEventListener('click', () => {
   $ipc3d.newProject()
+  generateViewButtons()
 })
 
 document.getElementById('loadAsset').addEventListener('click', () => {
@@ -46,6 +47,7 @@ document.getElementById('load').addEventListener('click', () => {
   }
 
   $ipc3d.loadJson(JSON.parse(jsonStr))
+  generateViewButtons()
 })
 
 const urlParams = new URLSearchParams(window.location.search)
@@ -55,6 +57,7 @@ if (urlParams.has('proj')) {
     .then(response => response.text())
     .then(txt => {
       $ipc3d.loadJson(JSON.parse(txt))
+      generateViewButtons()
     })
 }
 
