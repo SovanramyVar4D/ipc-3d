@@ -48,7 +48,7 @@ class IPC_3D extends HTMLElement {
       .setPositionAndTarget(new Vec3(2, 2, 2), new Vec3(0, 0, 0))
 
     this.scene.getRoot().removeAllChildren()
-    // this.scene.setupGrid(10, 10)
+    this.scene.setupGrid(10, 10)
   }
 
   loadAsset(url: string) {

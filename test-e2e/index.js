@@ -12,11 +12,29 @@ document.getElementById('frameView').addEventListener('click', () => {
   $ipc3d.frameView()
 })
 
-document.getElementById('save').addEventListener('click', () => {
+function download(file, text) {
+  //creating an invisible element
+  var element = document.createElement('a')
+  element.setAttribute(
+    'href',
+    'data:text/plain;charset=utf-8, ' + encodeURIComponent(text)
+  )
+  element.setAttribute('download', file)
+  document.body.appendChild(element)
+  //onClick property
+  element.click()
+  document.body.removeChild(element)
+}
+
+document.getElementById('save').addEventListener('click', event => {
   const json = $ipc3d.saveJson()
   console.log(json)
 
-  localStorage.setItem('ipc-project', JSON.stringify(json))
+  if (event.ctrlKey) {
+    download('ipc.proj', JSON.stringify(json))
+  } else {
+    localStorage.setItem('ipc-project', JSON.stringify(json))
+  }
 })
 
 document.getElementById('load').addEventListener('click', () => {
@@ -29,3 +47,13 @@ document.getElementById('load').addEventListener('click', () => {
 
   $ipc3d.loadJson(JSON.parse(jsonStr))
 })
+
+const urlParams = new URLSearchParams(window.location.search)
+if (urlParams.has('proj')) {
+  const projUrl = urlParams.get('proj')
+  fetch(projUrl)
+    .then(response => response.text())
+    .then(txt => {
+      $ipc3d.loadJson(JSON.parse(txt))
+    })
+}
