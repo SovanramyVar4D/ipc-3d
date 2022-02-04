@@ -3,6 +3,7 @@ import {
   Camera,
   EnvMap,
   GLRenderer,
+  MathFunctions,
   Scene,
   Vec3,
   Xfo
@@ -40,6 +41,8 @@ class View {
 
     const startXfo = camera.globalXfoParam.value.clone()
     const startTarget = camera.getTargetPosition()
+    const startDist = startXfo.tr.distanceTo(startTarget)
+    const endDist = this.cameraXfo.tr.distanceTo(this.cameraTarget)
 
     const steps = 30
     let stepId = 0
@@ -47,10 +50,20 @@ class View {
       stepId++
 
       const t = stepId / steps
-
-      const cameraPos = startXfo.tr.lerp(this.cameraXfo.tr, t)
       const cameraTarg = startTarget.lerp(this.cameraTarget, t)
-      camera.setPositionAndTarget(cameraPos, cameraTarg)
+      const dist = MathFunctions.lerp(startDist, endDist, t)
+
+      // console.log(startDist, endDist, dist)
+
+      const cameraOri = startXfo.ori.slerp(this.cameraXfo.ori, t * 2)
+      const cameraPos = cameraTarg.add(cameraOri.getZaxis().scale(dist))
+      const xfo = new Xfo()
+      xfo.ori = cameraOri
+      xfo.tr = cameraPos
+      camera.globalXfoParam.value = xfo
+
+      // const cameraPos = startXfo.tr.lerp(this.cameraXfo.tr, t)
+      // camera.setPositionAndTarget(cameraPos, cameraTarg)
 
       if (stepId == steps) clearInterval(id)
     }, 20)
@@ -115,6 +128,9 @@ class IPC_3D extends HTMLElement {
 
     this.scene.getRoot().removeAllChildren()
     this.scene.setupGrid(10, 10)
+
+    this.assets = []
+    this.views = []
   }
 
   loadAsset(url: string) {
