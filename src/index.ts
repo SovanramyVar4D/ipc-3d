@@ -19,8 +19,8 @@ class IPC_3D extends HTMLElement {
     this.attachShadow({ mode: 'open' })
 
     const $mainWrapper = document.createElement('div')
-    $mainWrapper.style.width = '1000px'
-    $mainWrapper.style.height = '800px'
+    $mainWrapper.style.width = '100%'
+    $mainWrapper.style.height = '100%'
 
     const $canvas = document.createElement('canvas')
     $mainWrapper.appendChild($canvas)
