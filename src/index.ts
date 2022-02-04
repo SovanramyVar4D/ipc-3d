@@ -44,6 +44,11 @@ class View {
     const startTarget = camera.getTargetPosition()
     const startDist = startXfo.tr.distanceTo(startTarget)
     const endDist = this.cameraXfo.tr.distanceTo(this.cameraTarget)
+    const angle = startXfo.ori
+      .inverse()
+      .multiply(this.cameraXfo.ori)
+      .getAngle()
+    console.log(angle)
 
     const steps = 30
     let stepId = 0
@@ -56,8 +61,10 @@ class View {
       const dist = MathFunctions.lerp(startDist, endDist, smooth_t)
 
       // console.log(startDist, endDist, dist)
-
-      const cameraOri = startXfo.ori.slerp(this.cameraXfo.ori, smooth_t * 2)
+      const cameraOri =
+        angle > 0.0001
+          ? startXfo.ori.slerp(this.cameraXfo.ori, smooth_t * 2)
+          : this.cameraXfo.ori
       const cameraPos = cameraTarg.add(cameraOri.getZaxis().scale(dist))
       const xfo = new Xfo()
       xfo.ori = cameraOri
