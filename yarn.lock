@@ -1580,12 +1580,24 @@
     "@types/parse5" "^6.0.1"
     parse5 "^6.0.1"
 
-"@zeainc/zea-engine@^4.1.0":
-  version "4.1.0"
-  resolved "https://registry.yarnpkg.com/@zeainc/zea-engine/-/zea-engine-4.1.0.tgz#3757308300faec5f3ed99849bd56db558cce9b4b"
-  integrity sha512-wdEV8QuU6TXtkphnlowzM6EecHpyEtJ9txOKMZC1iDSoCq5xaYqm/94gLSwYAVVRbQ/kVobGiyHbz/idkn0Gig==
+"@zeainc/zea-engine@^4.1.2":
+  version "4.1.2"
+  resolved "https://registry.yarnpkg.com/@zeainc/zea-engine/-/zea-engine-4.1.2.tgz#ff2a7f30711b60b0ed5e3b415da038f0b1e8a80c"
+  integrity sha512-3l6jChHjlPQKbNWnUohT7n16IpTyhCI73Ba/dubljvxc/BDMgZF1epl0jdqMVuHJtluahNbQkyBPokCrZm2/cw==
   dependencies:
     lodash-es "^4.17.21"
+
+"@zeainc/zea-tree-view@^0.0.7":
+  version "0.0.7"
+  resolved "https://registry.yarnpkg.com/@zeainc/zea-tree-view/-/zea-tree-view-0.0.7.tgz#2159be3f2178af01147fffa62db6ab3e8f8c4485"
+  integrity sha512-UT4kvlWAngImI+NWdXirhRQ/B42WYo5mIhrBSz75a+AsdOpc7GkFSPC2ao2yqPVnKXP6dV21HCz31mDukECTow==
+
+"@zeainc/zea-ux@^4.0.4":
+  version "4.0.4"
+  resolved "https://registry.yarnpkg.com/@zeainc/zea-ux/-/zea-ux-4.0.4.tgz#abeed7ea1b75f82331fc860fc7443fb4730a329c"
+  integrity sha512-Hvs/gvpqftK2+sbsWvXp8eSwjB1HdGG4DBduv12UoKR8jce6X77ejOiA3Nl086yjRYDAAXd1cLHESzV6RQbIug==
+  dependencies:
+    dom-to-image "^2.6.0"
 
 abab@^2.0.0:
   version "2.0.5"
@@ -2623,6 +2635,11 @@ doctrine@^3.0.0:
   integrity sha512-yS+Q5i3hBf7GBkd4KG8a7eBNNWNGLTaEwwYWUijIYM7zrlYDM0BFXHjjPWlWZ1Rg7UaddZeIDmi9jF3HmqiQ2w==
   dependencies:
     esutils "^2.0.2"
+
+dom-to-image@^2.6.0:
+  version "2.6.0"
+  resolved "https://registry.yarnpkg.com/dom-to-image/-/dom-to-image-2.6.0.tgz#8a503608088c87b1c22f9034ae032e1898955867"
+  integrity sha1-ilA2CAiMh7HCL5A0rgMuGJiVWGc=
 
 domexception@^1.0.1:
   version "1.0.1"

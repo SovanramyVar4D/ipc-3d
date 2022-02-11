@@ -1,21 +1,27 @@
 import {
+  AssetLoadContext,
+  CADAssembly,
   CADAsset,
+  CADPart,
   Camera,
+  Color,
   EnvMap,
   GLRenderer,
   MathFunctions,
   Scene,
+  TreeItem,
   Vec3,
-  Xfo
+  Xfo,
+  ZeaMouseEvent,
+  ZeaPointerEvent
 } from '@zeainc/zea-engine'
+
+import { SelectionManager, UndoRedoManager } from '@zeainc/zea-ux'
+
+import { View, ViewJson } from './View'
 
 interface AssetJson {
   url: string
-}
-interface ViewJson {
-  name: string
-  cameraXfo: Record<string, any>
-  cameraTarget: Record<string, any>
 }
 
 interface ProjectJson {
@@ -23,83 +29,11 @@ interface ProjectJson {
   views: ViewJson[]
 }
 
-class View {
-  name = 'View'
-  cameraXfo: Xfo = new Xfo()
-  cameraTarget: Vec3 = new Vec3()
-  constructor(name: string = '') {
-    this.name = name
-  }
-
-  setCameraParams(camera: Camera) {
-    this.cameraXfo = camera.globalXfoParam.value.clone()
-    this.cameraTarget = camera.getTargetPosition()
-  }
-
-  activate(camera: Camera) {
-    // camera.globalXfoParam.value = this.cameraXfo.clone()
-
-    const startXfo = camera.globalXfoParam.value.clone()
-    startXfo.ori.alignWith(this.cameraXfo.ori)
-    const startTarget = camera.getTargetPosition()
-    const startDist = startXfo.tr.distanceTo(startTarget)
-    const endDist = this.cameraXfo.tr.distanceTo(this.cameraTarget)
-    const angle = startXfo.ori
-      .inverse()
-      .multiply(this.cameraXfo.ori)
-      .getAngle()
-    console.log(angle)
-
-    const steps = 30
-    let stepId = 0
-    const id = setInterval(() => {
-      stepId++
-
-      const t = stepId / steps
-      const smooth_t = MathFunctions.smoothStep(0, 1, t)
-      const cameraTarg = startTarget.lerp(this.cameraTarget, smooth_t)
-      const dist = MathFunctions.lerp(startDist, endDist, smooth_t)
-
-      // console.log(startDist, endDist, dist)
-      const cameraOri =
-        angle > 0.0001
-          ? startXfo.ori.slerp(this.cameraXfo.ori, smooth_t * 2)
-          : this.cameraXfo.ori
-      const cameraPos = cameraTarg.add(cameraOri.getZaxis().scale(dist))
-      const xfo = new Xfo()
-      xfo.ori = cameraOri
-      xfo.tr = cameraPos
-      camera.globalXfoParam.value = xfo
-      camera.setFocalDistance(dist)
-
-      // const cameraPos = startXfo.tr.lerp(this.cameraXfo.tr, t)
-      // camera.setPositionAndTarget(cameraPos, cameraTarg)
-
-      if (stepId == steps) clearInterval(id)
-    }, 20)
-  }
-
-  // /////////////////////////////////////////
-  // Persistence
-
-  saveJson(): ViewJson {
-    return {
-      name: this.name,
-      cameraXfo: this.cameraXfo.toJSON(),
-      cameraTarget: this.cameraTarget.toJSON()
-    }
-  }
-
-  loadJson(viewJson: ViewJson) {
-    this.name = viewJson.name
-    this.cameraXfo.fromJSON(viewJson.cameraXfo)
-    this.cameraTarget.fromJSON(viewJson.cameraTarget)
-  }
-}
-
 class IPC_3D extends HTMLElement {
   private scene: Scene
   private renderer: GLRenderer
+  private selectionManager: SelectionManager
+  private undoRedoManager: UndoRedoManager
   private assets: CADAsset[] = []
   private views: View[] = []
   constructor() {
@@ -124,7 +58,67 @@ class IPC_3D extends HTMLElement {
     envMap.load('data/StudioG.zenv')
     this.scene.setEnvMap(envMap)
 
+    const selectionOutlineColor = new Color('gold')
+    selectionOutlineColor.a = 0.1
+    this.selectionManager = new SelectionManager(
+      {
+        scene: this.scene,
+        renderer: this.renderer
+      },
+      {
+        enableXfoHandles: true,
+        selectionOutlineColor,
+        branchSelectionOutlineColor: selectionOutlineColor
+      }
+    )
+
+    this.undoRedoManager = UndoRedoManager.getInstance()
+
     this.renderer.setScene(this.scene)
+
+    let highlightedItem: TreeItem
+    const filterItem = (geomItem: TreeItem) => {
+      let item = geomItem
+      while (
+        item &&
+        !(item instanceof CADPart) &&
+        !(item instanceof CADAssembly)
+      ) {
+        // console.log(item.getName(), item.getClassName())
+        item = <TreeItem>item.getOwner()
+      }
+      return item
+    }
+    // this.renderer.getViewport().on('pointerMove', (event: ZeaPointerEvent) => {
+    //   if (event.intersectionData) {
+    //     const geomItem = event.intersectionData.geomItem
+    //     // console.log(geomItem.getPath())
+    //     const item = filterItem(geomItem)
+    //     if (item) {
+    //       if (highlightedItem) {
+    //         highlightedItem.removeHighlight('foo', true)
+    //       }
+    //       item.addHighlight('foo', new Color(0.8, 0.2, 0.2, 0.1), true)
+    //       highlightedItem = item
+    //     }
+    //   } else {
+    //     if (highlightedItem) {
+    //       highlightedItem.removeHighlight('foo', true)
+    //     }
+    //   }
+    //   event.stopPropagation()
+    // })
+    this.renderer.getViewport().on('pointerDown', (event: ZeaPointerEvent) => {
+      console.log(event.pointerRay.dir.toString())
+
+      if (event.intersectionData) {
+        const geomItem = event.intersectionData.geomItem
+        const item = filterItem(geomItem)
+
+        const mousevent = <ZeaMouseEvent>event
+        this.selectionManager.toggleItemSelection(item, !mousevent.ctrlKey)
+      }
+    })
 
     // renderer.getViewport().backgroundColorParam.value = new Color(1, 0, 0)
     this.newProject()
@@ -137,7 +131,7 @@ class IPC_3D extends HTMLElement {
       .setPositionAndTarget(new Vec3(2, 2, 2), new Vec3(0, 0, 0))
 
     this.scene.getRoot().removeAllChildren()
-    this.scene.setupGrid(10, 10)
+    this.scene.setupGrid(1000, 10)
 
     this.assets = []
     this.views = []
@@ -145,7 +139,23 @@ class IPC_3D extends HTMLElement {
 
   loadAsset(url: string) {
     const cadAsset = new CADAsset()
-    cadAsset.load(url).then(() => {
+
+    const context = new AssetLoadContext()
+    context.units = 'Millimeters'
+
+    cadAsset.load(url, context).then(() => {
+      const path = ['.', '1', 'MOTOR_HOUSING']
+
+      try {
+        const item = <TreeItem>cadAsset.resolvePath(path)
+        item.addHighlight('bar', new Color(0.2, 0.2, 0.8, 0.1), true)
+
+        item.on('pointerMove', (event: ZeaPointerEvent) => {
+          console.log('PointerMoved on item')
+          event.stopPropagation()
+        })
+      } catch (e) {}
+
       this.renderer.frameAll()
       console.log('loaded')
     })
@@ -199,6 +209,17 @@ class IPC_3D extends HTMLElement {
       view.loadJson(viewJson)
       this.views.push(view)
     })
+  }
+
+  // /////////////////////////////////////////
+  // Undo /Redo
+
+  undo() {
+    this.undoRedoManager.undo()
+  }
+
+  redo() {
+    this.undoRedoManager.redo()
   }
 }
 

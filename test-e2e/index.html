@@ -7,44 +7,112 @@
     <title>3D IPC</title>
 
     <script src="https://cdn.tailwindcss.com"></script>
+
     <script
       crossorigin
       src="../node_modules/@zeainc/zea-engine/dist/index.umd.js"
     ></script>
+    <script
+      crossorigin
+      src="../node_modules/@zeainc/zea-ux/dist/index.umd.js"
+    ></script>
+    <script
+      crossorigin
+      src="../node_modules/@zeainc/zea-tree-view/dist/zeatreeview.umd.development.js"
+    ></script>
+
     <script src="../dist/ipc3d.umd.development.js"></script>
+
     <script async src="index.js"></script>
   </head>
   <body class="h-full">
     <div class="flex-col h-full overflow-hidden">
-      <header class="flex space-x-2 py-2 border-b">
+      <header class="flex space-x-2 p-2 border-b">
         <h1>3D IPC</h1>
 
-        <button id="newProject" class="border rounded bg-gray-300 px-2">
+        <button
+          id="newProject"
+          class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
+        >
           New Project
         </button>
-        <button id="loadAsset" class="border rounded bg-gray-300 px-2">
-          Load Asset
-        </button>
-        <button id="frameView" class="border rounded bg-gray-300 px-2">
-          Frame View
-        </button>
-        <button id="save" class="border rounded bg-gray-300 px-2">
+        <button
+          id="save"
+          class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
+        >
           Save
         </button>
-        <button id="load" class="border rounded bg-gray-300 px-2">
+        <button
+          id="load"
+          class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
+        >
           Load
+        </button>
+        <button
+          id="undo"
+          class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
+        >
+          Undo
+        </button>
+        <button
+          id="redo"
+          class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
+        >
+          Redo
+        </button>
+        <button
+          id="loadBike"
+          class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
+        >
+          Load Bike
+        </button>
+        <button
+          id="loadGearbox"
+          class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
+        >
+          Load Gearbox
+        </button>
+        <button
+          id="frameView"
+          class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
+        >
+          Frame View
         </button>
       </header>
 
       <div class="flex flex-1 h-full">
         <nav class="flex flex-col px-2 pt-2 space-y-2">
-          <button id="createView" class="border rounded bg-gray-300 px-2">
-            Create View
-          </button>
+          <div class="TabBar">
+            <button
+              id="showTab1"
+              class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
+            >
+              Views
+            </button>
+            <button
+              id="showTab2"
+              class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
+            >
+              Tree View
+            </button>
+          </div>
 
-          <hr />
+          <div id="tab1">
+            <button
+              id="createView"
+              class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
+            >
+              Create View
+            </button>
 
-          <div id="viewButtons" class="flex flex-col space-y-2"></div>
+            <hr />
+
+            <div id="viewButtons" class="flex flex-col space-y-2"></div>
+          </div>
+
+          <div id="tab2" class="overflow-auto" style="visibility: hidden;">
+            <zea-tree-view id="treeView"></zea-tree-view>
+          </div>
         </nav>
 
         <main class="flex flex-1 h-full">
