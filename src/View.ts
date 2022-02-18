@@ -1,17 +1,22 @@
-import { Camera, MathFunctions, Vec3, Xfo } from '@zeainc/zea-engine'
+import { Camera, MathFunctions, Scene, Vec3, Xfo } from '@zeainc/zea-engine'
+import { Pose, PoseJson } from './Pose'
 
 interface ViewJson {
   name: string
   cameraXfo: Record<string, any>
   cameraTarget: Record<string, any>
+  pose: PoseJson
 }
 
 class View {
   name = 'View'
   cameraXfo: Xfo = new Xfo()
   cameraTarget: Vec3 = new Vec3()
-  constructor(name: string = '') {
+
+  pose: Pose
+  constructor(name: string = '', scene: Scene) {
     this.name = name
+    this.pose = new Pose(scene)
   }
 
   setCameraParams(camera: Camera) {
@@ -52,6 +57,8 @@ class View {
 
       if (stepId == steps) clearInterval(id)
     }, 20)
+
+    this.pose.activate()
   }
 
   // /////////////////////////////////////////
@@ -61,7 +68,8 @@ class View {
     return {
       name: this.name,
       cameraXfo: this.cameraXfo.toJSON(),
-      cameraTarget: this.cameraTarget.toJSON()
+      cameraTarget: this.cameraTarget.toJSON(),
+      pose: this.pose.saveJson()
     }
   }
 
@@ -69,6 +77,7 @@ class View {
     this.name = viewJson.name
     this.cameraXfo.fromJSON(viewJson.cameraXfo)
     this.cameraTarget.fromJSON(viewJson.cameraTarget)
+    this.pose?.loadJson(viewJson.pose)
   }
 }
 

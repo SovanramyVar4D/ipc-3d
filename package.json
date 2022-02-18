@@ -42,6 +42,6 @@
   "dependencies": {
     "@zeainc/zea-engine": "^4.2.0",
     "@zeainc/zea-tree-view": "^0.0.7",
-    "@zeainc/zea-ux": "^4.0.4"
+    "@zeainc/zea-ux": "^4.0.5"
   }
 }

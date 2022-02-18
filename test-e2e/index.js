@@ -26,8 +26,9 @@ document.getElementById('load').addEventListener('click', () => {
     return
   }
 
-  $ipc3d.loadJson(JSON.parse(jsonStr))
-  generateViewButtons()
+  $ipc3d.loadJson(JSON.parse(jsonStr)).then(() => {
+    generateViewButtons()
+  })
 })
 
 const urlParams = new URLSearchParams(window.location.search)
@@ -36,8 +37,9 @@ if (urlParams.has('proj')) {
   fetch(projUrl)
     .then(response => response.text())
     .then(txt => {
-      $ipc3d.loadJson(JSON.parse(txt))
-      generateViewButtons()
+      $ipc3d.loadJson(JSON.parse(txt)).then(() => {
+        generateViewButtons()
+      })
     })
 }
 

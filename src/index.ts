@@ -16,11 +16,16 @@ import {
   ZeaPointerEvent
 } from '@zeainc/zea-engine'
 
-import { SelectionManager, UndoRedoManager } from '@zeainc/zea-ux'
+import {
+  SelectionManager,
+  SelectionXfoChange,
+  UndoRedoManager
+} from '@zeainc/zea-ux'
 
 import { View, ViewJson } from './View'
 import CreateViewChange from './Changes/CreateViewChange'
 import ChangeViewCamera from './Changes/ChangeViewCamera'
+import { Pose, PoseJson } from './Pose'
 
 interface AssetJson {
   url: string
@@ -29,6 +34,7 @@ interface AssetJson {
 interface ProjectJson {
   assets: AssetJson[]
   views: ViewJson[]
+  neutralPose: PoseJson
 }
 
 class IPC_3D extends HTMLElement {
@@ -39,6 +45,9 @@ class IPC_3D extends HTMLElement {
   private assets: CADAsset[] = []
   private views: View[] = []
   private activeView?: View
+
+  private neutralPose: Pose
+
   constructor() {
     super()
 
@@ -56,6 +65,8 @@ class IPC_3D extends HTMLElement {
     this.renderer = new GLRenderer($canvas)
 
     this.scene = new Scene()
+
+    this.neutralPose = new Pose(this.scene)
 
     const envMap = new EnvMap()
     envMap.load('data/StudioG.zenv')
@@ -77,8 +88,17 @@ class IPC_3D extends HTMLElement {
 
     this.undoRedoManager = UndoRedoManager.getInstance()
 
-    this.undoRedoManager.on('changeAdded', (event: object) => {
+    this.undoRedoManager.on('changeAdded', (event: Object) => {
       console.log('changeAdded:', event)
+      // @ts-ignore
+      const change = <Change>event.change
+      if (change instanceof SelectionXfoChange) {
+        if (this.activeView) {
+          this.activeView.pose.storeTreeItemsPose(change.treeItems)
+        } else {
+          this.neutralPose.storeTreeItemsPose(change.treeItems)
+        }
+      }
     })
 
     this.undoRedoManager.on('changeUpdated', (event: object) => {
@@ -146,22 +166,27 @@ class IPC_3D extends HTMLElement {
 
     this.assets = []
     this.views = []
+
+    this.undoRedoManager.flush()
   }
 
-  loadAsset(url: string) {
-    const cadAsset = new CADAsset()
+  async loadAsset(url: string): Promise<void> {
+    return new Promise<void>(resolve => {
+      const cadAsset = new CADAsset()
 
-    const context = new AssetLoadContext()
-    context.units = 'Millimeters'
+      const context = new AssetLoadContext()
+      context.units = 'Millimeters'
 
-    cadAsset.load(url, context).then(() => {
-      this.renderer.frameAll()
-      console.log('loaded')
+      cadAsset.load(url, context).then(() => {
+        this.renderer.frameAll()
+        console.log('loaded')
+        resolve()
+      })
+
+      this.scene.getRoot().addChild(cadAsset)
+
+      this.assets.push(cadAsset)
     })
-
-    this.scene.getRoot().addChild(cadAsset)
-
-    this.assets.push(cadAsset)
   }
 
   frameView() {
@@ -169,7 +194,7 @@ class IPC_3D extends HTMLElement {
   }
 
   createView() {
-    const view = new View('View' + this.views.length)
+    const view = new View('View' + this.views.length, this.scene)
     const change = new CreateViewChange(view, this.views)
     view.setCameraParams(this.renderer.getViewport().getCamera())
     this.views.push(view)
@@ -204,7 +229,11 @@ class IPC_3D extends HTMLElement {
   // Persistence
 
   saveJson(): ProjectJson {
-    const projectJson: ProjectJson = { assets: [], views: [] }
+    const projectJson: ProjectJson = {
+      assets: [],
+      views: [],
+      neutralPose: this.neutralPose.saveJson()
+    }
     this.assets.forEach((asset: CADAsset) => {
       const assetJson: AssetJson = {
         url: asset.url
@@ -218,16 +247,25 @@ class IPC_3D extends HTMLElement {
     return projectJson
   }
 
-  loadJson(projectJson: ProjectJson) {
-    projectJson.assets.forEach((assetJson: AssetJson) => {
-      this.loadAsset(assetJson.url)
-    })
+  loadJson(projectJson: ProjectJson): Promise<void> {
+    return new Promise<void>(resolve => {
+      const promises: Promise<void>[] = []
+      projectJson.assets.forEach((assetJson: AssetJson) => {
+        promises.push(this.loadAsset(assetJson.url))
+      })
 
-    this.views = []
-    projectJson.views.forEach((viewJson: ViewJson) => {
-      const view = new View()
-      view.loadJson(viewJson)
-      this.views.push(view)
+      Promise.all(promises).then(() => {
+        this.neutralPose.loadJson(projectJson.neutralPose)
+        this.neutralPose.activate()
+        this.views = []
+        projectJson.views.forEach((viewJson: ViewJson) => {
+          const view = new View('', this.scene)
+          view.loadJson(viewJson)
+          this.views.push(view)
+        })
+
+        resolve()
+      })
     })
   }
 
