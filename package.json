@@ -11,9 +11,8 @@
     "node": ">=10"
   },
   "scripts": {
-    "build": "tsdx build --format umd --name ipc3D",
-    "build:watch": "tsdx watch --format umd --name ipc3D",
-    "start": "tsdx watch --format umd --name ipc3D",
+    "build": "tsdx build --format umd --name ipc3D --target node",
+    "build:watch": "tsdx watch --format umd --name ipc3D --target node",
     "test": "tsdx test",
     "lint": "tsdx lint",
     "prepare": "tsdx build",

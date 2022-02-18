@@ -19,6 +19,8 @@ import {
 import { SelectionManager, UndoRedoManager } from '@zeainc/zea-ux'
 
 import { View, ViewJson } from './View'
+import CreateViewChange from './Changes/CreateViewChange'
+import ChangeViewCamera from './Changes/ChangeViewCamera'
 
 interface AssetJson {
   url: string
@@ -36,6 +38,7 @@ class IPC_3D extends HTMLElement {
   private undoRedoManager: UndoRedoManager
   private assets: CADAsset[] = []
   private views: View[] = []
+  private activeView?: View
   constructor() {
     super()
 
@@ -73,6 +76,14 @@ class IPC_3D extends HTMLElement {
     )
 
     this.undoRedoManager = UndoRedoManager.getInstance()
+
+    this.undoRedoManager.on('changeAdded', (event: object) => {
+      console.log('changeAdded:', event)
+    })
+
+    this.undoRedoManager.on('changeUpdated', (event: object) => {
+      console.log('changeUpdated:', event)
+    })
 
     this.renderer.setScene(this.scene)
 
@@ -144,18 +155,6 @@ class IPC_3D extends HTMLElement {
     context.units = 'Millimeters'
 
     cadAsset.load(url, context).then(() => {
-      const path = ['.', '1', 'MOTOR_HOUSING']
-
-      try {
-        const item = <TreeItem>cadAsset.resolvePath(path)
-        item.addHighlight('bar', new Color(0.2, 0.2, 0.8, 0.1), true)
-
-        item.on('pointerMove', (event: ZeaPointerEvent) => {
-          console.log('PointerMoved on item')
-          event.stopPropagation()
-        })
-      } catch (e) {}
-
       this.renderer.frameAll()
       console.log('loaded')
     })
@@ -171,13 +170,34 @@ class IPC_3D extends HTMLElement {
 
   createView() {
     const view = new View('View' + this.views.length)
+    const change = new CreateViewChange(view, this.views)
     view.setCameraParams(this.renderer.getViewport().getCamera())
     this.views.push(view)
+
+    this.undoRedoManager.addChange(change)
+
+    this.activeView = view
   }
+
+  deleteView(index: string) {}
 
   activateView(index: number) {
     const view = this.views[index]
     view.activate(this.renderer.getViewport().getCamera())
+
+    this.activeView = view
+  }
+
+  saveViewCamera() {
+    if (this.activeView) {
+      const change = new ChangeViewCamera(this.activeView)
+      this.activeView.setCameraParams(this.renderer.getViewport().getCamera())
+      change.updateCameraView()
+      this.undoRedoManager.addChange(change)
+    }
+  }
+  deactivateView() {
+    this.activeView = undefined
   }
 
   // /////////////////////////////////////////

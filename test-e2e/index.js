@@ -44,10 +44,6 @@ if (urlParams.has('proj')) {
 // ///////////////////////////////////////////////
 // Undo and Redo
 
-$ipc3d.undoRedoManager.on('changeAdded', () => {
-  console.log('changeAdded')
-})
-
 document.getElementById('undo').addEventListener('click', event => {
   console.log('undo')
   $ipc3d.undo()
@@ -110,6 +106,23 @@ $treeView.setSelectionManager($ipc3d.selectionManager)
 
 document.getElementById('createView').addEventListener('click', () => {
   $ipc3d.createView()
+  generateViewButtons()
+})
+document.getElementById('saveViewCamera').addEventListener('click', () => {
+  $ipc3d.saveViewCamera()
+})
+
+$ipc3d.undoRedoManager.on('changeAdded', () => {
+  console.log('changeAdded')
+})
+
+$ipc3d.undoRedoManager.on('changeUndone', () => {
+  console.log('changeUndone')
+  generateViewButtons()
+})
+
+$ipc3d.undoRedoManager.on('changeRedone', () => {
+  console.log('changeRedone')
   generateViewButtons()
 })
 
