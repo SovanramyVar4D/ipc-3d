@@ -62,6 +62,12 @@ class View {
     this.pose.lerpPose(neutralPose, steps, timeStep)
   }
 
+  copyFrom(view: View) {
+    this.cameraTarget = view.cameraTarget.clone()
+    this.cameraXfo = view.cameraXfo.clone()
+    this.pose.copyFrom(view.pose)
+  }
+
   // /////////////////////////////////////////
   // Persistence
 

@@ -54,6 +54,15 @@ class Pose {
     })
   }
 
+  copyFrom(pose: Pose) {
+    for (const key in pose.values) {
+      const value = pose.values[key]
+      const param = pose.params[key]
+      this.values[key] = value
+      this.params[key] = param
+    }
+  }
+
   activate(neutralPose?: Pose) {
     if (neutralPose) {
       for (const key in neutralPose.values) {

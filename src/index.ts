@@ -28,6 +28,7 @@ import { View, ViewJson } from './View'
 import CreateViewChange from './Changes/CreateViewChange'
 import ChangeViewCamera from './Changes/ChangeViewCamera'
 import { Pose, PoseJson } from './Pose'
+import { SelectionSet, SelectionSetJson } from './SelectionSet'
 
 interface AssetJson {
   url: string
@@ -36,6 +37,7 @@ interface AssetJson {
 interface ProjectJson {
   assets: AssetJson[]
   views: ViewJson[]
+  selectionSets: SelectionSetJson[]
   neutralPose: PoseJson
 }
 
@@ -46,6 +48,7 @@ class IPC_3D extends HTMLElement {
   private undoRedoManager: UndoRedoManager
   private assets: CADAsset[] = []
   private views: View[] = []
+  private selectionSets: SelectionSet[] = []
   private activeView?: View
 
   private neutralPose: Pose
@@ -212,6 +215,9 @@ class IPC_3D extends HTMLElement {
 
   createView() {
     const view = new View('View' + this.views.length, this.scene)
+    if (this.activeView) {
+      view.copyFrom(this.activeView)
+    }
     const change = new CreateViewChange(view, this.views)
     view.setCameraParams(this.renderer.getViewport().getCamera())
     this.views.push(view)
@@ -249,12 +255,29 @@ class IPC_3D extends HTMLElement {
   }
 
   // /////////////////////////////////////////
+  // Selection Sets
+
+  createSelectionSet() {
+    const set = Array.from(this.selectionManager.getSelection().values())
+    this.selectionSets.push(
+      new SelectionSet('SelSet' + this.selectionSets.length, set, this.scene)
+    )
+  }
+
+  activateSelectionSet(index: number) {
+    const selectionSet = this.selectionSets[index]
+    const set = new Set(selectionSet.items)
+    this.selectionManager.setSelection(set)
+  }
+
+  // /////////////////////////////////////////
   // Persistence
 
   saveJson(): ProjectJson {
     const projectJson: ProjectJson = {
       assets: [],
       views: [],
+      selectionSets: [],
       neutralPose: this.neutralPose.saveJson()
     }
     this.assets.forEach((asset: CADAsset) => {
@@ -266,6 +289,9 @@ class IPC_3D extends HTMLElement {
     })
     this.views.forEach((view: View) => {
       projectJson.views.push(view.saveJson())
+    })
+    this.selectionSets.forEach((selectionSet: SelectionSet) => {
+      projectJson.selectionSets.push(selectionSet.saveJson())
     })
     return projectJson
   }
@@ -286,6 +312,13 @@ class IPC_3D extends HTMLElement {
           view.loadJson(viewJson)
           this.views.push(view)
         })
+        projectJson.selectionSets.forEach(
+          (selectionSetJson: SelectionSetJson) => {
+            const sel = new SelectionSet('', [], this.scene)
+            sel.loadJson(selectionSetJson)
+            this.selectionSets.push(sel)
+          }
+        )
 
         resolve()
       })

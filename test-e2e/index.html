@@ -95,6 +95,12 @@
             >
               Tree View
             </button>
+            <button
+              id="showTab3"
+              class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
+            >
+              Selection Sets
+            </button>
           </div>
 
           <div id="tab1">
@@ -124,6 +130,19 @@
 
           <div id="tab2" class="overflow-auto" style="display: none;">
             <zea-tree-view id="treeView"></zea-tree-view>
+          </div>
+
+          <div id="tab3" class="overflow-auto" style="display: none;">
+            <button
+              id="createSelectionSet"
+              class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
+            >
+              Create Selection Set
+            </button>
+
+            <hr />
+
+            <div id="selectionSetButtons" class="flex flex-col space-y-2"></div>
           </div>
         </nav>
 
