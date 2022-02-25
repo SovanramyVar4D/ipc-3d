@@ -1588,10 +1588,10 @@
     caniuse-lite "^1.0.30001309"
     lodash-es "^4.17.21"
 
-"@zeainc/zea-tree-view@^0.0.7":
-  version "0.0.7"
-  resolved "https://registry.yarnpkg.com/@zeainc/zea-tree-view/-/zea-tree-view-0.0.7.tgz#2159be3f2178af01147fffa62db6ab3e8f8c4485"
-  integrity sha512-UT4kvlWAngImI+NWdXirhRQ/B42WYo5mIhrBSz75a+AsdOpc7GkFSPC2ao2yqPVnKXP6dV21HCz31mDukECTow==
+"@zeainc/zea-tree-view@^0.1.0":
+  version "0.1.1"
+  resolved "https://registry.yarnpkg.com/@zeainc/zea-tree-view/-/zea-tree-view-0.1.1.tgz#f1fe205bb1e285a6dac7d0a28f48eeb536007f4a"
+  integrity sha512-gSAXXfn+4551dOSLCp5GvHjBu1oYWYlfHKelDkPAD6Jm4UakekHtEfRQnWuKhcqYOVHhsCmgbsZdKRknx/4yaw==
 
 "@zeainc/zea-ux@^4.0.5":
   version "4.0.5"

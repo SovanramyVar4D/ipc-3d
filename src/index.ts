@@ -1,5 +1,6 @@
 import {
   AssetLoadContext,
+  BooleanParameter,
   CADAssembly,
   CADAsset,
   CADPart,
@@ -17,6 +18,7 @@ import {
 } from '@zeainc/zea-engine'
 
 import {
+  ParameterValueChange,
   SelectionManager,
   SelectionXfoChange,
   UndoRedoManager
@@ -89,9 +91,28 @@ class IPC_3D extends HTMLElement {
     this.undoRedoManager = UndoRedoManager.getInstance()
 
     this.undoRedoManager.on('changeAdded', (event: Object) => {
-      console.log('changeAdded:', event)
       // @ts-ignore
       const change = <Change>event.change
+      if (change instanceof SelectionXfoChange) {
+        if (this.activeView) {
+          this.neutralPose.storeNeutralPose(change.treeItems)
+          this.activeView.pose.storeTreeItemsPose(change.treeItems)
+        } else {
+          this.neutralPose.storeTreeItemsPose(change.treeItems)
+        }
+      } else if (change instanceof ParameterValueChange) {
+        const param = <BooleanParameter>change.param
+        if (this.activeView) {
+          this.neutralPose.storeParamValue(param, change.prevValue, true)
+          this.activeView.pose.storeParamValue(param, change.nextValue)
+        } else {
+          this.neutralPose.storeParamValue(param, change.nextValue)
+        }
+      }
+    })
+
+    this.undoRedoManager.on('changeUpdated', (event: object) => {
+      const change = this.undoRedoManager.getCurrentChange()
       if (change instanceof SelectionXfoChange) {
         if (this.activeView) {
           this.activeView.pose.storeTreeItemsPose(change.treeItems)
@@ -99,10 +120,6 @@ class IPC_3D extends HTMLElement {
           this.neutralPose.storeTreeItemsPose(change.treeItems)
         }
       }
-    })
-
-    this.undoRedoManager.on('changeUpdated', (event: object) => {
-      console.log('changeUpdated:', event)
     })
 
     this.renderer.setScene(this.scene)
@@ -208,7 +225,7 @@ class IPC_3D extends HTMLElement {
 
   activateView(index: number) {
     const view = this.views[index]
-    view.activate(this.renderer.getViewport().getCamera())
+    view.activate(this.renderer.getViewport().getCamera(), this.neutralPose)
 
     this.activeView = view
   }
@@ -221,6 +238,12 @@ class IPC_3D extends HTMLElement {
       this.undoRedoManager.addChange(change)
     }
   }
+
+  activateNeutralPose() {
+    this.neutralPose.lerpPose()
+    this.activeView = undefined
+  }
+
   deactivateView() {
     this.activeView = undefined
   }

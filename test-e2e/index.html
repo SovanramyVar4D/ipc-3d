@@ -18,7 +18,7 @@
     ></script>
     <script
       crossorigin
-      src="../node_modules/@zeainc/zea-tree-view/dist/zeatreeview.umd.development.js"
+      src="../node_modules/@zeainc/zea-tree-view/dist/index.umd.development.js"
     ></script>
 
     <script src="../dist/ipc3d.umd.development.js"></script>
@@ -110,13 +110,19 @@
             >
               Save View Camera
             </button>
+            <button
+              id="activateNeutralPose"
+              class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
+            >
+              Neutral Pose
+            </button>
 
             <hr />
 
             <div id="viewButtons" class="flex flex-col space-y-2"></div>
           </div>
 
-          <div id="tab2" class="overflow-auto" style="visibility: hidden;">
+          <div id="tab2" class="overflow-auto" style="display: none;">
             <zea-tree-view id="treeView"></zea-tree-view>
           </div>
         </nav>

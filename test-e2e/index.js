@@ -88,13 +88,13 @@ const $tab1 = document.querySelector('#tab1')
 const $tab2 = document.querySelector('#tab2')
 
 document.querySelector('#showTab1').addEventListener('click', () => {
-  $tab1.style.visibility = 'visible'
-  $tab2.style.visibility = 'hidden'
+  $tab1.style.display = ''
+  $tab2.style.display = 'none'
 })
 
 document.querySelector('#showTab2').addEventListener('click', () => {
-  $tab1.style.visibility = 'hidden'
-  $tab2.style.visibility = 'visible'
+  $tab1.style.display = 'none'
+  $tab2.style.display = ''
 })
 
 // ////////////////////////////////////////////////
@@ -112,6 +112,9 @@ document.getElementById('createView').addEventListener('click', () => {
 })
 document.getElementById('saveViewCamera').addEventListener('click', () => {
   $ipc3d.saveViewCamera()
+})
+document.getElementById('activateNeutralPose').addEventListener('click', () => {
+  $ipc3d.activateNeutralPose()
 })
 
 $ipc3d.undoRedoManager.on('changeAdded', () => {

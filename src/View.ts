@@ -24,7 +24,7 @@ class View {
     this.cameraTarget = camera.getTargetPosition()
   }
 
-  activate(camera: Camera) {
+  activate(camera: Camera, neutralPose?: Pose) {
     // camera.globalXfoParam.value = this.cameraXfo.clone()
 
     const startXfo = camera.globalXfoParam.value.clone()
@@ -33,7 +33,8 @@ class View {
     const startDist = startXfo.tr.distanceTo(startTarget)
     const endDist = this.cameraXfo.tr.distanceTo(this.cameraTarget)
 
-    const steps = 30
+    const steps = 25
+    const timeStep = 20
     let stepId = 0
     const id = setInterval(() => {
       stepId++
@@ -56,9 +57,9 @@ class View {
       // camera.setPositionAndTarget(cameraPos, cameraTarg)
 
       if (stepId == steps) clearInterval(id)
-    }, 20)
+    }, timeStep)
 
-    this.pose.activate()
+    this.pose.lerpPose(neutralPose, steps, timeStep)
   }
 
   // /////////////////////////////////////////
