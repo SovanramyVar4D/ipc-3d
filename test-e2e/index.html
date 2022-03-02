@@ -78,6 +78,24 @@
         >
           Frame View
         </button>
+
+        <button
+          id="hideSelection"
+          class="border rounded bg-blue-300 px-2 hover:bg-gray-100 hover:border-blue-500"
+        >
+          Hide Selection
+        </button>
+        <button
+                id="unHideAll"
+                class="border rounded bg-blue-300 px-2 hover:bg-gray-100 hover:border-blue-500"
+        >
+          Unhide all
+        </button>
+
+        <label class="border rounded bg-blue-300 px-2 hover:bg-gray-100 hover:border-blue-500">
+          Enable Handle
+          <input id="enable-handle" type="checkbox" checked/>
+        </label>
       </header>
 
       <div class="flex flex-1 h-full">
@@ -114,17 +132,17 @@
               id="saveViewCamera"
               class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
             >
-              Save View Camera
-            </button>
-            <button
-              id="activateNeutralPose"
-              class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
-            >
-              Neutral Pose
+              Save View
             </button>
 
             <hr />
 
+            <button
+                    id="activateNeutralPose"
+                    class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
+            >
+              Neutral Pose
+            </button>
             <div id="viewButtons" class="flex flex-col space-y-2"></div>
           </div>
 

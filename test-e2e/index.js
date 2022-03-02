@@ -85,6 +85,20 @@ document.getElementById('frameView').addEventListener('click', () => {
   $ipc3d.frameView()
 })
 
+/* SHOW HIDE */
+document.getElementById('hideSelection').addEventListener('click', () => {
+  $ipc3d.hideSelection()
+})
+document.getElementById('unHideAll').addEventListener('click', () => {
+  $ipc3d.unHideAll()
+})
+/* Misc */
+document.getElementById('enable-handle').addEventListener('change', (changeEvent) => {
+  var checked = changeEvent.currentTarget.checked
+  $ipc3d.selectionManager.showHandles(checked)
+  $ipc3d.selectionManager.updateHandleVisibility()
+})
+
 // ////////////////////////////////////////////////
 //  Tabs
 const $tab1 = document.querySelector('#tab1')
@@ -128,6 +142,8 @@ document.getElementById('saveViewCamera').addEventListener('click', () => {
 })
 document.getElementById('activateNeutralPose').addEventListener('click', () => {
   $ipc3d.activateNeutralPose()
+  generateViewButtons()
+  generateSelSetButtons()
 })
 
 $ipc3d.undoRedoManager.on('changeAdded', () => {
