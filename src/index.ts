@@ -4,31 +4,23 @@ import {
   CADAssembly,
   CADAsset,
   CADPart,
-  Camera,
   Color,
   EnvMap,
   GLRenderer,
-  MathFunctions,
   Scene,
   TreeItem,
   Vec3,
-  Xfo,
   ZeaMouseEvent,
   ZeaPointerEvent
 } from '@zeainc/zea-engine'
 
-import {
-  ParameterValueChange,
-  SelectionManager,
-  SelectionXfoChange,
-  UndoRedoManager
-} from '@zeainc/zea-ux'
+import {ParameterValueChange, SelectionManager, SelectionXfoChange, UndoRedoManager} from '@zeainc/zea-ux'
 
-import { View, ViewJson } from './View'
+import {View, ViewJson} from './View'
 import CreateViewChange from './Changes/CreateViewChange'
 import ChangeViewCamera from './Changes/ChangeViewCamera'
-import { Pose, PoseJson } from './Pose'
-import { SelectionSet, SelectionSetJson } from './SelectionSet'
+import {Pose, PoseJson} from './Pose'
+import {SelectionSet, SelectionSetJson} from './SelectionSet'
 
 interface AssetJson {
   url: string
@@ -41,7 +33,7 @@ interface ProjectJson {
   neutralPose: PoseJson
 }
 
-class IPC_3D extends HTMLElement {
+class Ipd3d extends HTMLElement {
   private scene: Scene
   private renderer: GLRenderer
   private selectionManager: SelectionManager
@@ -49,9 +41,14 @@ class IPC_3D extends HTMLElement {
   private assets: CADAsset[] = []
   private views: View[] = []
   private selectionSets: SelectionSet[] = []
+  private hiddenParts: TreeItem[] = []
   private activeView?: View
+  private highlightedItem?: TreeItem
 
   private neutralPose: Pose
+
+  private highlightColor = new Color(0.8, 0.2, 0.2, 0.3)
+  private selectionColor = new Color(1,0.8,0, 0.6)
 
   constructor() {
     super()
@@ -77,8 +74,6 @@ class IPC_3D extends HTMLElement {
     envMap.load('data/StudioG.zenv')
     this.scene.setEnvMap(envMap)
 
-    const selectionOutlineColor = new Color('gold')
-    selectionOutlineColor.a = 0.1
     this.selectionManager = new SelectionManager(
       {
         scene: this.scene,
@@ -86,16 +81,17 @@ class IPC_3D extends HTMLElement {
       },
       {
         enableXfoHandles: true,
-        selectionOutlineColor,
-        branchSelectionOutlineColor: selectionOutlineColor
+        selectionOutlineColor: this.selectionColor,
+        branchSelectionOutlineColor: this.selectionColor
       }
     )
+    this.selectionManager.selectionGroup.highlightFillParam.value = this.selectionColor.a
 
     this.undoRedoManager = UndoRedoManager.getInstance()
 
     this.undoRedoManager.on('changeAdded', (event: Object) => {
       // @ts-ignore
-      const change = <Change>event.change
+      const change = event.change
       if (change instanceof SelectionXfoChange) {
         if (this.activeView) {
           this.neutralPose.storeNeutralPose(change.treeItems)
@@ -114,7 +110,7 @@ class IPC_3D extends HTMLElement {
       }
     })
 
-    this.undoRedoManager.on('changeUpdated', (event: object) => {
+    this.undoRedoManager.on('changeUpdated', (event: Object) => {
       const change = this.undoRedoManager.getCurrentChange()
       if (change instanceof SelectionXfoChange) {
         if (this.activeView) {
@@ -127,55 +123,41 @@ class IPC_3D extends HTMLElement {
 
     this.renderer.setScene(this.scene)
 
-    let highlightedItem: TreeItem
-    const filterItem = (geomItem: TreeItem) => {
-      let item = geomItem
-      while (
-        item &&
-        !(item instanceof CADPart) &&
-        !(item instanceof CADAssembly)
-      ) {
-        // console.log(item.getName(), item.getClassName())
-        item = <TreeItem>item.getOwner()
-      }
-      return item
-    }
-    // this.renderer.getViewport().on('pointerMove', (event: ZeaPointerEvent) => {
-    //   if (event.intersectionData) {
-    //     const geomItem = event.intersectionData.geomItem
-    //     // console.log(geomItem.getPath())
-    //     const item = filterItem(geomItem)
-    //     if (item) {
-    //       if (highlightedItem) {
-    //         highlightedItem.removeHighlight('foo', true)
-    //       }
-    //       item.addHighlight('foo', new Color(0.8, 0.2, 0.2, 0.1), true)
-    //       highlightedItem = item
-    //     }
-    //   } else {
-    //     if (highlightedItem) {
-    //       highlightedItem.removeHighlight('foo', true)
-    //     }
-    //   }
-    //   event.stopPropagation()
-    // })
-    this.renderer.getViewport().on('pointerDown', (event: ZeaPointerEvent) => {
-      console.log(event.pointerRay.dir.toString())
-
+    this.renderer.getViewport().on('pointerMove', (event: ZeaPointerEvent) => {
       if (event.intersectionData) {
-        const geomItem = event.intersectionData.geomItem
-        const item = filterItem(geomItem)
+        const item = this.filterItem(event.intersectionData.geomItem)
+        if (item) {
+          if (this.highlightedItem) {
+            this.highlightedItem.removeHighlight('highlight', true)
+          }
+          item.addHighlight('highlight', this.highlightColor, true)
+          this.highlightedItem = item
+        }
+      } else {
+        if (this.highlightedItem) {
+          this.highlightedItem.removeHighlight('highlight', true)
+          this.highlightedItem = undefined
+        }
+      }
+      event.stopPropagation()
+    })
 
-        const mousevent = <ZeaMouseEvent>event
-        this.selectionManager.toggleItemSelection(item, !mousevent.ctrlKey)
+    this.renderer.getViewport().on('pointerDown', (event: ZeaPointerEvent) => {
+      if (event.intersectionData) {
+        const item = this.filterItem(event.intersectionData.geomItem)
+        this.selectionManager.toggleItemSelection(item, !(<ZeaMouseEvent>event).ctrlKey)
+      } else {
+        if (!(<ZeaMouseEvent>event).ctrlKey) {
+          this.selectionManager.setSelection(new Set(), true)
+        }
       }
     })
 
-    // renderer.getViewport().backgroundColorParam.value = new Color(1, 0, 0)
+    // this.renderer.getViewport().backgroundColorParam.value = new Color(.9, .4, .4)
     this.newProject()
   }
 
-  newProject(): void {
+  public newProject(): void {
     this.renderer
       .getViewport()
       .getCamera()
@@ -190,7 +172,7 @@ class IPC_3D extends HTMLElement {
     this.undoRedoManager.flush()
   }
 
-  async loadAsset(url: string): Promise<void> {
+  public async loadAsset(url: string): Promise<void> {
     return new Promise<void>(resolve => {
       const cadAsset = new CADAsset()
 
@@ -209,11 +191,24 @@ class IPC_3D extends HTMLElement {
     })
   }
 
-  frameView() {
+  private filterItem(geomItem: TreeItem) {
+    let item = geomItem
+    while (
+        item &&
+        !(item instanceof CADPart) &&
+        !(item instanceof CADAssembly)
+        ) {
+      // console.log(item.getName(), item.getClassName())
+      item = <TreeItem>item.getOwner()
+    }
+    return item
+  }
+
+  public frameView() {
     this.renderer.frameAll()
   }
 
-  createView() {
+  public createView() {
     const view = new View('View' + this.views.length, this.scene)
     if (this.activeView) {
       view.copyFrom(this.activeView)
@@ -227,16 +222,16 @@ class IPC_3D extends HTMLElement {
     this.activeView = view
   }
 
-  deleteView(index: string) {}
+  public deleteView(index: string) {}
 
-  activateView(index: number) {
+  public activateView(index: number) {
     const view = this.views[index]
     view.activate(this.renderer.getViewport().getCamera(), this.neutralPose)
 
     this.activeView = view
   }
 
-  saveViewCamera() {
+  public saveViewCamera() {
     if (this.activeView) {
       const change = new ChangeViewCamera(this.activeView)
       this.activeView.setCameraParams(this.renderer.getViewport().getCamera())
@@ -245,35 +240,50 @@ class IPC_3D extends HTMLElement {
     }
   }
 
-  activateNeutralPose() {
+  public activateNeutralPose() {
     this.neutralPose.lerpPose()
     this.activeView = undefined
   }
 
-  deactivateView() {
+  public deactivateView() {
     this.activeView = undefined
   }
 
   // /////////////////////////////////////////
   // Selection Sets
 
-  createSelectionSet() {
+  public createSelectionSet() {
     const set = Array.from(this.selectionManager.getSelection().values())
     this.selectionSets.push(
       new SelectionSet('SelSet' + this.selectionSets.length, set, this.scene)
     )
   }
 
-  activateSelectionSet(index: number) {
+  public activateSelectionSet(index: number) {
     const selectionSet = this.selectionSets[index]
     const set = new Set(selectionSet.items)
     this.selectionManager.setSelection(set)
   }
 
+  public hideSelection() {
+    const set = this.selectionManager.getSelection()
+    set.forEach((treeItem:TreeItem) => {
+      treeItem.setVisible(false)
+      this.hiddenParts.push(treeItem)
+    })
+  }
+
+  public unHideAll(){
+    this.hiddenParts.forEach((treeItem: TreeItem) => {
+      treeItem.setVisible(true)
+    })
+    this.hiddenParts = []
+  }
+
   // /////////////////////////////////////////
   // Persistence
 
-  saveJson(): ProjectJson {
+  public saveJson(): ProjectJson {
     const projectJson: ProjectJson = {
       assets: [],
       views: [],
@@ -296,7 +306,7 @@ class IPC_3D extends HTMLElement {
     return projectJson
   }
 
-  loadJson(projectJson: ProjectJson): Promise<void> {
+  public loadJson(projectJson: ProjectJson): Promise<void> {
     return new Promise<void>(resolve => {
       const promises: Promise<void>[] = []
       projectJson.assets.forEach((assetJson: AssetJson) => {
@@ -328,13 +338,13 @@ class IPC_3D extends HTMLElement {
   // /////////////////////////////////////////
   // Undo /Redo
 
-  undo() {
+  public undo() {
     this.undoRedoManager.undo()
   }
 
-  redo() {
+  public redo() {
     this.undoRedoManager.redo()
   }
 }
 
-customElements.define('ipc-3d', IPC_3D)
+customElements.define('ipc-3d', Ipd3d)
