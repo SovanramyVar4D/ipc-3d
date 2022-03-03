@@ -4,14 +4,17 @@ import {
   CADAssembly,
   CADAsset,
   CADPart,
+  Camera,
   Color,
   EnvMap,
   EventEmitter,
   GLRenderer,
+  MathFunctions,
   Scene,
   TreeItem,
   Vec2,
   Vec3,
+  Xfo,
   ZeaMouseEvent,
   ZeaPointerEvent
 } from '@zeainc/zea-engine'
@@ -90,6 +93,8 @@ class Ipd3d extends HTMLElement {
     envMap.load('data/StudioG.zenv')
     this.scene.setEnvMap(envMap)
 
+    const selectionOutlineColor = new Color('gold')
+    selectionOutlineColor.a = 0.1
     this.selectionManager = new SelectionManager(
       {
         scene: this.scene,
@@ -97,8 +102,8 @@ class Ipd3d extends HTMLElement {
       },
       {
         enableXfoHandles: true,
-        selectionOutlineColor: this.selectionColor,
-        branchSelectionOutlineColor: this.selectionColor
+          selectionOutlineColor: this.selectionColor,
+          branchSelectionOutlineColor: this.selectionColor
       }
     )
     this.selectionManager.selectionGroup.highlightFillParam.value = this.selectionColor.a
@@ -175,10 +180,7 @@ class Ipd3d extends HTMLElement {
       } else if (change instanceof ParameterValueChange) {
         const param = <BooleanParameter>change.param
         if (this.activeView) {
-          this.neutralPose.storeParamValue(param, change.prevValue, true)
-          this.activeView.pose.storeParamValue(param, change.nextValue)
-        } else {
-          this.neutralPose.storeParamValue(param, change.nextValue)
+          this.activeView.pose.storeParamValue(param, change.nextValue.clone())
         }
       }
     })
@@ -189,7 +191,11 @@ class Ipd3d extends HTMLElement {
         if (this.activeView) {
           this.activeView.pose.storeTreeItemsPose(change.treeItems)
         } else {
-          this.neutralPose.storeTreeItemsPose(change.treeItems)
+        }
+      } else if (change instanceof ParameterValueChange) {
+        const param = <BooleanParameter>change.param
+        if (this.activeView) {
+          this.activeView.pose.storeParamValue(param, change.nextValue.clone())
         }
       }
     })

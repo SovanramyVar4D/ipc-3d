@@ -39,7 +39,7 @@ class Pose {
     treeItems.forEach(treeItem => {
       this.storeParamValue(
         treeItem.globalXfoParam,
-        treeItem.globalXfoParam.value
+        treeItem.globalXfoParam.value.clone()
       )
     })
   }
@@ -48,7 +48,7 @@ class Pose {
     treeItems.forEach(treeItem => {
       this.storeParamValue(
         treeItem.globalXfoParam,
-        treeItem.globalXfoParam.value,
+        treeItem.globalXfoParam.value.clone(),
         true
       )
     })
