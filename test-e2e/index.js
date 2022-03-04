@@ -64,7 +64,7 @@ document.getElementById('loadBike').addEventListener('click', () => {
   $ipc3d.loadAsset('data/Mountain Bike.zcad')
 })
 document.getElementById('loadGearbox').addEventListener('click', () => {
-  $ipc3d.loadAsset('data/gear_box_final_asm.zcad')
+  $ipc3d.loadAsset('data/gear_box_final_asm.stp.zcad')
 })
 
 function download(file, text) {
