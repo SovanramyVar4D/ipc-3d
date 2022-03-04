@@ -106,23 +106,33 @@ document
 const $tab1 = document.querySelector('#tab1')
 const $tab2 = document.querySelector('#tab2')
 const $tab3 = document.querySelector('#tab3')
+const $tab4 = document.querySelector('#tab4')
 
 document.querySelector('#showTab1').addEventListener('click', () => {
   $tab1.style.display = ''
   $tab2.style.display = 'none'
   $tab3.style.display = 'none'
+  $tab4.style.display = 'none'
 })
 
 document.querySelector('#showTab2').addEventListener('click', () => {
   $tab1.style.display = 'none'
   $tab2.style.display = ''
   $tab3.style.display = 'none'
+  $tab4.style.display = 'none'
 })
 
 document.querySelector('#showTab3').addEventListener('click', () => {
   $tab1.style.display = 'none'
   $tab2.style.display = 'none'
   $tab3.style.display = ''
+  $tab4.style.display = 'none'
+})
+document.querySelector('#showTab4').addEventListener('click', () => {
+  $tab1.style.display = 'none'
+  $tab2.style.display = 'none'
+  $tab3.style.display = 'none'
+  $tab4.style.display = ''
 })
 
 // ////////////////////////////////////////////////
@@ -210,5 +220,34 @@ function generateSelSetButtons() {
     })
 
     $selectionSetButtons.appendChild($button)
+  })
+}
+
+// ////////////////////////////////////////////////////
+// Selection Sets
+
+document.getElementById('createCuttingPlane').addEventListener('click', () => {
+  $ipc3d.addCuttingPlane()
+  generateCuttingPlanes()
+})
+function generateCuttingPlanes() {
+  const $cuttingPlaneButtons = document.getElementById('cuttingPlaneButtons')
+  $cuttingPlaneButtons.replaceChildren()
+
+  let $highlightedSelectionSetBtn
+  $ipc3d.cuttingPlanes.forEach((cuttingPlane, index) => {
+    const $button = document.createElement('button')
+    $button.className = 'border rounded bg-gray-300 px-2  hover:bg-gray-100'
+    $button.textContent = cuttingPlane.name
+
+    $button.addEventListener('click', () => {
+      $ipc3d.activateCuttingPlane(index)
+      if ($highlightedSelectionSetBtn)
+        $highlightedSelectionSetBtn.style.borderColor = ''
+      $button.style.borderColor = 'red'
+      $highlightedSelectionSetBtn = $button
+    })
+
+    $cuttingPlaneButtons.appendChild($button)
   })
 }

@@ -29,6 +29,11 @@ import ChangeViewCamera from './Changes/ChangeViewCamera'
 import { Pose, PoseJson } from './Pose'
 import { SelectionSet, SelectionSetJson } from './SelectionSet'
 
+import {
+  default as CuttingPlaneWrapper,
+  CuttingPlaneJson
+} from './CuttingPlane'
+
 interface AssetJson {
   url: string
 }
@@ -37,6 +42,7 @@ interface ProjectJson {
   assets: AssetJson[]
   views: ViewJson[]
   selectionSets: SelectionSetJson[]
+  cuttingPlanes: CuttingPlaneJson[]
   neutralPose: PoseJson
 }
 
@@ -47,6 +53,7 @@ class Ipd3d extends HTMLElement {
   private undoRedoManager: UndoRedoManager
   private assets: CADAsset[] = []
   private views: View[] = []
+  private cuttingPlanes: CuttingPlaneWrapper[] = []
   private selectionSets: SelectionSet[] = []
   private hiddenParts: TreeItem[] = []
   private activeView?: View
@@ -74,6 +81,8 @@ class Ipd3d extends HTMLElement {
     this.shadowRoot?.appendChild($mainWrapper)
 
     this.renderer = new GLRenderer($canvas)
+    this.renderer.outlineThickness = 0.5
+    this.renderer.outlineSensitivity = 5
 
     this.scene = new Scene()
 
@@ -389,6 +398,31 @@ class Ipd3d extends HTMLElement {
   }
 
   // /////////////////////////////////////////
+  // Cutting Planes
+
+  addCuttingPlane() {
+    const selection = this.selectionManager.getSelection()
+    const cuttingPlane = new CuttingPlaneWrapper(
+      this.scene,
+      'CuttingPlane' + this.cuttingPlanes.length,
+      Array.from(selection)
+    )
+
+    this.cuttingPlanes.push(cuttingPlane)
+
+    this.selectionManager.setSelection(
+      new Set<TreeItem>([cuttingPlane.cuttingPlane])
+    )
+    this.eventEmitter.emit('cuttingPlaneListChanged')
+  }
+
+  activateCuttingPlane(index: number) {
+    // const cuttingPlane = this.cuttingPlanes[ index ]
+    // cuttingPlane.cuttingPlane.cutAwayEnabledParam.value = !cuttingPlane.cuttingPlane.cutAwayEnabledParam.value)
+    // console.log('do something', index)
+  }
+
+  // /////////////////////////////////////////
   // Persistence
 
   public saveJson(): ProjectJson {
@@ -396,6 +430,7 @@ class Ipd3d extends HTMLElement {
       assets: [],
       views: [],
       selectionSets: [],
+      cuttingPlanes: [],
       neutralPose: this.neutralPose.saveJson()
     }
     this.assets.forEach((asset: CADAsset) => {
@@ -410,6 +445,9 @@ class Ipd3d extends HTMLElement {
     })
     this.selectionSets.forEach((selectionSet: SelectionSet) => {
       projectJson.selectionSets.push(selectionSet.saveJson())
+    })
+    this.cuttingPlanes.forEach((cuttingPlane: CuttingPlaneWrapper) => {
+      projectJson.cuttingPlanes.push(cuttingPlane.saveJson())
     })
     return projectJson
   }
@@ -440,6 +478,15 @@ class Ipd3d extends HTMLElement {
           }
         )
         this.eventEmitter.emit('selectionSetListChanged')
+
+        projectJson.cuttingPlanes.forEach(
+          (cuttingPlaneJson: CuttingPlaneJson) => {
+            const cuttingPlane = new CuttingPlaneWrapper(this.scene, '', [])
+            cuttingPlane.loadJson(cuttingPlaneJson)
+            this.cuttingPlanes.push(cuttingPlane)
+          }
+        )
+        this.eventEmitter.emit('cuttingPlaneListChanged')
 
         resolve()
       })

@@ -86,15 +86,17 @@
           Hide Selection
         </button>
         <button
-                id="unHideAll"
-                class="border rounded bg-blue-300 px-2 hover:bg-gray-100 hover:border-blue-500"
+          id="unHideAll"
+          class="border rounded bg-blue-300 px-2 hover:bg-gray-100 hover:border-blue-500"
         >
           Unhide all
         </button>
 
-        <label class="border rounded bg-blue-300 px-2 hover:bg-gray-100 hover:border-blue-500">
+        <label
+          class="border rounded bg-blue-300 px-2 hover:bg-gray-100 hover:border-blue-500"
+        >
           Enable Handle
-          <input id="enable-handle" type="checkbox" checked/>
+          <input id="enable-handle" type="checkbox" checked />
         </label>
       </header>
 
@@ -119,6 +121,12 @@
             >
               Selection Sets
             </button>
+            <button
+              id="showTab4"
+              class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
+            >
+              Cutting planes
+            </button>
           </div>
 
           <div id="tab1">
@@ -138,8 +146,8 @@
             <hr />
 
             <button
-                    id="activateNeutralPose"
-                    class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
+              id="activateNeutralPose"
+              class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
             >
               Neutral Pose
             </button>
@@ -161,6 +169,19 @@
             <hr />
 
             <div id="selectionSetButtons" class="flex flex-col space-y-2"></div>
+          </div>
+
+          <div id="tab4" class="overflow-auto" style="display: none;">
+            <button
+              id="createCuttingPlane"
+              class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
+            >
+              Create Cutting plane
+            </button>
+
+            <hr />
+
+            <div id="cuttingPlaneButtons" class="flex flex-col space-y-2"></div>
           </div>
         </nav>
 
