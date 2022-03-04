@@ -10,6 +10,7 @@ import {
   GLRenderer,
   Scene,
   TreeItem,
+  Vec2,
   Vec3,
   ZeaMouseEvent,
   ZeaPointerEvent
@@ -29,10 +30,7 @@ import ChangeViewCamera from './Changes/ChangeViewCamera'
 import { Pose, PoseJson } from './Pose'
 import { SelectionSet, SelectionSetJson } from './SelectionSet'
 
-import {
-  default as CuttingPlaneWrapper,
-  CuttingPlaneJson
-} from './CuttingPlane'
+import CuttingPlaneWrapper, { CuttingPlaneJson } from './CuttingPlane'
 
 interface AssetJson {
   url: string
@@ -197,8 +195,12 @@ class Ipd3d extends HTMLElement {
     })
 
     this.renderer.setScene(this.scene)
+
     /*
+    // Disabling the highlighting as it is distracting.
     this.renderer.getViewport().on('pointerMove', (event: ZeaPointerEvent) => {
+      // If the SelectionTool is on, it will draw a selection rect during pointerMove events.
+      if (selectionOn) return
       if (event.intersectionData) {
         const item = this.filterItem(event.intersectionData.geomItem)
         if (item) {
@@ -216,21 +218,36 @@ class Ipd3d extends HTMLElement {
       }
       event.stopPropagation()
     })
+    */
 
+    let pointerDownPos: Vec2 | null = null
     this.renderer.getViewport().on('pointerDown', (event: ZeaPointerEvent) => {
+      // If the SelectionTool is on, it will handle selection changes.
+      if (selectionOn) return
+      pointerDownPos = event.pointerPos
       if (event.intersectionData) {
         const item = this.filterItem(event.intersectionData.geomItem)
         this.selectionManager.toggleItemSelection(
           item,
           !(<ZeaMouseEvent>event).ctrlKey
         )
-      } else {
+      }
+    })
+    this.renderer.getViewport().on('pointerUp', (event: ZeaPointerEvent) => {
+      // If the SelectionTool is on, it will handle selection changes.
+      if (selectionOn) return
+      if (!event.intersectionData) {
         if (!(<ZeaMouseEvent>event).ctrlKey) {
-          this.selectionManager.setSelection(new Set(), true)
+          // Clear the selection if the pointer is released close to the press location.
+          if (
+            pointerDownPos &&
+            event.pointerPos.distanceTo(pointerDownPos) < 2
+          ) {
+            this.selectionManager.setSelection(new Set(), true)
+          }
         }
       }
     })
-*/
 
     /// ///////////////////////////////
 
