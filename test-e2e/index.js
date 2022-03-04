@@ -1,11 +1,17 @@
 const $ipc3d = document.getElementById('ipc-3d')
 
+$ipc3d.on('viewsListChanged', () => {
+  generateViewButtons()
+})
+
+$ipc3d.on('selectionSetListChanged', () => {
+  generateSelSetButtons()
+})
+
 // ///////////////////////////////////////////////
 // PRojects
 document.getElementById('newProject').addEventListener('click', () => {
   $ipc3d.newProject()
-  generateViewButtons()
-  generateSelSetButtons()
 })
 
 document.getElementById('save').addEventListener('click', event => {
@@ -27,10 +33,7 @@ document.getElementById('load').addEventListener('click', () => {
     return
   }
 
-  $ipc3d.loadJson(JSON.parse(jsonStr)).then(() => {
-    generateViewButtons()
-    generateSelSetButtons()
-  })
+  $ipc3d.loadJson(JSON.parse(jsonStr)).then(() => {})
 })
 
 const urlParams = new URLSearchParams(window.location.search)
@@ -39,10 +42,7 @@ if (urlParams.has('proj')) {
   fetch(projUrl)
     .then(response => response.text())
     .then(txt => {
-      $ipc3d.loadJson(JSON.parse(txt)).then(() => {
-        generateViewButtons()
-        generateSelSetButtons()
-      })
+      $ipc3d.loadJson(JSON.parse(txt)).then(() => {})
     })
 }
 
@@ -64,7 +64,7 @@ document.getElementById('loadBike').addEventListener('click', () => {
   $ipc3d.loadAsset('data/Mountain Bike.zcad')
 })
 document.getElementById('loadGearbox').addEventListener('click', () => {
-  $ipc3d.loadAsset('data/gear_box_final_asm.zcad')
+  $ipc3d.loadAsset('data/gear_box_final_asm.stp.zcad')
 })
 
 function download(file, text) {
@@ -93,34 +93,46 @@ document.getElementById('unHideAll').addEventListener('click', () => {
   $ipc3d.unHideAll()
 })
 /* Misc */
-document.getElementById('enable-handle').addEventListener('change', (changeEvent) => {
-  var checked = changeEvent.currentTarget.checked
-  $ipc3d.selectionManager.showHandles(checked)
-  $ipc3d.selectionManager.updateHandleVisibility()
-})
+document
+  .getElementById('enable-handle')
+  .addEventListener('change', changeEvent => {
+    var checked = changeEvent.currentTarget.checked
+    $ipc3d.selectionManager.showHandles(checked)
+    $ipc3d.selectionManager.updateHandleVisibility()
+  })
 
 // ////////////////////////////////////////////////
 //  Tabs
 const $tab1 = document.querySelector('#tab1')
 const $tab2 = document.querySelector('#tab2')
 const $tab3 = document.querySelector('#tab3')
+const $tab4 = document.querySelector('#tab4')
 
 document.querySelector('#showTab1').addEventListener('click', () => {
   $tab1.style.display = ''
   $tab2.style.display = 'none'
   $tab3.style.display = 'none'
+  $tab4.style.display = 'none'
 })
 
 document.querySelector('#showTab2').addEventListener('click', () => {
   $tab1.style.display = 'none'
   $tab2.style.display = ''
   $tab3.style.display = 'none'
+  $tab4.style.display = 'none'
 })
 
 document.querySelector('#showTab3').addEventListener('click', () => {
   $tab1.style.display = 'none'
   $tab2.style.display = 'none'
   $tab3.style.display = ''
+  $tab4.style.display = 'none'
+})
+document.querySelector('#showTab4').addEventListener('click', () => {
+  $tab1.style.display = 'none'
+  $tab2.style.display = 'none'
+  $tab3.style.display = 'none'
+  $tab4.style.display = ''
 })
 
 // ////////////////////////////////////////////////
@@ -134,16 +146,12 @@ $treeView.setSelectionManager($ipc3d.selectionManager)
 
 document.getElementById('createView').addEventListener('click', () => {
   $ipc3d.createView()
-  generateViewButtons()
-  generateSelSetButtons()
 })
 document.getElementById('saveViewCamera').addEventListener('click', () => {
   $ipc3d.saveViewCamera()
 })
 document.getElementById('activateNeutralPose').addEventListener('click', () => {
   $ipc3d.activateNeutralPose()
-  generateViewButtons()
-  generateSelSetButtons()
 })
 
 $ipc3d.undoRedoManager.on('changeAdded', () => {
@@ -152,14 +160,10 @@ $ipc3d.undoRedoManager.on('changeAdded', () => {
 
 $ipc3d.undoRedoManager.on('changeUndone', () => {
   console.log('changeUndone')
-  generateViewButtons()
-  generateSelSetButtons()
 })
 
 $ipc3d.undoRedoManager.on('changeRedone', () => {
   console.log('changeRedone')
-  generateViewButtons()
-  generateSelSetButtons()
 })
 
 function generateViewButtons() {
@@ -196,7 +200,6 @@ function generateViewButtons() {
 
 document.getElementById('createSelectionSet').addEventListener('click', () => {
   $ipc3d.createSelectionSet()
-  generateSelSetButtons()
 })
 function generateSelSetButtons() {
   const $selectionSetButtons = document.getElementById('selectionSetButtons')
@@ -217,5 +220,34 @@ function generateSelSetButtons() {
     })
 
     $selectionSetButtons.appendChild($button)
+  })
+}
+
+// ////////////////////////////////////////////////////
+// Selection Sets
+
+document.getElementById('createCuttingPlane').addEventListener('click', () => {
+  $ipc3d.addCuttingPlane()
+  generateCuttingPlanes()
+})
+function generateCuttingPlanes() {
+  const $cuttingPlaneButtons = document.getElementById('cuttingPlaneButtons')
+  $cuttingPlaneButtons.replaceChildren()
+
+  let $highlightedSelectionSetBtn
+  $ipc3d.cuttingPlanes.forEach((cuttingPlane, index) => {
+    const $button = document.createElement('button')
+    $button.className = 'border rounded bg-gray-300 px-2  hover:bg-gray-100'
+    $button.textContent = cuttingPlane.name
+
+    $button.addEventListener('click', () => {
+      $ipc3d.activateCuttingPlane(index)
+      if ($highlightedSelectionSetBtn)
+        $highlightedSelectionSetBtn.style.borderColor = ''
+      $button.style.borderColor = 'red'
+      $highlightedSelectionSetBtn = $button
+    })
+
+    $cuttingPlaneButtons.appendChild($button)
   })
 }

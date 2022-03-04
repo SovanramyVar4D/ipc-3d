@@ -1580,23 +1580,22 @@
     "@types/parse5" "^6.0.1"
     parse5 "^6.0.1"
 
-"@zeainc/zea-engine@^4.2.0":
-  version "4.2.0"
-  resolved "https://registry.yarnpkg.com/@zeainc/zea-engine/-/zea-engine-4.2.0.tgz#d2b997d21866f82cbc8d236cfc4e3b6edeb6c214"
-  integrity sha512-rM8sLbvMo35mg80NZw88KPDnGSSAQWMznSDndrQIkPjhUOsWFj/hVn2w8e1SW0L6D9sFR0YMgMeBxGIG6SGSdg==
+"@zeainc/zea-engine@4.2.0-81aa8c9":
+  version "4.2.0-81aa8c9"
+  resolved "https://registry.yarnpkg.com/@zeainc/zea-engine/-/zea-engine-4.2.0-81aa8c9.tgz#154dc8fc6b06695558461676abe7804cf0b7bbe1"
+  integrity sha512-fHV46H+B7qgr8/JQWEGaOH1rv/cnff1qp5toboJd+Did6akmB0DeRsldDinUjYSFe7ik4eH4czNoHNlwDtEYYw==
   dependencies:
-    caniuse-lite "^1.0.30001309"
     lodash-es "^4.17.21"
 
-"@zeainc/zea-tree-view@^0.1.0":
+"@zeainc/zea-tree-view@^0.1.1":
   version "0.1.1"
   resolved "https://registry.yarnpkg.com/@zeainc/zea-tree-view/-/zea-tree-view-0.1.1.tgz#f1fe205bb1e285a6dac7d0a28f48eeb536007f4a"
   integrity sha512-gSAXXfn+4551dOSLCp5GvHjBu1oYWYlfHKelDkPAD6Jm4UakekHtEfRQnWuKhcqYOVHhsCmgbsZdKRknx/4yaw==
 
-"@zeainc/zea-ux@^4.0.5":
-  version "4.0.5"
-  resolved "https://registry.yarnpkg.com/@zeainc/zea-ux/-/zea-ux-4.0.5.tgz#06da0e6ffec92dd7d9b01ef1451702f2163de257"
-  integrity sha512-Zo/6NV1mhoRhojIGlTExq5+sgYqSKJ8xTNiqILbmmcKzaffdyi8/dJO/gEj+AdBAQhJnORYOMovz1c6JZa6P+A==
+"@zeainc/zea-ux@4.0.5-d5bff18":
+  version "4.0.5-d5bff18"
+  resolved "https://registry.yarnpkg.com/@zeainc/zea-ux/-/zea-ux-4.0.5-d5bff18.tgz#5fd37dbc4f10ce607554eec1c76d87e9da185320"
+  integrity sha512-GK/ut67D7aCTledRBQnyJ060TgTkB08LXdwDHZlu9qpeZw6ip67Gce11pAUeFm0wMfyUtvv/wI5vI0h3Qn3qZw==
   dependencies:
     dom-to-image "^2.6.0"
 
@@ -2157,11 +2156,6 @@ caniuse-lite@^1.0.30001286:
   version "1.0.30001303"
   resolved "https://registry.yarnpkg.com/caniuse-lite/-/caniuse-lite-1.0.30001303.tgz#9b168e4f43ccfc372b86f4bc5a551d9b909c95c9"
   integrity sha512-/Mqc1oESndUNszJP0kx0UaQU9kEv9nNtJ7Kn8AdA0mNnH8eR1cj0kG+NbNuC1Wq/b21eA8prhKRA3bbkjONegQ==
-
-caniuse-lite@^1.0.30001309:
-  version "1.0.30001312"
-  resolved "https://registry.yarnpkg.com/caniuse-lite/-/caniuse-lite-1.0.30001312.tgz#e11eba4b87e24d22697dae05455d5aea28550d5f"
-  integrity sha512-Wiz1Psk2MEK0pX3rUzWaunLTZzqS2JYZFzNKqAiJGiuxIjRPLgV6+VDPOg6lQOUxmDwhTlh198JsTTi8Hzw6aQ==
 
 capture-exit@^2.0.0:
   version "2.0.0"
