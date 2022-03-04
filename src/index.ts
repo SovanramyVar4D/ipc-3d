@@ -6,6 +6,7 @@ import {
   CADPart,
   Color,
   EnvMap,
+  EventEmitter,
   GLRenderer,
   Scene,
   TreeItem,
@@ -14,13 +15,18 @@ import {
   ZeaPointerEvent
 } from '@zeainc/zea-engine'
 
-import {ParameterValueChange, SelectionManager, SelectionXfoChange, UndoRedoManager} from '@zeainc/zea-ux'
+import {
+  ParameterValueChange,
+  SelectionManager,
+  SelectionXfoChange,
+  UndoRedoManager
+} from '@zeainc/zea-ux'
 
-import {View, ViewJson} from './View'
+import { View, ViewJson } from './View'
 import CreateViewChange from './Changes/CreateViewChange'
 import ChangeViewCamera from './Changes/ChangeViewCamera'
-import {Pose, PoseJson} from './Pose'
-import {SelectionSet, SelectionSetJson} from './SelectionSet'
+import { Pose, PoseJson } from './Pose'
+import { SelectionSet, SelectionSetJson } from './SelectionSet'
 
 interface AssetJson {
   url: string
@@ -48,7 +54,9 @@ class Ipd3d extends HTMLElement {
   private neutralPose: Pose
 
   private highlightColor = new Color(0.8, 0.2, 0.2, 0.3)
-  private selectionColor = new Color(1,0.8,0, 0.6)
+  private selectionColor = new Color(1, 0.8, 0, 0.6)
+
+  private eventEmitter = new EventEmitter()
 
   constructor() {
     super()
@@ -145,7 +153,10 @@ class Ipd3d extends HTMLElement {
     this.renderer.getViewport().on('pointerDown', (event: ZeaPointerEvent) => {
       if (event.intersectionData) {
         const item = this.filterItem(event.intersectionData.geomItem)
-        this.selectionManager.toggleItemSelection(item, !(<ZeaMouseEvent>event).ctrlKey)
+        this.selectionManager.toggleItemSelection(
+          item,
+          !(<ZeaMouseEvent>event).ctrlKey
+        )
       } else {
         if (!(<ZeaMouseEvent>event).ctrlKey) {
           this.selectionManager.setSelection(new Set(), true)
@@ -170,6 +181,9 @@ class Ipd3d extends HTMLElement {
     this.views = []
 
     this.undoRedoManager.flush()
+
+    this.eventEmitter.emit('viewsListChanged')
+    this.eventEmitter.emit('selectionSetListChanged')
   }
 
   public async loadAsset(url: string): Promise<void> {
@@ -194,10 +208,10 @@ class Ipd3d extends HTMLElement {
   private filterItem(geomItem: TreeItem) {
     let item = geomItem
     while (
-        item &&
-        !(item instanceof CADPart) &&
-        !(item instanceof CADAssembly)
-        ) {
+      item &&
+      !(item instanceof CADPart) &&
+      !(item instanceof CADAssembly)
+    ) {
       // console.log(item.getName(), item.getClassName())
       item = <TreeItem>item.getOwner()
     }
@@ -213,22 +227,28 @@ class Ipd3d extends HTMLElement {
     if (this.activeView) {
       view.copyFrom(this.activeView)
     }
-    const change = new CreateViewChange(view, this.views)
+    const change = new CreateViewChange(view, this.views, this.eventEmitter)
     view.setCameraParams(this.renderer.getViewport().getCamera())
     this.views.push(view)
 
     this.undoRedoManager.addChange(change)
 
     this.activeView = view
+
+    this.eventEmitter.emit('viewsListChanged')
   }
 
-  public deleteView(index: string) {}
+  public deleteView(index: string) {
+    this.eventEmitter.emit('viewsListChanged')
+  }
 
   public activateView(index: number) {
     const view = this.views[index]
     view.activate(this.renderer.getViewport().getCamera(), this.neutralPose)
 
     this.activeView = view
+
+    this.eventEmitter.emit('viewsListChanged')
   }
 
   public saveViewCamera() {
@@ -257,23 +277,26 @@ class Ipd3d extends HTMLElement {
     this.selectionSets.push(
       new SelectionSet('SelSet' + this.selectionSets.length, set, this.scene)
     )
+
+    this.eventEmitter.emit('selectionSetListChanged')
   }
 
   public activateSelectionSet(index: number) {
     const selectionSet = this.selectionSets[index]
     const set = new Set(selectionSet.items)
     this.selectionManager.setSelection(set)
+    this.eventEmitter.emit('selectionSetListChanged')
   }
 
   public hideSelection() {
     const set = this.selectionManager.getSelection()
-    set.forEach((treeItem:TreeItem) => {
+    set.forEach((treeItem: TreeItem) => {
       treeItem.setVisible(false)
       this.hiddenParts.push(treeItem)
     })
   }
 
-  public unHideAll(){
+  public unHideAll() {
     this.hiddenParts.forEach((treeItem: TreeItem) => {
       treeItem.setVisible(true)
     })
@@ -330,9 +353,17 @@ class Ipd3d extends HTMLElement {
           }
         )
 
+        this.eventEmitter.emit('viewsListChanged')
         resolve()
       })
     })
+  }
+
+  // /////////////////////////////////////////
+  // Events
+
+  on(eventName: string, listener?: (event: any) => void): number {
+    return this.eventEmitter.on(eventName, listener)
   }
 
   // /////////////////////////////////////////

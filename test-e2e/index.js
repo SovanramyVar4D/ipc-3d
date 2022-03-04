@@ -1,10 +1,17 @@
 const $ipc3d = document.getElementById('ipc-3d')
 
+$ipc3d.on('viewsListChanged', () => {
+  generateViewButtons()
+})
+
+$ipc3d.on('selectionSetListChanged', () => {
+  generateSelSetButtons()
+})
+
 // ///////////////////////////////////////////////
 // PRojects
 document.getElementById('newProject').addEventListener('click', () => {
   $ipc3d.newProject()
-  generateViewButtons()
   generateSelSetButtons()
 })
 
@@ -28,7 +35,6 @@ document.getElementById('load').addEventListener('click', () => {
   }
 
   $ipc3d.loadJson(JSON.parse(jsonStr)).then(() => {
-    generateViewButtons()
     generateSelSetButtons()
   })
 })
@@ -40,7 +46,6 @@ if (urlParams.has('proj')) {
     .then(response => response.text())
     .then(txt => {
       $ipc3d.loadJson(JSON.parse(txt)).then(() => {
-        generateViewButtons()
         generateSelSetButtons()
       })
     })
@@ -93,11 +98,13 @@ document.getElementById('unHideAll').addEventListener('click', () => {
   $ipc3d.unHideAll()
 })
 /* Misc */
-document.getElementById('enable-handle').addEventListener('change', (changeEvent) => {
-  var checked = changeEvent.currentTarget.checked
-  $ipc3d.selectionManager.showHandles(checked)
-  $ipc3d.selectionManager.updateHandleVisibility()
-})
+document
+  .getElementById('enable-handle')
+  .addEventListener('change', changeEvent => {
+    var checked = changeEvent.currentTarget.checked
+    $ipc3d.selectionManager.showHandles(checked)
+    $ipc3d.selectionManager.updateHandleVisibility()
+  })
 
 // ////////////////////////////////////////////////
 //  Tabs
@@ -134,16 +141,12 @@ $treeView.setSelectionManager($ipc3d.selectionManager)
 
 document.getElementById('createView').addEventListener('click', () => {
   $ipc3d.createView()
-  generateViewButtons()
-  generateSelSetButtons()
 })
 document.getElementById('saveViewCamera').addEventListener('click', () => {
   $ipc3d.saveViewCamera()
 })
 document.getElementById('activateNeutralPose').addEventListener('click', () => {
   $ipc3d.activateNeutralPose()
-  generateViewButtons()
-  generateSelSetButtons()
 })
 
 $ipc3d.undoRedoManager.on('changeAdded', () => {
@@ -152,13 +155,11 @@ $ipc3d.undoRedoManager.on('changeAdded', () => {
 
 $ipc3d.undoRedoManager.on('changeUndone', () => {
   console.log('changeUndone')
-  generateViewButtons()
   generateSelSetButtons()
 })
 
 $ipc3d.undoRedoManager.on('changeRedone', () => {
   console.log('changeRedone')
-  generateViewButtons()
   generateSelSetButtons()
 })
 
@@ -196,7 +197,6 @@ function generateViewButtons() {
 
 document.getElementById('createSelectionSet').addEventListener('click', () => {
   $ipc3d.createSelectionSet()
-  generateSelSetButtons()
 })
 function generateSelSetButtons() {
   const $selectionSetButtons = document.getElementById('selectionSetButtons')
