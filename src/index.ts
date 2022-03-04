@@ -222,6 +222,29 @@ class Ipd3d extends HTMLElement {
       }
     })
 */
+
+    /// ///////////////////////////////
+
+    const $viewCube = document.createElement('zea-view-cube')
+    $viewCube.setAttribute('id', 'view-cube')
+    $mainWrapper.appendChild($viewCube)
+
+    // @ts-ignore
+    $viewCube.setViewport(this.renderer.getViewport())
+
+    const styleTag = document.createElement('style')
+    styleTag.appendChild(
+      document.createTextNode(`
+      #view-cube {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+      }
+      `)
+    )
+    this.shadowRoot?.appendChild(styleTag)
+
+    //
     // this.renderer.getViewport().backgroundColorParam.value = new Color(.9, .4, .4)
     this.newProject()
   }
@@ -277,7 +300,11 @@ class Ipd3d extends HTMLElement {
   }
 
   public frameView() {
-    this.renderer.frameAll()
+    const selection = this.selectionManager.getSelection()
+    if (selection.size == 0) this.renderer.frameAll()
+    else {
+      this.renderer.getViewport().frameView(Array.from(selection))
+    }
   }
 
   public createView() {
