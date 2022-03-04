@@ -18,6 +18,7 @@ import {
 import {
   ParameterValueChange,
   SelectionManager,
+  SelectionTool,
   SelectionXfoChange,
   UndoRedoManager
 } from '@zeainc/zea-ux'
@@ -54,7 +55,7 @@ class Ipd3d extends HTMLElement {
   private neutralPose: Pose
 
   private highlightColor = new Color(0.8, 0.2, 0.2, 0.3)
-  private selectionColor = new Color(1, 0.8, 0, 0.6)
+  private selectionColor = new Color(1, 0.8, 0, 0.1)
 
   private eventEmitter = new EventEmitter()
 
@@ -97,6 +98,63 @@ class Ipd3d extends HTMLElement {
 
     this.undoRedoManager = UndoRedoManager.getInstance()
 
+    // ////////////////////////////////////////////
+    // Setup Selection Tool
+
+    const cameraManipulator = this.renderer.getViewport().getManipulator()
+    const selectionTool = new SelectionTool({
+      scene: this.scene,
+      renderer: this.renderer,
+      selectionManager: this.selectionManager
+    })
+
+    selectionTool.selectionRectMat.getParameter('BaseColor')!.value = new Color(
+      0.2,
+      0.2,
+      0.2
+    )
+
+    let selectionOn = false
+    const setToolToSelectionTool = () => {
+      this.renderer.getViewport().setManipulator(selectionTool)
+      selectionOn = true
+    }
+
+    const setToolToCameraManipulator = () => {
+      this.renderer.getViewport().setManipulator(cameraManipulator)
+      selectionOn = false
+    }
+
+    // ////////////////////////////////////////////
+    // HotKeys
+
+    document.addEventListener('keydown', (e: KeyboardEvent) => {
+      switch (e.key) {
+        case 's':
+          if (!selectionOn) setToolToSelectionTool()
+          break
+        case 'z':
+          if (e.ctrlKey) {
+            UndoRedoManager.getInstance().undo()
+          }
+          break
+        case 'y':
+          if (e.ctrlKey) {
+            UndoRedoManager.getInstance().redo()
+          }
+          break
+      }
+    })
+    document.addEventListener('keyup', (e: KeyboardEvent) => {
+      switch (e.key) {
+        case 's':
+          if (selectionOn) setToolToCameraManipulator()
+          break
+      }
+    })
+    // ////////////////////////////////////////////
+    // Pose Editing
+
     this.undoRedoManager.on('changeAdded', (event: Object) => {
       // @ts-ignore
       const change = event.change
@@ -130,7 +188,7 @@ class Ipd3d extends HTMLElement {
     })
 
     this.renderer.setScene(this.scene)
-
+    /*
     this.renderer.getViewport().on('pointerMove', (event: ZeaPointerEvent) => {
       if (event.intersectionData) {
         const item = this.filterItem(event.intersectionData.geomItem)
@@ -163,7 +221,7 @@ class Ipd3d extends HTMLElement {
         }
       }
     })
-
+*/
     // this.renderer.getViewport().backgroundColorParam.value = new Color(.9, .4, .4)
     this.newProject()
   }
