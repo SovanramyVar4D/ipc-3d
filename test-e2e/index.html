@@ -86,15 +86,17 @@
           Hide Selection
         </button>
         <button
-                id="unHideAll"
-                class="border rounded bg-blue-300 px-2 hover:bg-gray-100 hover:border-blue-500"
+          id="unHideAll"
+          class="border rounded bg-blue-300 px-2 hover:bg-gray-100 hover:border-blue-500"
         >
           Unhide all
         </button>
 
-        <label class="border rounded bg-blue-300 px-2 hover:bg-gray-100 hover:border-blue-500">
+        <label
+          class="border rounded bg-blue-300 px-2 hover:bg-gray-100 hover:border-blue-500"
+        >
           Enable Handle
-          <input id="enable-handle" type="checkbox" checked/>
+          <input id="enable-handle" type="checkbox" checked />
         </label>
       </header>
 
@@ -138,8 +140,8 @@
             <hr />
 
             <button
-                    id="activateNeutralPose"
-                    class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
+              id="activateNeutralPose"
+              class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
             >
               Neutral Pose
             </button>
@@ -166,6 +168,7 @@
 
         <main class="flex flex-1 h-full">
           <ipc-3d id="ipc-3d" class="h-full w-full"></ipc-3d>
+          <zea-param-editor id="param-editor"></zea-param-editor>
         </main>
       </div>
     </div>

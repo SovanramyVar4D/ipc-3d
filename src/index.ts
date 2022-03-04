@@ -14,13 +14,20 @@ import {
   ZeaPointerEvent
 } from '@zeainc/zea-engine'
 
-import {ParameterValueChange, SelectionManager, SelectionXfoChange, UndoRedoManager} from '@zeainc/zea-ux'
+import {
+  ParameterValueChange,
+  SelectionManager,
+  SelectionXfoChange,
+  UndoRedoManager
+} from '@zeainc/zea-ux'
 
-import {View, ViewJson} from './View'
+import './ParamEditor'
+
+import { View, ViewJson } from './View'
 import CreateViewChange from './Changes/CreateViewChange'
 import ChangeViewCamera from './Changes/ChangeViewCamera'
-import {Pose, PoseJson} from './Pose'
-import {SelectionSet, SelectionSetJson} from './SelectionSet'
+import { Pose, PoseJson } from './Pose'
+import { SelectionSet, SelectionSetJson } from './SelectionSet'
 
 interface AssetJson {
   url: string
@@ -48,7 +55,7 @@ class Ipd3d extends HTMLElement {
   private neutralPose: Pose
 
   private highlightColor = new Color(0.8, 0.2, 0.2, 0.3)
-  private selectionColor = new Color(1,0.8,0, 0.6)
+  private selectionColor = new Color(1, 0.8, 0, 0.6)
 
   constructor() {
     super()
@@ -145,7 +152,10 @@ class Ipd3d extends HTMLElement {
     this.renderer.getViewport().on('pointerDown', (event: ZeaPointerEvent) => {
       if (event.intersectionData) {
         const item = this.filterItem(event.intersectionData.geomItem)
-        this.selectionManager.toggleItemSelection(item, !(<ZeaMouseEvent>event).ctrlKey)
+        this.selectionManager.toggleItemSelection(
+          item,
+          !(<ZeaMouseEvent>event).ctrlKey
+        )
       } else {
         if (!(<ZeaMouseEvent>event).ctrlKey) {
           this.selectionManager.setSelection(new Set(), true)
@@ -194,10 +204,10 @@ class Ipd3d extends HTMLElement {
   private filterItem(geomItem: TreeItem) {
     let item = geomItem
     while (
-        item &&
-        !(item instanceof CADPart) &&
-        !(item instanceof CADAssembly)
-        ) {
+      item &&
+      !(item instanceof CADPart) &&
+      !(item instanceof CADAssembly)
+    ) {
       // console.log(item.getName(), item.getClassName())
       item = <TreeItem>item.getOwner()
     }
@@ -267,13 +277,13 @@ class Ipd3d extends HTMLElement {
 
   public hideSelection() {
     const set = this.selectionManager.getSelection()
-    set.forEach((treeItem:TreeItem) => {
+    set.forEach((treeItem: TreeItem) => {
       treeItem.setVisible(false)
       this.hiddenParts.push(treeItem)
     })
   }
 
-  public unHideAll(){
+  public unHideAll() {
     this.hiddenParts.forEach((treeItem: TreeItem) => {
       treeItem.setVisible(true)
     })
