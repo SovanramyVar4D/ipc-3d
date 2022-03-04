@@ -92,6 +92,8 @@ class Ipd3d extends HTMLElement {
     envMap.load('data/StudioG.zenv')
     this.scene.setEnvMap(envMap)
 
+    // ////////////////////////////////////////////
+    // Setup Selection Manager
     this.selectionManager = new SelectionManager(
       {
         scene: this.scene,
@@ -104,6 +106,14 @@ class Ipd3d extends HTMLElement {
       }
     )
     this.selectionManager.selectionGroup.highlightFillParam.value = this.selectionColor.a
+
+    this.selectionManager.on('selectionChanged', (event: any) => {
+      console.log('selectionChanged', event)
+    })
+    this.selectionManager.on('leadSelectionChanged', (event: any) => {
+      console.log('leadSelectionChanged', event)
+      this.eventEmitter.emit('leadSelectionChanged', event)
+    })
 
     this.undoRedoManager = UndoRedoManager.getInstance()
 

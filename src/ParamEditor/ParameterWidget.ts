@@ -14,6 +14,8 @@ abstract class ParameterWidget extends HTMLElement {
   setParameter(parameter: Parameter<any>) {
     this.parameter = parameter
     this.parameter.on('valueChanged', () => this.updateValue())
+
+    this.updateValue()
   }
 }
 

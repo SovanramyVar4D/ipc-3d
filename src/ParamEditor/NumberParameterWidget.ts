@@ -4,22 +4,23 @@ import { ParameterWidget } from './ParameterWidget'
 
 class NumberParameterWidget extends ParameterWidget {
   parameter: NumberParameter | null = null
+  $label: HTMLLabelElement
   $input: HTMLInputElement
 
   constructor() {
     super()
 
-    const $label = document.createElement('label')
-    $label.setAttribute('for', 'value')
-    $label.textContent = 'Value:'
-    $label.textContent = 'Value:'
+    this.$label = document.createElement('label')
+    this.$label.setAttribute('for', 'value')
+    this.$label.textContent = 'Value:'
+    this.$label.textContent = 'Value:'
 
     this.$input = document.createElement('input')
     this.$input.setAttribute('type', 'number')
     this.$input.setAttribute('id', 'value')
     this.$input.setAttribute('name', 'value')
 
-    this.shadowRoot?.appendChild($label)
+    this.shadowRoot?.appendChild(this.$label)
     this.shadowRoot?.appendChild(this.$input)
 
     this.$input.addEventListener('change', () => {})
@@ -39,6 +40,7 @@ class NumberParameterWidget extends ParameterWidget {
 
   setParameter(parameter: NumberParameter) {
     super.setParameter(parameter)
+    this.$label.textContent = parameter.getName() + ':'
     const range = parameter.getRange()
     if (range) {
       this.$input.min = `${range[0]}`

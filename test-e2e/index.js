@@ -251,3 +251,27 @@ function generateCuttingPlanes() {
     $cuttingPlaneButtons.appendChild($button)
   })
 }
+
+// ////////////////////////////////////////////////////
+// UIPane.
+
+let expanded = false
+document.getElementById('expand-panel').addEventListener('click', () => {
+  const rightPanel = document.getElementById('right-panel')
+  if (!expanded) {
+    rightPanel.classList.add('w-72')
+    document.getElementById('expand-panel').textContent = '>'
+    expanded = true
+  } else {
+    rightPanel.classList.remove('w-72')
+    document.getElementById('expand-panel').textContent = '<'
+    expanded = false
+  }
+})
+
+$ipc3d.on('leadSelectionChanged', event => {
+  const { treeItem } = event
+  const paramEditor = document.getElementById('param-editor')
+  console.log('leadSelectionChanged', event)
+  paramEditor.setParameterOwner(treeItem)
+})

@@ -5,6 +5,7 @@ class ParamEditor extends HTMLElement {
   parameterOwner: ParameterOwner | null = null
 
   static tagNames: Record<string, string> = {}
+  skipList: string[] = []
 
   static registerWidget(className: string, tagName: string): void {
     this.tagNames[className] = tagName
@@ -31,21 +32,29 @@ class ParamEditor extends HTMLElement {
       }`)
     )
     this.shadowRoot?.appendChild(styleTag)
+
+    this.skipList.push('BoundingBox')
+    this.skipList.push('LocalXfo')
+    this.skipList.push('GlobalXfo')
   }
 
   setParameterOwner(parameterOwner: ParameterOwner) {
     this.parameterOwner = parameterOwner
     this.parameterOwner.getParameters().forEach(parameter => {
-      const tagName = ParamEditor.tagNames[parameter.getClassName()]
+      console.log(parameter.getName())
+      if (this.skipList.includes(parameter.getName())) return
 
-      const $paramNameDiv = document.createElement('div')
-      $paramNameDiv.classList.add('flex')
-      $paramNameDiv.classList.add('items-center')
-      $paramNameDiv.classList.add('justify-end')
-      $paramNameDiv.classList.add('mr-2')
-      $paramNameDiv.classList.add('text-black')
-      $paramNameDiv.textContent = parameter.getName()
-      this.$params.appendChild($paramNameDiv)
+      const tagName = ParamEditor.tagNames[parameter.getClassName()]
+      if (!tagName) return
+
+      // const $paramNameDiv = document.createElement('div')
+      // $paramNameDiv.classList.add('flex')
+      // $paramNameDiv.classList.add('items-center')
+      // $paramNameDiv.classList.add('justify-end')
+      // $paramNameDiv.classList.add('mr-2')
+      // $paramNameDiv.classList.add('text-black')
+      // $paramNameDiv.textContent = parameter.getName()
+      // this.$params.appendChild($paramNameDiv)
 
       const $paramDiv = document.createElement('div')
       $paramDiv.classList.add('pointer-events-auto')
