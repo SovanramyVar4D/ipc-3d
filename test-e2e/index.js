@@ -12,7 +12,6 @@ $ipc3d.on('selectionSetListChanged', () => {
 // PRojects
 document.getElementById('newProject').addEventListener('click', () => {
   $ipc3d.newProject()
-  generateSelSetButtons()
 })
 
 document.getElementById('save').addEventListener('click', event => {
@@ -34,9 +33,7 @@ document.getElementById('load').addEventListener('click', () => {
     return
   }
 
-  $ipc3d.loadJson(JSON.parse(jsonStr)).then(() => {
-    generateSelSetButtons()
-  })
+  $ipc3d.loadJson(JSON.parse(jsonStr)).then(() => {})
 })
 
 const urlParams = new URLSearchParams(window.location.search)
@@ -45,9 +42,7 @@ if (urlParams.has('proj')) {
   fetch(projUrl)
     .then(response => response.text())
     .then(txt => {
-      $ipc3d.loadJson(JSON.parse(txt)).then(() => {
-        generateSelSetButtons()
-      })
+      $ipc3d.loadJson(JSON.parse(txt)).then(() => {})
     })
 }
 
@@ -155,12 +150,10 @@ $ipc3d.undoRedoManager.on('changeAdded', () => {
 
 $ipc3d.undoRedoManager.on('changeUndone', () => {
   console.log('changeUndone')
-  generateSelSetButtons()
 })
 
 $ipc3d.undoRedoManager.on('changeRedone', () => {
   console.log('changeRedone')
-  generateSelSetButtons()
 })
 
 function generateViewButtons() {

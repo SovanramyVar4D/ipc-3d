@@ -345,6 +345,8 @@ class Ipd3d extends HTMLElement {
           view.loadJson(viewJson)
           this.views.push(view)
         })
+        this.eventEmitter.emit('viewsListChanged')
+
         projectJson.selectionSets.forEach(
           (selectionSetJson: SelectionSetJson) => {
             const sel = new SelectionSet('', [], this.scene)
@@ -352,8 +354,8 @@ class Ipd3d extends HTMLElement {
             this.selectionSets.push(sel)
           }
         )
+        this.eventEmitter.emit('selectionSetListChanged')
 
-        this.eventEmitter.emit('viewsListChanged')
         resolve()
       })
     })
