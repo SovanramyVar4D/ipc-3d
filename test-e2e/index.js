@@ -204,6 +204,19 @@ function generateViewButtons() {
       $ipc3d.renameView(index, newName)
     })
     $optionsWrapper.appendChild($renameBtn)
+
+    // Delete
+    const $deleteBtn = document.createElement('button')
+    $deleteBtn.textContent = 'Delete'
+    $deleteBtn.className = 'border rounded bg-red-300 px-2  hover:bg-red-200'
+    $deleteBtn.addEventListener('click', (event) => {
+      event.stopPropagation()
+      $ipc3d.deleteView(index)
+    })
+    $optionsWrapper.appendChild($deleteBtn)
+
+    $viewWrapper.appendChild($optionsWrapper)
+    $viewButtons.appendChild($viewWrapper)
   })
 }
 

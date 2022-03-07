@@ -355,7 +355,10 @@ class Ipd3d extends HTMLElement {
     this.eventEmitter.emit('viewsListChanged')
   }
 
-  public deleteView(index: string) {
+  public deleteView(index: number) {
+    this.activeView = undefined
+    this.views.splice(index,1)
+
     this.eventEmitter.emit('viewsListChanged')
   }
 
