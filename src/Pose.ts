@@ -5,22 +5,23 @@ import {
   TreeItem,
   Xfo,
   XfoParameter,
-  BooleanParameter
+  BooleanParameter,
+  NumberParameter
 } from '@zeainc/zea-engine'
 
 interface PoseJson {
-  values: Record<string, Record<string, any> | boolean>
+  values: Record<string, any>
 }
 
 class Pose {
-  values: Record<string, Xfo | boolean> = {}
-  params: Record<string, XfoParameter | BooleanParameter> = {}
+  values: Record<string, any> = {}
+  params: Record<string, Parameter<any>> = {}
 
   constructor(private scene: Scene) {}
 
   storeParamValue(
-    param: XfoParameter | BooleanParameter,
-    value: Xfo | boolean,
+    param: Parameter<any>,
+    value: any,
     storeOnlyNewValues = false
   ) {
     const path = param.getPath()
@@ -30,7 +31,12 @@ class Pose {
     if (storeOnlyNewValues && this.values[key]) return
 
     if (value instanceof Xfo) this.values[key] = value.clone()
-    else if (typeof value == 'boolean') this.values[key] = value
+    else if (
+      typeof value == 'boolean' ||
+      typeof value == 'number' ||
+      typeof value == 'string'
+    )
+      this.values[key] = value
 
     this.params[key] = param
   }
@@ -69,23 +75,20 @@ class Pose {
         if (!(key in this.values)) {
           const value = neutralPose.values[key]
           const param = neutralPose.params[key]
-          if (param instanceof XfoParameter) param.setValue(<Xfo>value)
-          else if (param instanceof BooleanParameter)
-            param.setValue(<boolean>value)
+          param.setValue(value)
         }
       }
     }
     for (const key in this.values) {
       const value = this.values[key]
       const param = this.params[key]
-      if (param instanceof XfoParameter) param.setValue(<Xfo>value)
-      else if (param instanceof BooleanParameter) param.setValue(<boolean>value)
+      param.setValue(value)
     }
   }
 
   lerpPose(neutralPose?: Pose, steps: number = 25, timeStep: number = 20) {
-    const startValues: Record<string, Xfo | boolean> = {}
-    const endValues: Record<string, Xfo | boolean> = {}
+    const startValues: Record<string, any> = {}
+    const endValues: Record<string, any> = {}
 
     for (const key in this.values) {
       startValues[key] = this.params[key].value
@@ -114,6 +117,18 @@ class Pose {
           const value = new Xfo()
           value.tr = startVal.tr.lerp(endValue.tr, smooth_t)
           value.ori = startVal.ori.slerp(endValue.ori, smooth_t)
+
+          if (neutralPose && !(key in this.values)) {
+            neutralPose.params[key].value = value
+          } else {
+            this.params[key].value = value
+          }
+        } else if (typeof startValues[key] == 'number') {
+          const value = MathFunctions.lerp(
+            <number>startValues[key],
+            <number>endValues[key],
+            smooth_t
+          )
 
           if (neutralPose && !(key in this.values)) {
             neutralPose.params[key].value = value
@@ -161,8 +176,8 @@ class Pose {
         xfo.fromJSON(<Record<string, any>>poseJson.values[key])
         this.values[key] = xfo
         this.params[key] = param
-      } else if (param instanceof BooleanParameter) {
-        this.values[key] = <boolean>poseJson.values[key]
+      } else {
+        this.values[key] = poseJson.values[key]
         this.params[key] = param
       }
     }
