@@ -359,6 +359,12 @@ class Ipd3d extends HTMLElement {
     this.eventEmitter.emit('viewsListChanged')
   }
 
+  public renameView(index: number, newName: string) {
+    const view = this.views[index]
+    view.name = newName
+    this.eventEmitter.emit('viewsListChanged')
+  }
+
   public activateView(index: number) {
     const view = this.views[index]
     view.activate(this.renderer.getViewport().getCamera(), this.neutralPose)

@@ -172,18 +172,38 @@ function generateViewButtons() {
 
   let $highlightedViewBtn
   $ipc3d.views.forEach((view, index) => {
-    const $button = document.createElement('button')
-    $button.className = 'border rounded bg-gray-300 px-2  hover:bg-gray-100'
-    $button.textContent = view.name
+    const $viewWrapper = document.createElement('div')
+    $viewWrapper.className = 'border rounded bg-gray-300 px-2  hover:bg-gray-100'
+    $viewWrapper.style.textAlign = 'center'
+    $viewWrapper.textContent = view.name
 
-    $button.addEventListener('click', () => {
+    $viewWrapper.addEventListener('click', (event) => {
+      event.stopPropagation()
       $ipc3d.activateView(index)
       if ($highlightedViewBtn) $highlightedViewBtn.style.borderColor = ''
-      $button.style.borderColor = 'red'
-      $highlightedViewBtn = $button
+      $viewWrapper.style.borderColor = 'red'
+      $highlightedViewBtn = $viewWrapper
     })
 
-    $viewButtons.appendChild($button)
+    // ////////////////////////////
+    // Options Buttons
+    const $optionsWrapper = document.createElement('div')
+    $optionsWrapper.style.display = 'block'
+
+    // Rename
+    const $renameBtn = document.createElement('button')
+    $renameBtn.textContent = 'Rename'
+    $renameBtn.className = 'border rounded bg-yellow-300 px-2  hover:bg-yellow-200'
+
+    $renameBtn.addEventListener('click', (event) => {
+      event.stopPropagation()
+      let newName = prompt('Rename View',view.name+'-renamed')
+      while ($ipc3d.views.map((view) => view.name).includes(newName)) {
+        newName = prompt(`This name already exists ! \n Please enter a new name for the view \'${view.name}\'`,view.name+'-renamed')
+      }
+      $ipc3d.renameView(index, newName)
+    })
+    $optionsWrapper.appendChild($renameBtn)
   })
 }
 
