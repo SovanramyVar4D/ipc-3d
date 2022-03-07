@@ -1,4 +1,4 @@
-import { Color, ColorParameter } from '@zeainc/zea-engine'
+import { Color, Parameter, ColorParameter } from '@zeainc/zea-engine'
 import { ParameterValueChange, UndoRedoManager } from '@zeainc/zea-ux'
 import { ParameterWidget } from './ParameterWidget'
 
@@ -9,36 +9,42 @@ class ColorParameterWidget extends ParameterWidget {
   constructor() {
     super()
 
-    const $label = document.createElement('label')
-    $label.setAttribute('for', 'value')
-    $label.textContent = 'Value:'
-    $label.textContent = 'Value:'
-
     this.$input = document.createElement('input')
     this.$input.setAttribute('type', 'color')
     this.$input.setAttribute('id', 'value')
     this.$input.setAttribute('name', 'value')
 
-    this.shadowRoot?.appendChild($label)
     this.shadowRoot?.appendChild(this.$input)
 
-    this.$input.addEventListener('change', () => {})
-  }
-
-  setValue(): void {
-    if (this.parameter) {
+    let change: ParameterValueChange | null = null
+    this.$input.addEventListener('input', () => {
       const value = new Color(this.$input.value)
-      const change = new ParameterValueChange(this.parameter, value)
-      UndoRedoManager.getInstance().addChange(change)
-    }
+      if (!change) {
+        change = new ParameterValueChange(this.parameter!, value)
+        UndoRedoManager.getInstance().addChange(change)
+      } else {
+        change.update({
+          value
+        })
+      }
+    })
+    this.$input.addEventListener('change', () => {
+      if (change) {
+        change = null
+      }
+    })
   }
 
   updateValue(): void {
     this.$input.value = `${this.parameter?.value.toHex()}`
   }
+
+  static checkParam(param: Parameter<any>) {
+    return param instanceof ColorParameter
+  }
 }
 
 import { ParamEditor } from './ParamEditor'
-ParamEditor.registerWidget('ColorParameter', 'zea-color-param')
+ParamEditor.registerWidget('zea-color-param', ColorParameterWidget)
 
 customElements.define('zea-color-param', ColorParameterWidget)

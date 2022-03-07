@@ -1,29 +1,30 @@
-import { NumberParameter } from '@zeainc/zea-engine'
+import { NumberParameter, Parameter } from '@zeainc/zea-engine'
 import { ParameterValueChange, UndoRedoManager } from '@zeainc/zea-ux'
 import { ParameterWidget } from './ParameterWidget'
 
 class NumberParameterWidget extends ParameterWidget {
   parameter: NumberParameter | null = null
-  $label: HTMLLabelElement
+  // $label: HTMLLabelElement
   $input: HTMLInputElement
 
   constructor() {
     super()
 
-    this.$label = document.createElement('label')
-    this.$label.setAttribute('for', 'value')
-    this.$label.textContent = 'Value:'
-    this.$label.textContent = 'Value:'
+    // this.$label = document.createElement('label')
+    // this.$label.setAttribute('for', 'value')
+    // this.$label.textContent = 'Value:'
 
     this.$input = document.createElement('input')
     this.$input.setAttribute('type', 'number')
     this.$input.setAttribute('id', 'value')
     this.$input.setAttribute('name', 'value')
 
-    this.shadowRoot?.appendChild(this.$label)
+    // this.shadowRoot?.appendChild(this.$label)
     this.shadowRoot?.appendChild(this.$input)
 
-    this.$input.addEventListener('change', () => {})
+    this.$input.addEventListener('change', () => {
+      this.setValue()
+    })
   }
 
   setValue(): void {
@@ -35,12 +36,13 @@ class NumberParameterWidget extends ParameterWidget {
   }
 
   updateValue(): void {
+    console.log('updateValue:', this.parameter?.value)
     this.$input.value = `${this.parameter?.value}`
   }
 
   setParameter(parameter: NumberParameter) {
     super.setParameter(parameter)
-    this.$label.textContent = parameter.getName() + ':'
+    // this.$label.textContent = parameter.getName() + ':'
     const range = parameter.getRange()
     if (range) {
       this.$input.min = `${range[0]}`
@@ -51,9 +53,13 @@ class NumberParameterWidget extends ParameterWidget {
       this.$input.step = `${step}`
     }
   }
+
+  static checkParam(param: Parameter<any>) {
+    return param instanceof NumberParameter
+  }
 }
 
 import { ParamEditor } from './ParamEditor'
-ParamEditor.registerWidget('NumberParameter', 'zea-number-param')
+ParamEditor.registerWidget('zea-number-param', NumberParameterWidget)
 
 customElements.define('zea-number-param', NumberParameterWidget)

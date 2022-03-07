@@ -8,7 +8,6 @@ abstract class ParameterWidget extends HTMLElement {
     this.attachShadow({ mode: 'open' })
   }
 
-  abstract setValue(): void
   abstract updateValue(): void
 
   setParameter(parameter: Parameter<any>) {
@@ -16,6 +15,10 @@ abstract class ParameterWidget extends HTMLElement {
     this.parameter.on('valueChanged', () => this.updateValue())
 
     this.updateValue()
+  }
+
+  static checkParam(param: Parameter<any>) {
+    return false
   }
 }
 
