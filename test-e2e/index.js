@@ -240,22 +240,63 @@ function generateSelSetButtons() {
   const $selectionSetButtons = document.getElementById('selectionSetButtons')
   $selectionSetButtons.replaceChildren()
 
-  let $highlightedSelectionSetBtn
   $ipc3d.selectionSets.forEach((selectionSet, index) => {
-    const $button = document.createElement('button')
-    $button.className = 'border rounded bg-gray-300 px-2  hover:bg-gray-100'
-    $button.textContent = selectionSet.name
+    const $selectionSetButton = document.createElement('div')
+    $selectionSetButton.className = 'border rounded bg-gray-300 px-2  hover:bg-gray-100'
+      $selectionSetButton.style.textAlign = 'center'
+      $selectionSetButton.textContent = selectionSet.name
 
-    $button.addEventListener('click', () => {
-      $ipc3d.activateSelectionSet(index)
-      if ($highlightedSelectionSetBtn)
-        $highlightedSelectionSetBtn.style.borderColor = ''
-      $button.style.borderColor = 'red'
-      $highlightedSelectionSetBtn = $button
+      $selectionSetButton.addEventListener('click', (event) => {
+        event.stopPropagation()
+        $ipc3d.activateSelectionSet(index)
+
+        const $activeSelectionSetButton = document.querySelector('.active-selection-set')
+        if ($activeSelectionSetButton) {
+          $activeSelectionSetButton.className = 'border rounded bg-gray-300 px-2  hover:bg-gray-100'
+          $activeSelectionSetButton.classList.remove('active-selection-set')
+        }
+
+        if ($activeSelectionSetButton === $selectionSetButton) {
+          $ipc3d.deactivateSelectionSet()
+        } else {
+          $selectionSetButton.className = 'border rounded text-white bg-blue-300 px-2 border-blue-500'
+          $selectionSetButton.classList.add('active-selection-set')
+        }
+      })
+
+      // ////////////////////////////
+      // Options Buttons
+      const $optionsWrapper = document.createElement('div')
+      $optionsWrapper.style.display = 'block'
+
+      // Rename
+      const $renameBtn = document.createElement('button')
+      $renameBtn.textContent = 'Rename'
+      $renameBtn.className = 'border rounded text-black bg-yellow-200 px-2  hover:bg-yellow-150'
+
+      $renameBtn.addEventListener('click', (event) => {
+        event.stopPropagation()
+        let newName = prompt('Rename SelectionSet',selectionSet.name+'-renamed')
+        while ($ipc3d.selectionSets.map((selectionSet) => selectionSet.name).includes(newName)) {
+          newName = prompt(`This name already exists ! \n Please enter a new name for the selectionSet \'${selectionSet.name}\'`,selectionSet.name+'-renamed')
+        }
+        if (newName) $ipc3d.renameSelectionSet(index, newName)
+      })
+      $optionsWrapper.appendChild($renameBtn)
+
+      // Delete
+      const $deleteBtn = document.createElement('button')
+      $deleteBtn.textContent = 'Delete'
+      $deleteBtn.className = 'border rounded text-black bg-red-200 px-2  hover:bg-red-150'
+      $deleteBtn.addEventListener('click', (event) => {
+        event.stopPropagation()
+        $ipc3d.deleteSelectionSet(index)
+      })
+      $optionsWrapper.appendChild($deleteBtn)
+
+      $selectionSetButton.appendChild($optionsWrapper)
+      $selectionSetButtons.appendChild($selectionSetButton)
     })
-
-    $selectionSetButtons.appendChild($button)
-  })
 }
 
 // ////////////////////////////////////////////////////

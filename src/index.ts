@@ -396,10 +396,24 @@ class Ipd3d extends HTMLElement {
 
   public createSelectionSet() {
     const set = Array.from(this.selectionManager.getSelection().values())
-    this.selectionSets.push(
-      new SelectionSet('SelSet' + this.selectionSets.length, set, this.scene)
-    )
+    if (set.length > 0) {
+      this.selectionSets.push(
+          new SelectionSet('SelSet' + this.selectionSets.length, set, this.scene)
+      )
+      this.eventEmitter.emit('selectionSetListChanged')
+    }
+  }
 
+  public deleteSelectionSet(index: number) {
+    this.selectionManager.clearSelection()
+
+    this.selectionSets.splice(index,1)
+    this.eventEmitter.emit('selectionSetListChanged')
+  }
+
+  public renameSelectionSet(index: number, newName: string) {
+    const selectionSet = this.selectionSets[index]
+    selectionSet.name = newName
     this.eventEmitter.emit('selectionSetListChanged')
   }
 
@@ -407,6 +421,10 @@ class Ipd3d extends HTMLElement {
     const selectionSet = this.selectionSets[index]
     const set = new Set(selectionSet.items)
     this.selectionManager.setSelection(set)
+  }
+
+  public deactivateSelectionSet() {
+    this.selectionManager.clearSelection()
     this.eventEmitter.emit('selectionSetListChanged')
   }
 
