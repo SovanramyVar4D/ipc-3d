@@ -9,7 +9,7 @@ $ipc3d.on('selectionSetListChanged', () => {
 })
 
 // ///////////////////////////////////////////////
-// PRojects
+// Projects
 document.getElementById('newProject').addEventListener('click', () => {
   $ipc3d.newProject()
 })
@@ -170,19 +170,29 @@ function generateViewButtons() {
   const $viewButtons = document.getElementById('viewButtons')
   $viewButtons.replaceChildren()
 
-  let $highlightedViewBtn
-  $ipc3d.views.forEach((view, index) => {
-    const $viewWrapper = document.createElement('div')
-    $viewWrapper.className = 'border rounded bg-gray-300 px-2  hover:bg-gray-100'
-    $viewWrapper.style.textAlign = 'center'
-    $viewWrapper.textContent = view.name
 
-    $viewWrapper.addEventListener('click', (event) => {
+  $ipc3d.views.forEach((view, index) => {
+    const $viewButton = document.createElement('div')
+    $viewButton.className = 'border rounded bg-gray-300 px-2  hover:bg-gray-100'
+    $viewButton.style.textAlign = 'center'
+    $viewButton.textContent = view.name
+
+    $viewButton.addEventListener('click', (event) => {
+      const $activeViewButton = document.querySelector('.active-view')
       event.stopPropagation()
       $ipc3d.activateView(index)
-      if ($highlightedViewBtn) $highlightedViewBtn.style.borderColor = ''
-      $viewWrapper.style.borderColor = 'red'
-      $highlightedViewBtn = $viewWrapper
+
+      if ($activeViewButton) {
+        $activeViewButton.className = 'border rounded bg-gray-300 px-2  hover:bg-gray-100'
+        $activeViewButton.classList.remove('active-view')
+      }
+
+      if ($activeViewButton === $viewButton) {
+        $ipc3d.deactivateView()
+      } else {
+        $viewButton.className = 'border rounded text-white bg-blue-300 px-2 border-blue-500'
+        $viewButton.classList.add('active-view')
+      }
     })
 
     // ////////////////////////////
@@ -193,7 +203,7 @@ function generateViewButtons() {
     // Rename
     const $renameBtn = document.createElement('button')
     $renameBtn.textContent = 'Rename'
-    $renameBtn.className = 'border rounded bg-yellow-300 px-2  hover:bg-yellow-200'
+    $renameBtn.className = 'border rounded text-black bg-yellow-200 px-2  hover:bg-yellow-150'
 
     $renameBtn.addEventListener('click', (event) => {
       event.stopPropagation()
@@ -201,32 +211,24 @@ function generateViewButtons() {
       while ($ipc3d.views.map((view) => view.name).includes(newName)) {
         newName = prompt(`This name already exists ! \n Please enter a new name for the view \'${view.name}\'`,view.name+'-renamed')
       }
-      $ipc3d.renameView(index, newName)
+      if (newName) $ipc3d.renameView(index, newName)
     })
     $optionsWrapper.appendChild($renameBtn)
 
     // Delete
     const $deleteBtn = document.createElement('button')
     $deleteBtn.textContent = 'Delete'
-    $deleteBtn.className = 'border rounded bg-red-300 px-2  hover:bg-red-200'
+    $deleteBtn.className = 'border rounded text-black bg-red-200 px-2  hover:bg-red-150'
     $deleteBtn.addEventListener('click', (event) => {
       event.stopPropagation()
       $ipc3d.deleteView(index)
     })
     $optionsWrapper.appendChild($deleteBtn)
 
-    $viewWrapper.appendChild($optionsWrapper)
-    $viewButtons.appendChild($viewWrapper)
+    $viewButton.appendChild($optionsWrapper)
+    $viewButtons.appendChild($viewButton)
   })
 }
-
-// document.getElementById('view0').addEventListener('click', () => {
-//   $ipc3d.activateView(0)
-// })
-
-// document.getElementById('view1').addEventListener('click', () => {
-//   $ipc3d.activateView(1)
-// })
 
 // ////////////////////////////////////////////////////
 // Selection Sets
@@ -257,7 +259,7 @@ function generateSelSetButtons() {
 }
 
 // ////////////////////////////////////////////////////
-// Selection Sets
+// Cut Planes
 
 document.getElementById('createCuttingPlane').addEventListener('click', () => {
   $ipc3d.addCuttingPlane()

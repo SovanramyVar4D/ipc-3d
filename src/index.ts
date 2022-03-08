@@ -177,11 +177,6 @@ class Ipd3d extends HTMLElement {
         } else {
           this.neutralPose.storeTreeItemsPose(change.treeItems)
         }
-      } else if (change instanceof ParameterValueChange) {
-        const param = <BooleanParameter>change.param
-        if (this.activeView) {
-          this.activeView.pose.storeParamValue(param, change.nextValue.clone())
-        }
       }
     })
 
@@ -190,7 +185,6 @@ class Ipd3d extends HTMLElement {
       if (change instanceof SelectionXfoChange) {
         if (this.activeView) {
           this.activeView.pose.storeTreeItemsPose(change.treeItems)
-        } else {
         }
       } else if (change instanceof ParameterValueChange) {
         const param = <BooleanParameter>change.param
@@ -369,12 +363,12 @@ class Ipd3d extends HTMLElement {
   }
 
   public activateView(index: number) {
+    this.selectionManager.clearSelection()
+
     const view = this.views[index]
     view.activate(this.renderer.getViewport().getCamera(), this.neutralPose)
 
     this.activeView = view
-
-    this.eventEmitter.emit('viewsListChanged')
   }
 
   public saveViewCamera() {
@@ -388,11 +382,13 @@ class Ipd3d extends HTMLElement {
 
   public activateNeutralPose() {
     this.neutralPose.lerpPose()
-    this.activeView = undefined
   }
 
   public deactivateView() {
+    this.selectionManager.clearSelection()
+
     this.activeView = undefined
+    this.eventEmitter.emit('viewsListChanged')
   }
 
   // /////////////////////////////////////////
