@@ -201,11 +201,14 @@ function generateViewButtons() {
     $optionsWrapper.style.display = 'block'
 
     // Rename
-    const $renameBtn = document.createElement('button')
-    $renameBtn.textContent = 'Rename'
-    $renameBtn.className = 'border rounded text-black bg-yellow-200 px-2  hover:bg-yellow-150'
+    const $RenameViewButton = document.createElement('button')
+    $RenameViewButton.className = 'border rounded text-black bg-yellow-200 px-2  hover:bg-yellow-150'
 
-    $renameBtn.addEventListener('click', (event) => {
+    const renameViewIcon = document.createElement('i')
+    renameViewIcon.className = 'fa-solid fa-pen-to-square'
+    $RenameViewButton.appendChild(renameViewIcon)
+
+    $RenameViewButton.addEventListener('click', (event) => {
       event.stopPropagation()
       let newName = prompt('Rename View',view.name+'-renamed')
       while ($ipc3d.views.map((view) => view.name).includes(newName)) {
@@ -213,17 +216,22 @@ function generateViewButtons() {
       }
       if (newName) $ipc3d.renameView(index, newName)
     })
-    $optionsWrapper.appendChild($renameBtn)
+    $optionsWrapper.appendChild($RenameViewButton)
 
     // Delete
-    const $deleteBtn = document.createElement('button')
-    $deleteBtn.textContent = 'Delete'
-    $deleteBtn.className = 'border rounded text-black bg-red-200 px-2  hover:bg-red-150'
-    $deleteBtn.addEventListener('click', (event) => {
+    // <i class="fa-solid fa-trash-can-xmark"></i>
+    const $deleteViewButton = document.createElement('button')
+    $deleteViewButton.className = 'border rounded text-black bg-red-200 px-2  hover:bg-red-150'
+
+    const deleteViewIcon = document.createElement('i')
+    deleteViewIcon.className = 'fa-solid fa-trash'
+    $deleteViewButton.appendChild(deleteViewIcon)
+
+    $deleteViewButton.addEventListener('click', (event) => {
       event.stopPropagation()
       $ipc3d.deleteView(index)
     })
-    $optionsWrapper.appendChild($deleteBtn)
+    $optionsWrapper.appendChild($deleteViewButton)
 
     $viewButton.appendChild($optionsWrapper)
     $viewButtons.appendChild($viewButton)
@@ -271,8 +279,11 @@ function generateSelSetButtons() {
 
       // Rename
       const $renameBtn = document.createElement('button')
-      $renameBtn.textContent = 'Rename'
       $renameBtn.className = 'border rounded text-black bg-yellow-200 px-2  hover:bg-yellow-150'
+
+      const iconElement = document.createElement('i')
+      iconElement.className = 'fa-solid fa-pen-to-square'
+      $renameBtn.appendChild(iconElement)
 
       $renameBtn.addEventListener('click', (event) => {
         event.stopPropagation()

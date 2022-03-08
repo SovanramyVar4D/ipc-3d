@@ -381,6 +381,7 @@ class Ipd3d extends HTMLElement {
   }
 
   public activateNeutralPose() {
+    this.deactivateView()
     this.neutralPose.lerpPose()
   }
 
