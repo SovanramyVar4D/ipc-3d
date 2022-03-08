@@ -34,6 +34,8 @@ import { Pose, PoseJson } from './Pose'
 import { SelectionSet, SelectionSetJson } from './SelectionSet'
 
 import CuttingPlaneWrapper, { CuttingPlaneJson } from './CuttingPlane'
+import DeleteViewChange from "./Changes/DeleteViewChange";
+import RenameViewChange from "./Changes/RenameViewChange";
 
 interface AssetJson {
   url: string
@@ -350,15 +352,23 @@ class Ipd3d extends HTMLElement {
   }
 
   public deleteView(index: number) {
-    this.activeView = undefined
+    const view = this.views[index]
+
+    const change = new DeleteViewChange(view, this.views, this.eventEmitter)
+
     this.views.splice(index,1)
+    this.undoRedoManager.addChange(change)
 
     this.eventEmitter.emit('viewsListChanged')
   }
 
   public renameView(index: number, newName: string) {
     const view = this.views[index]
+
+    const change = new RenameViewChange(view, newName, this.eventEmitter)
     view.name = newName
+    this.undoRedoManager.addChange(change)
+
     this.eventEmitter.emit('viewsListChanged')
   }
 
