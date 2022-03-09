@@ -36,6 +36,9 @@ import { SelectionSet, SelectionSetJson } from './SelectionSet'
 import CuttingPlaneWrapper, { CuttingPlaneJson } from './CuttingPlane'
 import DeleteViewChange from "./Changes/DeleteViewChange";
 import RenameViewChange from "./Changes/RenameViewChange";
+import CreateSelectionSetChange from "./Changes/CreateSelectionSetChange";
+import DeleteSelectionSetChange from "./Changes/DeleteSelectionSetChange";
+import RenameSelectionSetChange from "./Changes/RenameSelectionSetChange";
 
 interface AssetJson {
   url: string
@@ -415,41 +418,49 @@ class Ipd3d extends HTMLElement {
 
   public createSelectionSet(selectionSet?: SelectionSet, name?: string) {
     const selectionSetName = name ? name : 'SelectionSet-' + this.selectionSets.length
-    const set = Array.from(this.selectionManager.getSelection().values())
 
+    let newSelectionSet
     if (selectionSet) {
-      this.selectionSets.push(
-          new SelectionSet(selectionSetName, selectionSet.items, selectionSet.scene)
-      )
-      this.eventEmitter.emit('selectionSetListChanged')
-
+      newSelectionSet = new SelectionSet(selectionSetName, selectionSet.items, selectionSet.scene)
     } else {
+      const set = Array.from(this.selectionManager.getSelection().values())
       if (set.length > 0) {
-        this.selectionSets.push(
-            new SelectionSet(selectionSetName, set, this.scene)
-        )
-        this.eventEmitter.emit('selectionSetListChanged')
+        newSelectionSet = new SelectionSet(selectionSetName, set, this.scene)
       }
+    }
+    if (newSelectionSet) {
+      const change = new CreateSelectionSetChange(newSelectionSet, this.selectionSets, this.eventEmitter)
+      this.selectionSets.push(newSelectionSet)
+      this.undoRedoManager.addChange(change)
+
+      this.eventEmitter.emit('selectionSetsListChanged')
     }
   }
 
   public deleteSelectionSet(index: number) {
+    const selectionSet = this.selectionSets[index]
+
     this.selectionManager.clearSelection()
 
+    const change = new DeleteSelectionSetChange(selectionSet, this.selectionSets, this.eventEmitter);
     this.selectionSets.splice(index,1)
-    this.eventEmitter.emit('selectionSetListChanged')
+    this.undoRedoManager.addChange(change)
+
+    this.eventEmitter.emit('selectionSetsListChanged')
   }
 
   public renameSelectionSet(index: number, newName: string) {
     const selectionSet = this.selectionSets[index]
+    const change = new RenameSelectionSetChange(selectionSet, newName, this.eventEmitter);
     selectionSet.name = newName
-    this.eventEmitter.emit('selectionSetListChanged')
+    this.undoRedoManager.addChange(change)
+    this.eventEmitter.emit('selectionSetsListChanged')
   }
 
   public duplicateSelectionSet(fromSelectionSetIndex: number) {
     const selectionSet = this.selectionSets[fromSelectionSetIndex]
     this.createSelectionSet(selectionSet, selectionSet.name+'-duplicated')
-    this.eventEmitter.emit('selectionSetListChanged')
+    this.eventEmitter.emit('selectionSetsListChanged')
   }
 
   public activateSelectionSet(index: number) {
@@ -460,7 +471,7 @@ class Ipd3d extends HTMLElement {
 
   public deactivateSelectionSet() {
     this.selectionManager.clearSelection()
-    this.eventEmitter.emit('selectionSetListChanged')
+    this.eventEmitter.emit('selectionSetsListChanged')
   }
 
   public hideSelection() {

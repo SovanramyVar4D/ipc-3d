@@ -4,7 +4,7 @@ $ipc3d.on('viewsListChanged', () => {
   generateViewButtons()
 })
 
-$ipc3d.on('selectionSetListChanged', () => {
+$ipc3d.on('selectionSetsListChanged', () => {
   generateSelSetButtons()
 })
 
