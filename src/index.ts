@@ -335,18 +335,21 @@ class Ipd3d extends HTMLElement {
     }
   }
 
-  public createView() {
-    const view = new View('View' + this.views.length, this.scene)
-    if (this.activeView) {
-      view.copyFrom(this.activeView)
-    }
-    const change = new CreateViewChange(view, this.views, this.eventEmitter)
-    view.setCameraParams(this.renderer.getViewport().getCamera())
-    this.views.push(view)
+  public createView(view?: View, name?: string) {
+    const viewName = name ? name : 'View' + this.views.length
+
+    const newView = new View(viewName, this.scene)
+
+    if (view) newView.copyFrom(view)
+
+
+    const change = new CreateViewChange(newView, this.views, this.eventEmitter)
+    newView.setCameraParams(this.renderer.getViewport().getCamera())
+    this.views.push(newView)
 
     this.undoRedoManager.addChange(change)
 
-    this.activeView = view
+    // this.activeView = newView
 
     this.eventEmitter.emit('viewsListChanged')
   }
@@ -360,6 +363,11 @@ class Ipd3d extends HTMLElement {
     this.undoRedoManager.addChange(change)
 
     this.eventEmitter.emit('viewsListChanged')
+  }
+
+  public duplicateView(fromViewIndex: number) {
+    const view = this.views[fromViewIndex]
+    this.createView(view, view.name + '-duplicated')
   }
 
   public renameView(index: number, newName: string) {
@@ -405,13 +413,23 @@ class Ipd3d extends HTMLElement {
   // /////////////////////////////////////////
   // Selection Sets
 
-  public createSelectionSet() {
+  public createSelectionSet(selectionSet?: SelectionSet, name?: string) {
+    const selectionSetName = name ? name : 'SelectionSet-' + this.selectionSets.length
     const set = Array.from(this.selectionManager.getSelection().values())
-    if (set.length > 0) {
+
+    if (selectionSet) {
       this.selectionSets.push(
-          new SelectionSet('SelSet' + this.selectionSets.length, set, this.scene)
+          new SelectionSet(selectionSetName, selectionSet.items, selectionSet.scene)
       )
       this.eventEmitter.emit('selectionSetListChanged')
+
+    } else {
+      if (set.length > 0) {
+        this.selectionSets.push(
+            new SelectionSet(selectionSetName, set, this.scene)
+        )
+        this.eventEmitter.emit('selectionSetListChanged')
+      }
     }
   }
 
@@ -425,6 +443,12 @@ class Ipd3d extends HTMLElement {
   public renameSelectionSet(index: number, newName: string) {
     const selectionSet = this.selectionSets[index]
     selectionSet.name = newName
+    this.eventEmitter.emit('selectionSetListChanged')
+  }
+
+  public duplicateSelectionSet(fromSelectionSetIndex: number) {
+    const selectionSet = this.selectionSets[fromSelectionSetIndex]
+    this.createSelectionSet(selectionSet, selectionSet.name+'-duplicated')
     this.eventEmitter.emit('selectionSetListChanged')
   }
 

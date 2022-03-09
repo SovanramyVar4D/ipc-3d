@@ -145,7 +145,11 @@ $treeView.setSelectionManager($ipc3d.selectionManager)
 //  Views
 
 document.getElementById('createView').addEventListener('click', () => {
-  $ipc3d.createView()
+  let viewName = prompt('View Name')
+  while ($ipc3d.views.map((view) => view.name).includes(viewName)) {
+    viewName = prompt('This view name already exists ! \n Please enter a new name for the View')
+  }
+  if (viewName) $ipc3d.createView(null, viewName)
 })
 document.getElementById('saveViewCamera').addEventListener('click', () => {
   $ipc3d.saveViewCamera()
@@ -169,7 +173,6 @@ $ipc3d.undoRedoManager.on('changeRedone', () => {
 function generateViewButtons() {
   const $viewButtons = document.getElementById('viewButtons')
   $viewButtons.replaceChildren()
-
 
   $ipc3d.views.forEach((view, index) => {
     const $viewButton = document.createElement('div')
@@ -202,7 +205,7 @@ function generateViewButtons() {
 
     // Rename
     const $RenameViewButton = document.createElement('button')
-    $RenameViewButton.className = 'border rounded text-black bg-yellow-200 px-2  hover:bg-yellow-150'
+    $RenameViewButton.className = 'border rounded text-black bg-yellow-200 px-5 mx-0.5 hover:bg-yellow-150'
 
     const renameViewIcon = document.createElement('i')
     renameViewIcon.className = 'fa-solid fa-pen-to-square'
@@ -212,16 +215,29 @@ function generateViewButtons() {
       event.stopPropagation()
       let newName = prompt('Rename View',view.name+'-renamed')
       while ($ipc3d.views.map((view) => view.name).includes(newName)) {
-        newName = prompt(`This name already exists ! \n Please enter a new name for the view \'${view.name}\'`,view.name+'-renamed')
+        newName = prompt(`This name already exists ! \n Please enter a new name for the View \'${view.name}\'`,view.name+'-renamed')
       }
       if (newName) $ipc3d.renameView(index, newName)
     })
     $optionsWrapper.appendChild($RenameViewButton)
 
+    // Duplicate
+    const $duplicateViewButton = document.createElement('button')
+    $duplicateViewButton.className = 'border rounded text-black bg-yellow-200 px-5 mx-0.5 hover:bg-red-150'
+
+    const duplicateViewIcon = document.createElement('i')
+    duplicateViewIcon.className = 'fa-solid fa-clone'
+    $duplicateViewButton.appendChild(duplicateViewIcon)
+
+    $duplicateViewButton.addEventListener('click', (event) => {
+      event.stopPropagation()
+      $ipc3d.duplicateView(index)
+    })
+    $optionsWrapper.appendChild($duplicateViewButton)
+
     // Delete
-    // <i class="fa-solid fa-trash-can-xmark"></i>
     const $deleteViewButton = document.createElement('button')
-    $deleteViewButton.className = 'border rounded text-black bg-red-200 px-2  hover:bg-red-150'
+    $deleteViewButton.className = 'border rounded text-black bg-red-200 px-5 ml-5 hover:bg-red-150'
 
     const deleteViewIcon = document.createElement('i')
     deleteViewIcon.className = 'fa-solid fa-trash'
@@ -242,15 +258,20 @@ function generateViewButtons() {
 // Selection Sets
 
 document.getElementById('createSelectionSet').addEventListener('click', () => {
-  $ipc3d.createSelectionSet()
+  let selectionSetName = prompt('Selection Set Name')
+  while ($ipc3d.selectionSets.map((selectionSet) => selectionSet.name).includes(selectionSetName)) {
+    selectionSetName = prompt('This view name already exists ! \n Please enter a new name for the Selection Set')
+  }
+  if (selectionSetName)   $ipc3d.createSelectionSet(null, selectionSetName)
 })
+
 function generateSelSetButtons() {
   const $selectionSetButtons = document.getElementById('selectionSetButtons')
   $selectionSetButtons.replaceChildren()
 
   $ipc3d.selectionSets.forEach((selectionSet, index) => {
     const $selectionSetButton = document.createElement('div')
-    $selectionSetButton.className = 'border rounded bg-gray-300 px-2  hover:bg-gray-100'
+    $selectionSetButton.className = 'border rounded bg-gray-300 px-2 hover:bg-gray-100'
       $selectionSetButton.style.textAlign = 'center'
       $selectionSetButton.textContent = selectionSet.name
 
@@ -260,7 +281,7 @@ function generateSelSetButtons() {
 
         const $activeSelectionSetButton = document.querySelector('.active-selection-set')
         if ($activeSelectionSetButton) {
-          $activeSelectionSetButton.className = 'border rounded bg-gray-300 px-2  hover:bg-gray-100'
+          $activeSelectionSetButton.className = 'border rounded bg-gray-300 px-2 hover:bg-gray-100'
           $activeSelectionSetButton.classList.remove('active-selection-set')
         }
 
@@ -272,40 +293,58 @@ function generateSelSetButtons() {
         }
       })
 
-      // ////////////////////////////
-      // Options Buttons
-      const $optionsWrapper = document.createElement('div')
-      $optionsWrapper.style.display = 'block'
+    // ////////////////////////////
+    // Options Buttons
+    const $optionsWrapper = document.createElement('div')
+    $optionsWrapper.style.display = 'block'
 
-      // Rename
-      const $renameBtn = document.createElement('button')
-      $renameBtn.className = 'border rounded text-black bg-yellow-200 px-2  hover:bg-yellow-150'
+    // Rename
+    const $RenameSelectionSetButton = document.createElement('button')
+    $RenameSelectionSetButton.className = 'border rounded text-black bg-yellow-200 px-5 mx-0.5 hover:bg-yellow-150'
 
-      const iconElement = document.createElement('i')
-      iconElement.className = 'fa-solid fa-pen-to-square'
-      $renameBtn.appendChild(iconElement)
+    const renameSelectionSetIcon = document.createElement('i')
+    renameSelectionSetIcon.className = 'fa-solid fa-pen-to-square'
+    $RenameSelectionSetButton.appendChild(renameSelectionSetIcon)
 
-      $renameBtn.addEventListener('click', (event) => {
-        event.stopPropagation()
-        let newName = prompt('Rename SelectionSet',selectionSet.name+'-renamed')
-        while ($ipc3d.selectionSets.map((selectionSet) => selectionSet.name).includes(newName)) {
-          newName = prompt(`This name already exists ! \n Please enter a new name for the selectionSet \'${selectionSet.name}\'`,selectionSet.name+'-renamed')
-        }
-        if (newName) $ipc3d.renameSelectionSet(index, newName)
-      })
-      $optionsWrapper.appendChild($renameBtn)
+    $RenameSelectionSetButton.addEventListener('click', (event) => {
+      event.stopPropagation()
+      let newName = prompt('Rename Selection Set',selectionSet.name+'-renamed')
+      while ($ipc3d.selectionSets.map((selectionSet) => selectionSet.name).includes(newName)) {
+        newName = prompt(`This name already exists ! \n Please enter a new name for the Selection Set \'${selectionSet.name}\'`,selectionSet.name+'-renamed')
+      }
+      if (newName) $ipc3d.renameSelectionSet(index, newName)
+    })
+    $optionsWrapper.appendChild($RenameSelectionSetButton)
 
-      // Delete
-      const $deleteBtn = document.createElement('button')
-      $deleteBtn.textContent = 'Delete'
-      $deleteBtn.className = 'border rounded text-black bg-red-200 px-2  hover:bg-red-150'
-      $deleteBtn.addEventListener('click', (event) => {
-        event.stopPropagation()
-        $ipc3d.deleteSelectionSet(index)
-      })
-      $optionsWrapper.appendChild($deleteBtn)
+    // Duplicate
+    const $duplicateSelectionSetButton = document.createElement('button')
+    $duplicateSelectionSetButton.className = 'border rounded text-black bg-yellow-200 px-5 mx-0.5 hover:bg-red-150'
 
-      $selectionSetButton.appendChild($optionsWrapper)
+    const duplicateSelectionSetIcon = document.createElement('i')
+    duplicateSelectionSetIcon.className = 'fa-solid fa-clone'
+    $duplicateSelectionSetButton.appendChild(duplicateSelectionSetIcon)
+
+    $duplicateSelectionSetButton.addEventListener('click', (event) => {
+      event.stopPropagation()
+      $ipc3d.duplicateSelectionSet(index)
+    })
+    $optionsWrapper.appendChild($duplicateSelectionSetButton)
+
+    // Delete
+    const $deleteSelectionSetButton = document.createElement('button')
+    $deleteSelectionSetButton.className = 'border rounded text-black bg-red-200 px-5 ml-5 hover:bg-red-150'
+
+    const deleteSelectionSetIcon = document.createElement('i')
+    deleteSelectionSetIcon.className = 'fa-solid fa-trash'
+    $deleteSelectionSetButton.appendChild(deleteSelectionSetIcon)
+
+    $deleteSelectionSetButton.addEventListener('click', (event) => {
+      event.stopPropagation()
+      $ipc3d.deleteSelectionSet(index)
+    })
+    $optionsWrapper.appendChild($deleteSelectionSetButton)
+
+    $selectionSetButton.appendChild($optionsWrapper)
       $selectionSetButtons.appendChild($selectionSetButton)
     })
 }
@@ -315,7 +354,6 @@ function generateSelSetButtons() {
 
 document.getElementById('createCuttingPlane').addEventListener('click', () => {
   $ipc3d.addCuttingPlane()
-  generateCuttingPlanes()
 })
 function generateCuttingPlanes() {
   const $cuttingPlaneButtons = document.getElementById('cuttingPlaneButtons')
