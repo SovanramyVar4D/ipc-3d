@@ -4,53 +4,62 @@ import { ParameterWidget } from './ParameterWidget'
 
 class NumberParameterWidget extends ParameterWidget {
   parameter: NumberParameter | null = null
-  // $label: HTMLLabelElement
   $input: HTMLInputElement
 
   constructor() {
     super()
-
-    // this.$label = document.createElement('label')
-    // this.$label.setAttribute('for', 'value')
-    // this.$label.textContent = 'Value:'
 
     this.$input = document.createElement('input')
     this.$input.setAttribute('type', 'number')
     this.$input.setAttribute('id', 'value')
     this.$input.setAttribute('name', 'value')
 
-    // this.shadowRoot?.appendChild(this.$label)
     this.shadowRoot?.appendChild(this.$input)
 
+    const styleTag = document.createElement('style')
+    styleTag.appendChild(
+      document.createTextNode(`
+        input {
+          width: 100%;
+        }
+      `)
+    )
+    this.shadowRoot?.appendChild(styleTag)
+
+    let change: ParameterValueChange | null = null
+    this.$input.addEventListener('input', () => {
+      const value = this.$input.valueAsNumber / 100
+      if (!change) {
+        change = new ParameterValueChange(this.parameter!, value)
+        UndoRedoManager.getInstance().addChange(change)
+      } else {
+        change.update({
+          value
+        })
+      }
+    })
     this.$input.addEventListener('change', () => {
-      this.setValue()
+      if (change) {
+        change = null
+      }
     })
   }
 
-  setValue(): void {
-    if (this.parameter) {
-      const value = this.$input.valueAsNumber
-      const change = new ParameterValueChange(this.parameter, value)
-      UndoRedoManager.getInstance().addChange(change)
-    }
-  }
-
   updateValue(): void {
-    console.log('updateValue:', this.parameter?.value)
-    this.$input.value = `${this.parameter?.value}`
+    this.$input.value = `${this.parameter?.value! * 100}`
   }
 
   setParameter(parameter: NumberParameter) {
     super.setParameter(parameter)
-    // this.$label.textContent = parameter.getName() + ':'
     const range = parameter.getRange()
     if (range) {
-      this.$input.min = `${range[0]}`
-      this.$input.max = `${range[1]}`
+      this.$input.type = `range`
+      this.$input.min = `${range[0] * 100}`
+      this.$input.max = `${range[1] * 100}`
     }
     const step = parameter.getStep()
-    if (range) {
-      this.$input.step = `${step}`
+    if (step) {
+      this.$input.step = `${step * 100}`
     }
   }
 

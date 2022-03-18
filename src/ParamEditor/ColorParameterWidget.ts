@@ -16,6 +16,16 @@ class ColorParameterWidget extends ParameterWidget {
 
     this.shadowRoot?.appendChild(this.$input)
 
+    const styleTag = document.createElement('style')
+    styleTag.appendChild(
+      document.createTextNode(`
+        input {
+          width: 100%;
+        }
+      `)
+    )
+    this.shadowRoot?.appendChild(styleTag)
+
     let change: ParameterValueChange | null = null
     this.$input.addEventListener('input', () => {
       const value = new Color(this.$input.value)

@@ -17,6 +17,16 @@ class StringParameterWidget extends ParameterWidget {
 
     this.shadowRoot?.appendChild(this.$input)
 
+    const styleTag = document.createElement('style')
+    styleTag.appendChild(
+      document.createTextNode(`
+        input {
+          width: 100%;
+        }
+      `)
+    )
+    this.shadowRoot?.appendChild(styleTag)
+
     this.$input.addEventListener('change', () => {
       this.setValue()
     })
