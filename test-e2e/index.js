@@ -171,13 +171,13 @@ function generateViewButtons() {
   $viewButtons.replaceChildren()
 
   let $highlightedViewBtn
-  $ipc3d.views.forEach((view, index) => {
+  $ipc3d.views.forEach((view, i) => {
     const $button = document.createElement('button')
     $button.className = 'border rounded bg-gray-300 px-2  hover:bg-gray-100'
     $button.textContent = view.name
 
     $button.addEventListener('click', () => {
-      $ipc3d.activateView(index)
+      $ipc3d.activateView(i)
       if ($highlightedViewBtn) $highlightedViewBtn.style.borderColor = ''
       $button.style.borderColor = 'red'
       $highlightedViewBtn = $button
@@ -206,13 +206,13 @@ function generateSelSetButtons() {
   $selectionSetButtons.replaceChildren()
 
   let $highlightedSelectionSetBtn
-  $ipc3d.selectionSets.forEach((selectionSet, index) => {
+  $ipc3d.selectionSets.forEach((selectionSet, i) => {
     const $button = document.createElement('button')
     $button.className = 'border rounded bg-gray-300 px-2  hover:bg-gray-100'
     $button.textContent = selectionSet.name
 
     $button.addEventListener('click', () => {
-      $ipc3d.activateSelectionSet(index)
+      $ipc3d.activateSelectionSet(i)
       if ($highlightedSelectionSetBtn)
         $highlightedSelectionSetBtn.style.borderColor = ''
       $button.style.borderColor = 'red'
@@ -235,13 +235,13 @@ function generateCuttingPlanes() {
   $cuttingPlaneButtons.replaceChildren()
 
   let $highlightedSelectionSetBtn
-  $ipc3d.cuttingPlanes.forEach((cuttingPlane, index) => {
+  $ipc3d.cuttingPlanes.forEach((cuttingPlane, i) => {
     const $button = document.createElement('button')
     $button.className = 'border rounded bg-gray-300 px-2  hover:bg-gray-100'
     $button.textContent = cuttingPlane.name
 
     $button.addEventListener('click', () => {
-      $ipc3d.activateCuttingPlane(index)
+      $ipc3d.activateCuttingPlane(i)
       if ($highlightedSelectionSetBtn)
         $highlightedSelectionSetBtn.style.borderColor = ''
       $button.style.borderColor = 'red'
@@ -253,22 +253,22 @@ function generateCuttingPlanes() {
 }
 
 // ////////////////////////////////////////////////////
-// UIPane.
+// UIPanel
 
 let expanded = false
-const paramEditor = document.getElementById('param-editor')
+const $paramEditor = document.getElementById('param-editor')
 const expandButton = document.getElementById('expand-panel')
-document.getElementById('expand-panel').addEventListener('click', () => {
+expandButton.addEventListener('click', () => {
   const rightPanel = document.getElementById('right-panel')
   if (!expanded) {
     rightPanel.classList.add('w-72')
     expandButton.textContent = '>'
-    paramEditor.style.visibility = 'visible'
+    $paramEditor.style.visibility = 'visible'
     expanded = true
   } else {
     rightPanel.classList.remove('w-72')
     expandButton.textContent = '<'
-    paramEditor.style.visibility = 'hidden'
+    $paramEditor.style.visibility = 'hidden'
     expanded = false
   }
 })
@@ -276,5 +276,13 @@ document.getElementById('expand-panel').addEventListener('click', () => {
 $ipc3d.on('leadSelectionChanged', event => {
   const { treeItem } = event
   console.log('leadSelectionChanged', event)
-  paramEditor.setParameterOwner(treeItem)
+  $paramEditor.clear()
+  if (treeItem) {
+    $paramEditor.addParameterOwner(treeItem)
+    // if (treeItem instanceof zeaEngine.GeomItem) {
+    //   const material = treeItem.materialParam.value
+    //   $paramEditor.addParameterOwner(material)
+    // }
+  }
+})
 })

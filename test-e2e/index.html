@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" class="h-full">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -25,180 +25,181 @@
 
     <script async src="index.js"></script>
   </head>
-  <body class="h-full">
-    <div class="flex-col h-full overflow-hidden">
-      <header class="flex space-x-2 p-2 border-b">
-        <h1>3D IPC</h1>
 
-        <button
-          id="newProject"
-          class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
-        >
-          New Project
-        </button>
-        <button
-          id="save"
-          class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
-        >
-          Save
-        </button>
-        <button
-          id="load"
-          class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
-        >
-          Load
-        </button>
-        <button
-          id="undo"
-          class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
-        >
-          Undo
-        </button>
-        <button
-          id="redo"
-          class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
-        >
-          Redo
-        </button>
-        <button
-          id="loadBike"
-          class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
-        >
-          Load Bike
-        </button>
-        <button
-          id="loadGearbox"
-          class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
-        >
-          Load Gearbox
-        </button>
-        <button
-          id="frameView"
-          class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
-        >
-          Frame View
-        </button>
+  <body class="flex flex-col h-screen overflow-hidden">
+    <header class="flex space-x-2 p-2 border-b">
+      <h1>3D IPC</h1>
 
-        <button
-          id="hideSelection"
-          class="border rounded bg-blue-300 px-2 hover:bg-gray-100 hover:border-blue-500"
-        >
-          Hide Selection
-        </button>
-        <button
-          id="unHideAll"
-          class="border rounded bg-blue-300 px-2 hover:bg-gray-100 hover:border-blue-500"
-        >
-          Unhide all
-        </button>
+      <button
+        id="newProject"
+        class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
+      >
+        New Project
+      </button>
+      <button
+        id="save"
+        class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
+      >
+        Save
+      </button>
+      <button
+        id="load"
+        class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
+      >
+        Load
+      </button>
+      <button
+        id="undo"
+        class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
+      >
+        Undo
+      </button>
+      <button
+        id="redo"
+        class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
+      >
+        Redo
+      </button>
+      <button
+        id="loadBike"
+        class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
+      >
+        Load Bike
+      </button>
+      <button
+        id="loadGearbox"
+        class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
+      >
+        Load Gearbox
+      </button>
+      <button
+        id="frameView"
+        class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
+      >
+        Frame View
+      </button>
 
-        <label
-          class="border rounded bg-blue-300 px-2 hover:bg-gray-100 hover:border-blue-500"
-        >
-          Enable Handle
-          <input id="enable-handle" type="checkbox" checked />
-        </label>
-      </header>
+      <button
+        id="hideSelection"
+        class="border rounded bg-blue-300 px-2 hover:bg-gray-100 hover:border-blue-500"
+      >
+        Hide Selection
+      </button>
+      <button
+        id="unHideAll"
+        class="border rounded bg-blue-300 px-2 hover:bg-gray-100 hover:border-blue-500"
+      >
+        Unhide all
+      </button>
 
-      <div class="flex flex-1 h-full">
-        <nav class="Sidebar flex flex-col px-2 pt-2 space-y-2 w-96">
-          <div class="TabBar">
-            <button
-              id="showTab1"
-              class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
-            >
-              Views
-            </button>
-            <button
-              id="showTab2"
-              class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
-            >
-              Tree View
-            </button>
-            <button
-              id="showTab3"
-              class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
-            >
-              Selection Sets
-            </button>
-            <button
-              id="showTab4"
-              class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
-            >
-              Cutting planes
-            </button>
-          </div>
+      <label
+        class="border rounded bg-blue-300 px-2 hover:bg-gray-100 hover:border-blue-500"
+      >
+        Enable Handle
+        <input id="enable-handle" type="checkbox" checked />
+      </label>
+    </header>
 
-          <div id="tab1">
-            <button
-              id="createView"
-              class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
-            >
-              Create View
-            </button>
-            <button
-              id="saveViewCamera"
-              class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
-            >
-              Save View
-            </button>
+    <main class="flex flex-1">
+      <nav class="Sidebar flex flex-col px-2 pt-2 space-y-2 w-96">
+        <div class="TabBar">
+          <button
+            id="showTab1"
+            class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
+          >
+            Views
+          </button>
+          <button
+            id="showTab2"
+            class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
+          >
+            Tree View
+          </button>
+          <button
+            id="showTab3"
+            class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
+          >
+            Selection Sets
+          </button>
+          <button
+            id="showTab4"
+            class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
+          >
+            Cutting planes
+          </button>
+        </div>
 
-            <hr />
+        <div id="tab1">
+          <button
+            id="createView"
+            class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
+          >
+            Create View
+          </button>
+          <button
+            id="saveViewCamera"
+            class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
+          >
+            Save View
+          </button>
 
-            <button
-              id="activateNeutralPose"
-              class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
-            >
-              Neutral Pose
-            </button>
-            <div id="viewButtons" class="flex flex-col space-y-2"></div>
-          </div>
+          <hr />
 
-          <div id="tab2" class="overflow-auto" style="display: none;">
-            <zea-tree-view id="treeView"></zea-tree-view>
-          </div>
+          <button
+            id="activateNeutralPose"
+            class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
+          >
+            Neutral Pose
+          </button>
+          <div id="viewButtons" class="flex flex-col space-y-2"></div>
+        </div>
 
-          <div id="tab3" class="overflow-auto" style="display: none;">
-            <button
-              id="createSelectionSet"
-              class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
-            >
-              Create Selection Set
-            </button>
+        <div id="tab2" class="overflow-auto" style="display: none;">
+          <zea-tree-view id="treeView"></zea-tree-view>
+        </div>
 
-            <hr />
+        <div id="tab3" class="overflow-auto" style="display: none;">
+          <button
+            id="createSelectionSet"
+            class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
+          >
+            Create Selection Set
+          </button>
 
-            <div id="selectionSetButtons" class="flex flex-col space-y-2"></div>
-          </div>
+          <hr />
 
-          <div id="tab4" class="overflow-auto" style="display: none;">
-            <button
-              id="createCuttingPlane"
-              class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
-            >
-              Create Cutting plane
-            </button>
+          <div id="selectionSetButtons" class="flex flex-col space-y-2"></div>
+        </div>
 
-            <hr />
+        <div id="tab4" class="overflow-auto" style="display: none;">
+          <button
+            id="createCuttingPlane"
+            class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
+          >
+            Create Cutting plane
+          </button>
 
-            <div id="cuttingPlaneButtons" class="flex flex-col space-y-2"></div>
-          </div>
-        </nav>
+          <hr />
 
-        <main class="flex flex-1 h-full">
-          <ipc-3d id="ipc-3d" class="h-full w-full"></ipc-3d>
-        </main>
-        <nav
-          id="right-panel"
-          class="Sidebar flex flex-col px-2 pt-2 space-y-2  w-2"
-        >
-          <button id="expand-panel"><</button>
-          <zea-param-editor
-            id="param-editor"
-            style="visibility: hidden;"
-          ></zea-param-editor>
-        </nav>
-      </div>
-    </div>
+          <div id="cuttingPlaneButtons" class="flex flex-col space-y-2"></div>
+        </div>
+      </nav>
+
+      <ipc-3d id="ipc-3d" class="flex flex-1 h-full"></ipc-3d>
+      <nav
+        id="right-panel"
+        class="Sidebar flex flex-col px-2 pt-2 space-y-2  w-2"
+      >
+        <button id="expand-panel">&lt;</button>
+        <zea-param-editor
+          id="param-editor"
+          style="visibility: hidden;"
+        ></zea-param-editor>
+      </nav>
+    </main>
+
+    <button id="toggle-footer">⬆️</button>
+
+    <footer class="hidden flex h-80 px-2 overflow-y-scroll"></footer>
   </body>
 </html>
