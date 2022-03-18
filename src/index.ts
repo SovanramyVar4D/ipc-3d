@@ -237,26 +237,22 @@ class Ipd3d extends HTMLElement {
       // If the SelectionTool is on, it will handle selection changes.
       if (selectionOn) return
       pointerDownPos = event.pointerPos
-      if (event.intersectionData) {
-        const item = this.filterItem(event.intersectionData.geomItem)
-        this.selectionManager.toggleItemSelection(
-          item,
-          !(<ZeaMouseEvent>event).ctrlKey
-        )
-      }
     })
     this.renderer.getViewport().on('pointerUp', (event: ZeaPointerEvent) => {
       // If the SelectionTool is on, it will handle selection changes.
       if (selectionOn) return
-      if (!event.intersectionData) {
-        if (!(<ZeaMouseEvent>event).ctrlKey) {
-          // Clear the selection if the pointer is released close to the press location.
-          if (
-            pointerDownPos &&
-            event.pointerPos.distanceTo(pointerDownPos) < 2
-          ) {
+      if (pointerDownPos && event.pointerPos.distanceTo(pointerDownPos) < 2) {
+        if (!event.intersectionData) {
+          if (!(<ZeaMouseEvent>event).ctrlKey) {
+            // Clear the selection if the pointer is released close to the press location.
             this.selectionManager.setSelection(new Set(), true)
           }
+        } else {
+          const item = this.filterItem(event.intersectionData.geomItem)
+          this.selectionManager.toggleItemSelection(
+            item,
+            !(<ZeaMouseEvent>event).ctrlKey
+          )
         }
       }
     })
