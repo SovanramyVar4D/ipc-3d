@@ -7,8 +7,11 @@ import {
   Color,
   EnvMap,
   EventEmitter,
+  GeomItem,
   GLRenderer,
+  Material,
   Scene,
+  StandardSurfaceMaterial,
   TreeItem,
   Vec2,
   Vec3,
@@ -44,6 +47,8 @@ interface ProjectJson {
   selectionSets: SelectionSetJson[]
   cuttingPlanes: CuttingPlaneJson[]
   neutralPose: PoseJson
+  materials: Record<string, any>[]
+  materialAssignments: Record<string, number>
 }
 
 class Ipd3d extends HTMLElement {
@@ -58,8 +63,10 @@ class Ipd3d extends HTMLElement {
   private hiddenParts: TreeItem[] = []
   private activeView?: View
   private highlightedItem?: TreeItem
-
   private neutralPose: Pose
+
+  private materials: Material[] = []
+  private materialAssignments: Record<string, number> = {}
 
   // private highlightColor = new Color(0.8, 0.2, 0.2, 0.3)
   private selectionColor = new Color(1, 0.8, 0, 0.1)
@@ -186,6 +193,7 @@ class Ipd3d extends HTMLElement {
         }
       } else if (change instanceof ParameterValueChange) {
         const param = <BooleanParameter>change.param
+        if (param.getOwner() instanceof Material) return
         if (this.activeView) {
           this.neutralPose.storeParamValue(param, change.prevValue, true)
           this.activeView.pose.storeParamValue(param, change.nextValue)
@@ -294,11 +302,15 @@ class Ipd3d extends HTMLElement {
 
     this.assets = []
     this.views = []
+    this.selectionSets = []
+    this.materials = []
+    this.materialAssignments = {}
 
     this.undoRedoManager.flush()
 
     this.eventEmitter.emit('viewsListChanged')
     this.eventEmitter.emit('selectionSetListChanged')
+    this.eventEmitter.emit('materialsListChanged')
   }
 
   public async loadAsset(url: string): Promise<void> {
@@ -448,6 +460,40 @@ class Ipd3d extends HTMLElement {
   }
 
   // /////////////////////////////////////////
+  // Materials
+
+  addNewMaterial() {
+    const material = new StandardSurfaceMaterial(
+      'Material' + this.materials.length
+    )
+    material.baseColorParam.value = Color.random(0.24)
+    material.edgeColorParam.value = new Color(0, 0, 0)
+    this.materials.push(material)
+    this.eventEmitter.emit('materialsListChanged')
+  }
+
+  assignMaterialToSelection(materialIndex: number) {
+    const material = this.materials[materialIndex]
+    const selection = this.selectionManager.getSelection()
+
+    const assignToGeomItems = (treeItem: TreeItem) => {
+      treeItem.traverse((childItem: TreeItem) => {
+        if (childItem instanceof GeomItem) {
+          childItem.materialParam.value = material
+
+          const path = childItem.getPath()
+          const key = JSON.stringify(path)
+          this.materialAssignments[key] = materialIndex
+        }
+      })
+    }
+
+    selection.forEach(item => {
+      assignToGeomItems(item)
+    })
+  }
+
+  // /////////////////////////////////////////
   // Persistence
 
   public saveJson(): ProjectJson {
@@ -456,6 +502,8 @@ class Ipd3d extends HTMLElement {
       views: [],
       selectionSets: [],
       cuttingPlanes: [],
+      materials: [],
+      materialAssignments: this.materialAssignments,
       neutralPose: this.neutralPose.saveJson()
     }
     this.assets.forEach((asset: CADAsset) => {
@@ -474,10 +522,14 @@ class Ipd3d extends HTMLElement {
     this.cuttingPlanes.forEach((cuttingPlane: CuttingPlaneWrapper) => {
       projectJson.cuttingPlanes.push(cuttingPlane.saveJson())
     })
+    this.materials.forEach((material: Material) => {
+      projectJson.materials.push(material.toJSON())
+    })
     return projectJson
   }
 
   public loadJson(projectJson: ProjectJson): Promise<void> {
+    this.newProject()
     return new Promise<void>(resolve => {
       const promises: Promise<void>[] = []
       projectJson.assets.forEach((assetJson: AssetJson) => {
@@ -512,6 +564,27 @@ class Ipd3d extends HTMLElement {
           }
         )
         this.eventEmitter.emit('cuttingPlaneListChanged')
+
+        projectJson.materials.forEach((materialJson: Record<string, any>) => {
+          const material = new StandardSurfaceMaterial()
+          material.fromJSON(materialJson)
+          this.materials.push(material)
+        })
+
+        let index = 0
+        for (let key in projectJson.materialAssignments) {
+          const path = JSON.parse(key)
+          console.log(index, projectJson.materialAssignments[key])
+          const material = this.materials[projectJson.materialAssignments[key]]
+          const item = this.scene.getRoot().resolvePath(path)
+          if (item instanceof GeomItem && material) {
+            item.materialParam.value = material
+          }
+          index++
+        }
+        this.materialAssignments = projectJson.materialAssignments
+
+        this.eventEmitter.emit('materialsListChanged')
 
         resolve()
       })

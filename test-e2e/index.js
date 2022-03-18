@@ -285,4 +285,71 @@ $ipc3d.on('leadSelectionChanged', event => {
     // }
   }
 })
+
+// ////////////////////////////////////////////////////
+// Bottom Panel
+const $paramEditorFooter = document.querySelector('#paramEditorFooter')
+$paramEditorFooter.editableNames = true
+
+const $toggleFooter = document.getElementById('toggle-footer')
+
+$toggleFooter.addEventListener('click', () => {
+  const $footer = document.querySelector('footer')
+  $footer.classList.toggle('hidden')
+})
+
+let activeMaterial = -1
+function generateMaterialButtons() {
+  const $materialButtons = document.getElementById('materialButtons')
+
+  while ($materialButtons.childNodes.length > 2) {
+    $materialButtons.removeChild($materialButtons.firstChild)
+  }
+  activeMaterial = -1
+  $paramEditorFooter.clear()
+
+  let $highlightedMaterialBtn
+  $ipc3d.materials.forEach((material, i) => {
+    const $button = document.createElement('button')
+    $button.className =
+      'Material border-2 rounded shadow h-32 w-32 transition-transform transform hover:scale-105 m-1'
+    $button.textContent = material.getName()
+    material.on('nameChanged', () => {
+      $button.textContent = material.getName()
+    })
+    $button.style['background-color'] = material.baseColorParam.value.toHex()
+
+    // here is what you need do to.
+    // Listent to value changes on the 'parameter' not the material....
+    material.baseColorParam.on('valueChanged', () => {
+      $button.style['background-color'] = material.baseColorParam.value.toHex()
+    })
+
+    $button.addEventListener('click', () => {
+      // $ipc3d.activateView(i)
+      if ($highlightedMaterialBtn)
+        $highlightedMaterialBtn.style.borderColor = ''
+      $button.style.borderColor = 'red'
+      $highlightedMaterialBtn = $button
+      activeMaterial = i
+
+      $paramEditorFooter.clear()
+      $paramEditorFooter.addParameterOwner(material)
+    })
+
+    $materialButtons.insertBefore($button, $addMaterialButton)
+  })
+}
+
+$ipc3d.on('materialsListChanged', () => {
+  generateMaterialButtons()
+})
+const $addMaterialButton = document.getElementById('add-material')
+$addMaterialButton.addEventListener('click', () => {
+  $ipc3d.addNewMaterial()
+})
+
+const $assignMaterialButton = document.getElementById('assign-material')
+$assignMaterialButton.addEventListener('click', () => {
+  $ipc3d.assignMaterialToSelection(activeMaterial)
 })
