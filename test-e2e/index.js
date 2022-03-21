@@ -1,11 +1,34 @@
+const DEFAULT_INACTIVE_ITEM_BUTTON_CLASSNAME = 'border rounded bg-gray-300 px-2  hover:bg-gray-100'
+const DEFAULT_ACTIVE_ITEM_BUTTON_CLASSNAME = 'border rounded text-white bg-blue-300 px-2 border-blue-500 active'
+
 const $ipc3d = document.getElementById('ipc-3d')
 
 $ipc3d.on('viewsListChanged', () => {
   generateViewButtons()
 })
 
+$ipc3d.on('viewActivated', (data) => {
+  const $button = activateButton(data, 'div.view-button')
+  if ($button) $button.classList.add('view-button')
+})
+
+$ipc3d.on('viewDeactivated', () => {
+  const $button = deactivateButton('div.view-button.active')
+  if ($button) $button.classList.add('view-button')
+})
+
 $ipc3d.on('selectionSetsListChanged', () => {
   generateSelSetButtons()
+})
+
+$ipc3d.on('selectionSetActivated', (data) => {
+  const $button = activateButton(data, 'div.selection-set-button')
+  if ($button) $button.classList.add('selection-set-button')
+})
+
+$ipc3d.on('selectionSetDeactivated', () => {
+  const $button = deactivateButton('div.selection-set-button.active')
+  if ($button) $button.classList.add('selection-set-button')
 })
 
 // ///////////////////////////////////////////////
@@ -172,8 +195,8 @@ document.getElementById('createView').addEventListener('click', () => {
 document.getElementById('saveViewCamera').addEventListener('click', () => {
   $ipc3d.saveViewCamera()
 })
-document.getElementById('activateNeutralPose').addEventListener('click', () => {
-  $ipc3d.activateNeutralPose()
+document.getElementById('activate-initial-view').addEventListener('click', () => {
+  $ipc3d.activateInitialView()
 })
 
 $ipc3d.undoRedoManager.on('changeAdded', () => {
@@ -194,36 +217,20 @@ function generateViewButtons() {
 
   $ipc3d.views.forEach((view, index) => {
     const $viewButton = document.createElement('div')
-    $viewButton.className = 'border rounded bg-gray-300 px-2 hover:bg-gray-100'
+    $viewButton.className = 'view-button border rounded bg-gray-300 px-2  hover:bg-gray-100'
     $viewButton.style.textAlign = 'center'
     $viewButton.textContent = view.name
 
-    const setButtonActive = () => {
-      $viewButton.className =
-        'border rounded text-white bg-blue-300 px-2 border-blue-500'
-      $viewButton.classList.add('active-view')
-    }
+    $viewButton.addEventListener('click', (event) => {
+      const $activeViewButton = document.querySelector('div.view-button.active')
 
-    if ($ipc3d.getActiveViewName() == view.name) {
-      setButtonActive()
-    }
-
-    $viewButton.addEventListener('click', event => {
-      const $activeViewButton = document.querySelector('.active-view')
+       if ($activeViewButton === $viewButton) {
+         $ipc3d.deactivateView()
+       } else {
+         $ipc3d.deactivateView()
+         $ipc3d.activateView(index)
+       }
       event.stopPropagation()
-      $ipc3d.activateView(index)
-
-      if ($activeViewButton) {
-        $activeViewButton.className =
-          'border rounded bg-gray-300 px-2  hover:bg-gray-100'
-        $activeViewButton.classList.remove('active-view')
-      }
-
-      if ($activeViewButton === $viewButton) {
-        $ipc3d.deactivateView()
-      } else {
-        setButtonActive()
-      }
     })
 
     // ////////////////////////////
@@ -288,6 +295,27 @@ function generateViewButtons() {
   })
 }
 
+function activateButton(btnText, selector) {
+  const $buttonToActivate =
+    [...document.querySelectorAll(selector)]
+      .find((btn) => btn.innerText === btnText)
+
+  if ($buttonToActivate) {
+    $buttonToActivate.className = DEFAULT_ACTIVE_ITEM_BUTTON_CLASSNAME
+  }
+  return $buttonToActivate
+}
+
+function deactivateButton(selector) {
+  const $buttonToDeactivate = document.querySelector(selector)
+
+  if ($buttonToDeactivate) {
+    $buttonToDeactivate.className = DEFAULT_INACTIVE_ITEM_BUTTON_CLASSNAME
+  }
+  return $buttonToDeactivate
+}
+
+
 // ////////////////////////////////////////////////////
 // Selection Sets
 
@@ -311,32 +339,22 @@ function generateSelSetButtons() {
 
   $ipc3d.selectionSets.forEach((selectionSet, index) => {
     const $selectionSetButton = document.createElement('div')
-    $selectionSetButton.className =
-      'border rounded bg-gray-300 px-2 hover:bg-gray-100'
-    $selectionSetButton.style.textAlign = 'center'
-    $selectionSetButton.textContent = selectionSet.name
+    $selectionSetButton.className = 'selection-set-button border rounded bg-gray-300 px-2 hover:bg-gray-100'
+      $selectionSetButton.style.textAlign = 'center'
+      $selectionSetButton.textContent = selectionSet.name
 
-    $selectionSetButton.addEventListener('click', event => {
-      event.stopPropagation()
-      $ipc3d.activateSelectionSet(index)
+      $selectionSetButton.addEventListener('click', (event) => {
+        const $activeSelectionSetButton = document.querySelector('div.selection-set-button.active')
 
-      const $activeSelectionSetButton = document.querySelector(
-        '.active-selection-set'
-      )
-      if ($activeSelectionSetButton) {
-        $activeSelectionSetButton.className =
-          'border rounded bg-gray-300 px-2 hover:bg-gray-100'
-        $activeSelectionSetButton.classList.remove('active-selection-set')
-      }
+        if ($activeSelectionSetButton === $selectionSetButton) {
+          $ipc3d.deactivateSelectionSet()
+        } else {
+          $ipc3d.deactivateSelectionSet()
+          $ipc3d.activateSelectionSet(index)
+        }
 
-      if ($activeSelectionSetButton === $selectionSetButton) {
-        $ipc3d.deactivateSelectionSet()
-      } else {
-        $selectionSetButton.className =
-          'border rounded text-white bg-blue-300 px-2 border-blue-500'
-        $selectionSetButton.classList.add('active-selection-set')
-      }
-    })
+        event.stopPropagation()
+      })
 
     // ////////////////////////////
     // Options Buttons
@@ -418,13 +436,13 @@ function generateCuttingPlanes() {
   $cuttingPlaneButtons.replaceChildren()
 
   let $highlightedSelectionSetBtn
-  $ipc3d.cuttingPlanes.forEach((cuttingPlane, i) => {
+  $ipc3d.cuttingPlanes.forEach((cuttingPlane, index) => {
     const $button = document.createElement('button')
     $button.className = 'border rounded bg-gray-300 px-2  hover:bg-gray-100'
     $button.textContent = cuttingPlane.name
 
     $button.addEventListener('click', () => {
-      $ipc3d.activateCuttingPlane(i)
+      $ipc3d.activateCuttingPlane(index)
       if ($highlightedSelectionSetBtn)
         $highlightedSelectionSetBtn.style.borderColor = ''
       $button.style.borderColor = 'red'

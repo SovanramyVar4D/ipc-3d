@@ -127,7 +127,8 @@ class Ipd3d extends HTMLElement {
       },
       {
         enableXfoHandles: true,
-        selectionOutlineColor
+          selectionOutlineColor: this.selectionColor,
+          branchSelectionOutlineColor: this.selectionColor
       }
     )
     this.selectionManager.selectionGroup.highlightFillParam.value =
@@ -210,15 +211,6 @@ class Ipd3d extends HTMLElement {
         } else {
           this.neutralPose.storeTreeItemsPose(change.treeItems)
         }
-      } else if (change instanceof ParameterValueChange) {
-        const param = change.param
-        if (param.getOwner() instanceof Material) return
-        if (this.activeView) {
-          this.neutralPose.storeParamValue(param, change.prevValue)
-          this.activeView.pose.storeParamValue(param, change.nextValue)
-        } else {
-          this.neutralPose.storeParamValue(param, change.nextValue)
-        }
       }
     })
 
@@ -267,6 +259,13 @@ class Ipd3d extends HTMLElement {
       // If the SelectionTool is on, it will handle selection changes.
       if (selectionOn) return
       pointerDownPos = event.pointerPos
+      if (event.intersectionData) {
+        const item = this.filterItem(event.intersectionData.geomItem)
+        this.selectionManager.toggleItemSelection(
+          item,
+          !(<ZeaMouseEvent>event).ctrlKey
+        )
+      }
     })
     this.renderer.getViewport().on('pointerUp', (event: ZeaPointerEvent) => {
       if (this.picking) {
@@ -395,16 +394,16 @@ class Ipd3d extends HTMLElement {
 
     if (view) newView.copyFrom(view)
 
+
     const change = new CreateViewChange(newView, this.views, this.eventEmitter)
     newView.setCameraParams(this.renderer.getViewport().getCamera())
     this.views.push(newView)
 
     this.undoRedoManager.addChange(change)
 
-    // Make the new view the active view.
-    this.activeView = newView
-
     this.eventEmitter.emit('viewsListChanged')
+
+    this.activateView(this.views.indexOf(newView))
   }
 
   public deleteView(index: number) {
@@ -440,6 +439,7 @@ class Ipd3d extends HTMLElement {
     view.activate(this.renderer.getViewport().getCamera(), this.neutralPose)
 
     this.activeView = view
+    this.eventEmitter.emit('viewActivated', view.name)
   }
 
   public getActiveViewName(): string {
@@ -456,7 +456,7 @@ class Ipd3d extends HTMLElement {
     }
   }
 
-  public activateNeutralPose() {
+  public activateInitialView() {
     this.deactivateView()
     this.neutralPose.lerpPose()
   }
@@ -465,7 +465,7 @@ class Ipd3d extends HTMLElement {
     this.selectionManager.clearSelection()
 
     this.activeView = undefined
-    this.eventEmitter.emit('viewsListChanged')
+    this.eventEmitter.emit('viewDeactivated')
   }
 
   // /////////////////////////////////////////
@@ -499,6 +499,7 @@ class Ipd3d extends HTMLElement {
       this.undoRedoManager.addChange(change)
 
       this.eventEmitter.emit('selectionSetsListChanged')
+      this.activateSelectionSet(this.selectionSets.indexOf(newSelectionSet))
     }
   }
 
@@ -540,11 +541,12 @@ class Ipd3d extends HTMLElement {
     const selectionSet = this.selectionSets[index]
     const set = new Set(selectionSet.items)
     this.selectionManager.setSelection(set)
+    this.eventEmitter.emit('selectionSetActivated', selectionSet.name)
   }
 
   public deactivateSelectionSet() {
     this.selectionManager.clearSelection()
-    this.eventEmitter.emit('selectionSetsListChanged')
+    this.eventEmitter.emit('selectionSetDeactivated')
   }
 
   public hideSelection() {
