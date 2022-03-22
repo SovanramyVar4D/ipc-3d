@@ -178,6 +178,10 @@ class Ipd3d extends HTMLElement {
       switch (e.key) {
         case 's':
           if (!selectionOn) setToolToSelectionTool()
+          if (e.ctrlKey) {
+            e.preventDefault()
+            this.eventEmitter.emit('saveKeyboardShortcutTriggered')
+          }
           break
         case 'z':
           if (e.ctrlKey) {
@@ -767,7 +771,7 @@ class Ipd3d extends HTMLElement {
             this.selectionSets.push(sel)
           }
         )
-        this.eventEmitter.emit('selectionSetListChanged')
+        this.eventEmitter.emit('selectionSetsListChanged')
 
         projectJson.cuttingPlanes.forEach(
           (cuttingPlaneJson: CuttingPlaneJson) => {

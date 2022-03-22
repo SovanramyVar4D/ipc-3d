@@ -3,6 +3,10 @@ const DEFAULT_ACTIVE_ITEM_BUTTON_CLASSNAME = 'border rounded text-white bg-blue-
 
 const $ipc3d = document.getElementById('ipc-3d')
 
+$ipc3d.on('saveKeyboardShortcutTriggered', () => {
+  saveProjectOnLocalStorage()
+})
+
 $ipc3d.on('viewsListChanged', () => {
   generateViewButtons()
 })
@@ -37,15 +41,12 @@ document.getElementById('newProject').addEventListener('click', () => {
   $ipc3d.newProject()
 })
 
-document.getElementById('save').addEventListener('click', event => {
-  const json = $ipc3d.saveJson()
-  console.log(json)
+document.getElementById('save').addEventListener('click', () => {
+  saveProjectOnLocalStorage()
+})
 
-  if (event.ctrlKey) {
-    download('ipc.proj', JSON.stringify(json))
-  } else {
-    localStorage.setItem('ipc-project', JSON.stringify(json))
-  }
+document.getElementById('save-as').addEventListener('click', () => {
+  downloadProjectFile()
 })
 
 document.getElementById('load').addEventListener('click', () => {
@@ -67,6 +68,31 @@ if (urlParams.has('proj')) {
     .then(txt => {
       $ipc3d.loadJson(JSON.parse(txt)).then(() => {})
     })
+}
+
+function downloadProjectFile() {
+  const json = $ipc3d.saveJson()
+  download('ipc.proj', JSON.stringify(json))
+}
+
+function saveProjectOnLocalStorage() {
+  const json = $ipc3d.saveJson()
+  console.log(json)
+  localStorage.setItem('ipc-project', JSON.stringify(json))
+}
+
+function download(file, text) {
+  //creating an invisible element
+  const element = document.createElement('a')
+  element.setAttribute(
+    'href',
+    'data:text/plain;charset=utf-8, ' + encodeURIComponent(text)
+  )
+  element.setAttribute('download', file)
+  document.body.appendChild(element)
+  //onClick property
+  element.click()
+  document.body.removeChild(element)
 }
 
 // ///////////////////////////////////////////////
@@ -93,20 +119,6 @@ document.getElementById('loadGearbox').addEventListener('click', async () => {
   const assetName = await $ipc3d.loadAsset('data/gear_box_final_asm.stp.zcad')
   $assetIndicator.textContent = assetName
 })
-
-function download(file, text) {
-  //creating an invisible element
-  var element = document.createElement('a')
-  element.setAttribute(
-    'href',
-    'data:text/plain;charset=utf-8, ' + encodeURIComponent(text)
-  )
-  element.setAttribute('download', file)
-  document.body.appendChild(element)
-  //onClick property
-  element.click()
-  document.body.removeChild(element)
-}
 
 document.getElementById('frameView').addEventListener('click', () => {
   $ipc3d.frameView()
