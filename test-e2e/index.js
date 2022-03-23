@@ -13,12 +13,20 @@ $ipc3d.on('viewsListChanged', () => {
 
 $ipc3d.on('viewActivated', (data) => {
   const $button = activateButton(data, 'div.view-button')
-  if ($button) $button.classList.add('view-button')
+  if ($button) {
+    $button.classList.add('view-button')
+    $button.querySelectorAll('button')
+      .forEach((btn) => btn.classList.remove('hidden'))
+  }
 })
 
 $ipc3d.on('viewDeactivated', () => {
   const $button = deactivateButton('div.view-button.active')
-  if ($button) $button.classList.add('view-button')
+  if ($button) {
+    $button.classList.add('view-button')
+    $button.querySelectorAll('button')
+      .forEach((btn) => btn.classList.add('hidden'))
+  }
 })
 
 $ipc3d.on('selectionSetsListChanged', () => {
@@ -27,12 +35,20 @@ $ipc3d.on('selectionSetsListChanged', () => {
 
 $ipc3d.on('selectionSetActivated', (data) => {
   const $button = activateButton(data, 'div.selection-set-button')
-  if ($button) $button.classList.add('selection-set-button')
+  if ($button) {
+    $button.classList.add('selection-set-button')
+    $button.querySelectorAll('button')
+      .forEach((btn) => btn.classList.remove('hidden'))
+  }
 })
 
 $ipc3d.on('selectionSetDeactivated', () => {
   const $button = deactivateButton('div.selection-set-button.active')
-  if ($button) $button.classList.add('selection-set-button')
+  if ($button) {
+    $button.classList.add('selection-set-button')
+    $button.querySelectorAll('button')
+      .forEach((btn) => btn.classList.add('hidden'))
+  }
 })
 
 // ///////////////////////////////////////////////
@@ -253,7 +269,7 @@ function generateViewButtons() {
     // Rename
     const $RenameViewButton = document.createElement('button')
     $RenameViewButton.className =
-      'border rounded text-black bg-yellow-200 px-5 mx-0.5 hover:bg-yellow-150'
+      'hidden border rounded text-black bg-yellow-200 px-5 mx-0.5 hover:bg-yellow-150'
 
     const renameViewIcon = document.createElement('i')
     renameViewIcon.className = 'fa-solid fa-pen-to-square'
@@ -275,7 +291,7 @@ function generateViewButtons() {
     // Duplicate
     const $duplicateViewButton = document.createElement('button')
     $duplicateViewButton.className =
-      'border rounded text-black bg-yellow-200 px-5 mx-0.5 hover:bg-red-150'
+      'hidden border rounded text-black bg-yellow-200 px-5 mx-0.5 hover:bg-red-150'
 
     const duplicateViewIcon = document.createElement('i')
     duplicateViewIcon.className = 'fa-solid fa-clone'
@@ -290,7 +306,7 @@ function generateViewButtons() {
     // Delete
     const $deleteViewButton = document.createElement('button')
     $deleteViewButton.className =
-      'border rounded text-black bg-red-200 px-5 ml-5 hover:bg-red-150'
+      'hidden border rounded text-black bg-red-200 px-5 ml-5 hover:bg-red-150'
 
     const deleteViewIcon = document.createElement('i')
     deleteViewIcon.className = 'fa-solid fa-trash'
@@ -376,7 +392,7 @@ function generateSelSetButtons() {
     // Rename
     const $RenameSelectionSetButton = document.createElement('button')
     $RenameSelectionSetButton.className =
-      'border rounded text-black bg-yellow-200 px-5 mx-0.5 hover:bg-yellow-150'
+      'hidden border rounded text-black bg-yellow-200 px-5 mx-0.5 hover:bg-yellow-150'
 
     const renameSelectionSetIcon = document.createElement('i')
     renameSelectionSetIcon.className = 'fa-solid fa-pen-to-square'
@@ -405,7 +421,7 @@ function generateSelSetButtons() {
     // Duplicate
     const $duplicateSelectionSetButton = document.createElement('button')
     $duplicateSelectionSetButton.className =
-      'border rounded text-black bg-yellow-200 px-5 mx-0.5 hover:bg-red-150'
+      'hidden border rounded text-black bg-yellow-200 px-5 mx-0.5 hover:bg-red-150'
 
     const duplicateSelectionSetIcon = document.createElement('i')
     duplicateSelectionSetIcon.className = 'fa-solid fa-clone'
@@ -420,7 +436,7 @@ function generateSelSetButtons() {
     // Delete
     const $deleteSelectionSetButton = document.createElement('button')
     $deleteSelectionSetButton.className =
-      'border rounded text-black bg-red-200 px-5 ml-5 hover:bg-red-150'
+      'hidden border rounded text-black bg-red-200 px-5 ml-5 hover:bg-red-150'
 
     const deleteSelectionSetIcon = document.createElement('i')
     deleteSelectionSetIcon.className = 'fa-solid fa-trash'

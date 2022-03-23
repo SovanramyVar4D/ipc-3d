@@ -77,6 +77,7 @@ class Ipd3d extends HTMLElement {
   private hiddenParts: TreeItem[] = []
   private activeView?: View
   private highlightedItem?: TreeItem
+
   private neutralPose: Pose
 
   private materials: Material[] = []
@@ -539,6 +540,17 @@ class Ipd3d extends HTMLElement {
     const selectionSet = this.selectionSets[fromSelectionSetIndex]
     this.createSelectionSet(selectionSet, selectionSet.name + '-duplicated')
     this.eventEmitter.emit('selectionSetsListChanged')
+  }
+
+
+  public updateSelectionSet(index: number) {
+    const selectionSet = this.selectionSets[index]
+
+    const selection = Array.from(this.selectionManager.getSelection())
+    const change = new UpdateSelectionSetChange(selectionSet, selection)
+    this.undoRedoManager.addChange(change)
+
+    selectionSet.items = Array.from(this.selectionManager.getSelection())
   }
 
   public activateSelectionSet(index: number) {
