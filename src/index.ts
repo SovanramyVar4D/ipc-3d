@@ -69,9 +69,6 @@ class Ipd3d extends HTMLElement {
 
   private neutralPose: Pose
 
-  // private highlightColor = new Color(0.8, 0.2, 0.2, 0.3)
-  private selectionColor = new Color(1, 0.8, 0, 0.1)
-
   private eventEmitter = new EventEmitter()
 
   constructor() {
@@ -111,11 +108,11 @@ class Ipd3d extends HTMLElement {
       },
       {
         enableXfoHandles: true,
-        selectionOutlineColor: this.selectionColor,
-        branchSelectionOutlineColor: this.selectionColor
+        selectionOutlineColor
       }
     )
-    this.selectionManager.selectionGroup.highlightFillParam.value = this.selectionColor.a
+    this.selectionManager.selectionGroup.highlightFillParam.value =
+      selectionOutlineColor.a
 
     this.selectionManager.on('selectionChanged', (event: any) => {
       console.log('selectionChanged', event)

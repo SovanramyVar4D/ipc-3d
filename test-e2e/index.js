@@ -178,7 +178,7 @@ function generateViewButtons() {
 
   $ipc3d.views.forEach((view, index) => {
     const $viewButton = document.createElement('div')
-    $viewButton.className = 'border rounded bg-gray-300 px-2  hover:bg-gray-100'
+    $viewButton.className = 'border rounded bg-gray-300 px-2 hover:bg-gray-100'
     $viewButton.style.textAlign = 'center'
     $viewButton.textContent = view.name
 
