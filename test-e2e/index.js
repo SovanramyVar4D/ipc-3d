@@ -92,6 +92,10 @@ document.getElementById('hideSelection').addEventListener('click', () => {
 document.getElementById('unHideAll').addEventListener('click', () => {
   $ipc3d.unHideAll()
 })
+/* Callouts */
+document.getElementById('addCallout').addEventListener('click', () => {
+  $ipc3d.startPickingSession()
+})
 /* Misc */
 document
   .getElementById('enable-handle')

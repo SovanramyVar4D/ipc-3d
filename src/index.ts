@@ -1,5 +1,6 @@
 import {
   AssetLoadContext,
+  BillboardItem,
   BooleanParameter,
   CADAssembly,
   CADAsset,
@@ -8,14 +9,20 @@ import {
   Color,
   EnvMap,
   EventEmitter,
+  FlatSurfaceMaterial,
   GeomItem,
   GLRenderer,
+  Label,
+  Lines,
   Material,
+  Ray,
   Scene,
+  Sphere,
   StandardSurfaceMaterial,
   TreeItem,
   Vec2,
   Vec3,
+  Vec3Attribute,
   Xfo,
   ZeaMouseEvent,
   ZeaPointerEvent
@@ -74,6 +81,9 @@ class Ipd3d extends HTMLElement {
 
   private materials: Material[] = []
   private materialAssignments: Record<string, number> = {}
+
+  private picking = false
+  private callouts: BillboardItem[] = []
 
   // private highlightColor = new Color(0.8, 0.2, 0.2, 0.3)
   private selectionColor = new Color(1, 0.8, 0, 0.1)
@@ -259,6 +269,17 @@ class Ipd3d extends HTMLElement {
       pointerDownPos = event.pointerPos
     })
     this.renderer.getViewport().on('pointerUp', (event: ZeaPointerEvent) => {
+      if (this.picking) {
+        if (event.intersectionData) {
+          const hitPos = event.intersectionData.intersectionPos
+          console.log(hitPos)
+
+          this.addCallout(hitPos)
+
+          this.picking = false
+          return
+        }
+      }
       // If the SelectionTool is on, it will handle selection changes.
       if (selectionOn) return
       if (pointerDownPos && event.pointerPos.distanceTo(pointerDownPos) < 2) {
@@ -334,7 +355,7 @@ class Ipd3d extends HTMLElement {
 
       cadAsset.load(url, context).then(() => {
         this.renderer.frameAll()
-        console.log('loaded')
+        console.log('loaded', cadAsset.getName())
         resolve()
       })
 
@@ -596,6 +617,85 @@ class Ipd3d extends HTMLElement {
     selection.forEach(item => {
       assignToGeomItems(item)
     })
+  }
+
+  // /////////////////////////////////////////
+  // Callouts
+
+  startPickingSession() {
+    this.picking = true
+  }
+
+  addCallout(basePos: Vec3 = new Vec3(0, 0, 1)) {
+    const labelText = '' + this.callouts.length
+    const label = new Label(labelText)
+    label.fontSizeParam.setValue(48)
+    label.borderRadiusParam.value = 20
+    // label.getParameter('FontColor').setValue(color)
+    label.backgroundColorParam.setValue(new Color(1, 1, 1))
+
+    const sphere = new Sphere(0.1)
+    const material = new FlatSurfaceMaterial()
+    material.baseColorParam.value = new Color(0, 0, 0)
+    const sphereXfo = new Xfo(basePos)
+    const sphereItem = new GeomItem('sphere', sphere, material, sphereXfo)
+
+    this.scene.getRoot().addChild(sphereItem)
+
+    const line = new Lines() //new Lines(0.0)
+    line.setNumVertices(2)
+    line.setNumSegments(1)
+    line.setSegmentVertexIndices(0, 0, 1)
+    const positions = <Vec3Attribute>line.getVertexAttribute('positions')
+    positions.setValue(0, new Vec3())
+    positions.setValue(1, new Vec3(0, 0, 1))
+    line.setBoundingBoxDirty()
+
+    const len = 100
+    const lineXfo = new Xfo()
+    lineXfo.sc.z = len
+    const geomItemLine = new GeomItem('line', line, material, lineXfo)
+
+    sphereItem.addChild(geomItemLine, false)
+
+    const billboard = new BillboardItem('Callout' + this.callouts.length, label)
+    const labelPos = basePos.add(new Vec3(0, 0, len))
+    const xfo = new Xfo(labelPos)
+    billboard.localXfoParam.value = xfo
+    billboard.pixelsPerMeterParam.setValue(3)
+    billboard.alignedToCameraParam.setValue(true)
+    billboard.alphaParam.setValue(1)
+
+    const plane = new Ray()
+    billboard.on('pointerDown', (event: ZeaPointerEvent) => {
+      plane.start = event.intersectionData!.intersectionPos
+      plane.dir = event.pointerRay.dir
+
+      this.renderer.getViewport().on('pointerMove', moveLabel)
+      this.renderer.getViewport().once('pointerUp', releaseLabel)
+      event.stopPropagation()
+    })
+
+    const moveLabel = (event: ZeaPointerEvent) => {
+      const dist = event.pointerRay.intersectRayPlane(plane)
+      xfo.tr = event.pointerRay.pointAtDist(dist)
+      billboard.globalXfoParam.value = xfo
+
+      const dir = xfo.tr.subtract(sphereXfo.tr).normalize()
+      lineXfo.ori.setFromDirectionAndUpvector(dir, new Vec3(0, 0, 1))
+      lineXfo.sc.z = xfo.tr.distanceTo(sphereXfo.tr)
+      lineXfo.tr = sphereXfo.tr
+      geomItemLine.globalXfoParam.value = lineXfo
+      event.stopPropagation()
+    }
+    const releaseLabel = (event: any) => {
+      this.renderer.getViewport().off('pointerMove', moveLabel)
+      event.stopPropagation()
+    }
+
+    sphereItem.addChild(billboard)
+
+    this.callouts.push(billboard)
   }
 
   // /////////////////////////////////////////
