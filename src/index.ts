@@ -82,7 +82,7 @@ class Ipd3d extends HTMLElement {
   private materials: Material[] = []
   private materialAssignments: Record<string, number> = {}
 
-  private picking = false
+  picking = false
   private callouts: BillboardItem[] = []
 
   // private highlightColor = new Color(0.8, 0.2, 0.2, 0.3)
@@ -276,7 +276,7 @@ class Ipd3d extends HTMLElement {
 
           this.addCallout(hitPos)
 
-          this.picking = false
+          this.endPickingSession()
           return
         }
       }
@@ -625,6 +625,10 @@ class Ipd3d extends HTMLElement {
   startPickingSession() {
     this.picking = true
   }
+  endPickingSession() {
+    this.picking = false
+    this.eventEmitter.emit('pickingEnded')
+  }
 
   addCallout(basePos: Vec3 = new Vec3(0, 0, 1)) {
     const labelText = '' + this.callouts.length
@@ -801,6 +805,11 @@ class Ipd3d extends HTMLElement {
 
   on(eventName: string, listener?: (event: any) => void): number {
     return this.eventEmitter.on(eventName, listener)
+  }
+
+  once(eventName: string, listener?: (event: any) => void): number {
+    // @ts-ignore
+    return this.eventEmitter.once(eventName, listener)
   }
 
   // /////////////////////////////////////////

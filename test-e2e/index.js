@@ -94,7 +94,15 @@ document.getElementById('unHideAll').addEventListener('click', () => {
 })
 /* Callouts */
 document.getElementById('addCallout').addEventListener('click', () => {
-  $ipc3d.startPickingSession()
+  if (!$ipc3d.picking) {
+    $ipc3d.startPickingSession()
+    document.getElementById('addCallout').classList.add('bg-gray-100')
+    $ipc3d.once('pickingEnded', () => {
+      document.getElementById('addCallout').classList.remove('bg-gray-100')
+    })
+  } else {
+    $ipc3d.endPickingSession()
+  }
 })
 /* Misc */
 document
