@@ -18,6 +18,13 @@ export class SelectionSet {
   // /////////////////////////////////////////
   // Persistence
 
+
+  copyFrom(selectionSet: SelectionSet) {
+    this.name = selectionSet.name
+    this.items = selectionSet.items
+    this.scene = selectionSet.scene
+  }
+
   saveJson(): SelectionSetJson {
     const json: SelectionSetJson = { name: this.name, items: [] }
 

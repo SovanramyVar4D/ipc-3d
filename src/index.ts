@@ -4,6 +4,7 @@ import {
   CADAssembly,
   CADAsset,
   CADPart,
+  Camera,
   Color,
   EnvMap,
   EventEmitter,
@@ -15,6 +16,7 @@ import {
   TreeItem,
   Vec2,
   Vec3,
+  Xfo,
   ZeaMouseEvent,
   ZeaPointerEvent
 } from '@zeainc/zea-engine'
@@ -36,6 +38,11 @@ import { Pose, PoseJson } from './Pose'
 import { SelectionSet, SelectionSetJson } from './SelectionSet'
 
 import CuttingPlaneWrapper, { CuttingPlaneJson } from './CuttingPlane'
+import DeleteViewChange from './Changes/DeleteViewChange'
+import RenameViewChange from './Changes/RenameViewChange'
+import CreateSelectionSetChange from './Changes/CreateSelectionSetChange'
+import DeleteSelectionSetChange from './Changes/DeleteSelectionSetChange'
+import RenameSelectionSetChange from './Changes/RenameSelectionSetChange'
 
 interface AssetJson {
   url: string
@@ -101,6 +108,8 @@ class Ipd3d extends HTMLElement {
 
     // ////////////////////////////////////////////
     // Setup Selection Manager
+    const selectionOutlineColor = new Color('gold')
+    selectionOutlineColor.a = 0.1
     this.selectionManager = new SelectionManager(
       {
         scene: this.scene,
@@ -108,17 +117,17 @@ class Ipd3d extends HTMLElement {
       },
       {
         enableXfoHandles: true,
-        selectionOutlineColor: this.selectionColor,
-        branchSelectionOutlineColor: this.selectionColor
+        selectionOutlineColor
       }
     )
-    this.selectionManager.selectionGroup.highlightFillParam.value = this.selectionColor.a
+    this.selectionManager.selectionGroup.highlightFillParam.value =
+      selectionOutlineColor.a
 
-    this.selectionManager.on('selectionChanged', (event: any) => {
-      console.log('selectionChanged', event)
-    })
+    // this.selectionManager.on('selectionChanged', (event: any) => {
+    //   console.log('selectionChanged', event)
+    // })
     this.selectionManager.on('leadSelectionChanged', (event: any) => {
-      console.log('leadSelectionChanged', event)
+      // console.log('leadSelectionChanged', event)
       this.eventEmitter.emit('leadSelectionChanged', event)
     })
 
@@ -192,10 +201,10 @@ class Ipd3d extends HTMLElement {
           this.neutralPose.storeTreeItemsPose(change.treeItems)
         }
       } else if (change instanceof ParameterValueChange) {
-        const param = <BooleanParameter>change.param
+        const param = change.param
         if (param.getOwner() instanceof Material) return
         if (this.activeView) {
-          this.neutralPose.storeParamValue(param, change.prevValue, true)
+          this.neutralPose.storeParamValue(param, change.prevValue)
           this.activeView.pose.storeParamValue(param, change.nextValue)
         } else {
           this.neutralPose.storeParamValue(param, change.nextValue)
@@ -208,8 +217,11 @@ class Ipd3d extends HTMLElement {
       if (change instanceof SelectionXfoChange) {
         if (this.activeView) {
           this.activeView.pose.storeTreeItemsPose(change.treeItems)
-        } else {
-          this.neutralPose.storeTreeItemsPose(change.treeItems)
+        }
+      } else if (change instanceof ParameterValueChange) {
+        const param = change.param
+        if (this.activeView) {
+          this.activeView.pose.storeParamValue(param, change.nextValue)
         }
       }
     })
@@ -353,33 +365,63 @@ class Ipd3d extends HTMLElement {
     }
   }
 
-  public createView() {
-    const view = new View('View' + this.views.length, this.scene)
-    if (this.activeView) {
-      view.copyFrom(this.activeView)
-    }
-    const change = new CreateViewChange(view, this.views, this.eventEmitter)
-    view.setCameraParams(this.renderer.getViewport().getCamera())
-    this.views.push(view)
+  public createView(view?: View, name?: string) {
+    const viewName = name ? name : 'View' + this.views.length
+
+    const newView = new View(viewName, this.scene)
+
+    if (view) newView.copyFrom(view)
+
+    const change = new CreateViewChange(newView, this.views, this.eventEmitter)
+    newView.setCameraParams(this.renderer.getViewport().getCamera())
+    this.views.push(newView)
 
     this.undoRedoManager.addChange(change)
 
-    this.activeView = view
+    // Make the new view the active view.
+    this.activeView = newView
 
     this.eventEmitter.emit('viewsListChanged')
   }
 
-  public deleteView(index: string) {
+  public deleteView(index: number) {
+    const view = this.views[index]
+
+    const change = new DeleteViewChange(view, this.views, this.eventEmitter)
+
+    this.views.splice(index, 1)
+    this.undoRedoManager.addChange(change)
+
+    this.eventEmitter.emit('viewsListChanged')
+  }
+
+  public duplicateView(fromViewIndex: number) {
+    const view = this.views[fromViewIndex]
+    this.createView(view, view.name + '-duplicated')
+  }
+
+  public renameView(index: number, newName: string) {
+    const view = this.views[index]
+
+    const change = new RenameViewChange(view, newName, this.eventEmitter)
+    view.name = newName
+    this.undoRedoManager.addChange(change)
+
     this.eventEmitter.emit('viewsListChanged')
   }
 
   public activateView(index: number) {
+    this.selectionManager.clearSelection()
+
     const view = this.views[index]
     view.activate(this.renderer.getViewport().getCamera(), this.neutralPose)
 
     this.activeView = view
+  }
 
-    this.eventEmitter.emit('viewsListChanged')
+  public getActiveViewName(): string {
+    if (this.activeView) return this.activeView.name
+    return ''
   }
 
   public saveViewCamera() {
@@ -392,31 +434,94 @@ class Ipd3d extends HTMLElement {
   }
 
   public activateNeutralPose() {
+    this.deactivateView()
     this.neutralPose.lerpPose()
-    this.activeView = undefined
   }
 
   public deactivateView() {
+    this.selectionManager.clearSelection()
+
     this.activeView = undefined
+    this.eventEmitter.emit('viewsListChanged')
   }
 
   // /////////////////////////////////////////
   // Selection Sets
 
-  public createSelectionSet() {
-    const set = Array.from(this.selectionManager.getSelection().values())
-    this.selectionSets.push(
-      new SelectionSet('SelSet' + this.selectionSets.length, set, this.scene)
-    )
+  public createSelectionSet(selectionSet?: SelectionSet, name?: string) {
+    const selectionSetName = name
+      ? name
+      : 'SelectionSet-' + this.selectionSets.length
 
-    this.eventEmitter.emit('selectionSetListChanged')
+    let newSelectionSet
+    if (selectionSet) {
+      newSelectionSet = new SelectionSet(
+        selectionSetName,
+        selectionSet.items,
+        selectionSet.scene
+      )
+    } else {
+      const set = Array.from(this.selectionManager.getSelection().values())
+      if (set.length > 0) {
+        newSelectionSet = new SelectionSet(selectionSetName, set, this.scene)
+      }
+    }
+    if (newSelectionSet) {
+      const change = new CreateSelectionSetChange(
+        newSelectionSet,
+        this.selectionSets,
+        this.eventEmitter
+      )
+      this.selectionSets.push(newSelectionSet)
+      this.undoRedoManager.addChange(change)
+
+      this.eventEmitter.emit('selectionSetsListChanged')
+    }
+  }
+
+  public deleteSelectionSet(index: number) {
+    const selectionSet = this.selectionSets[index]
+
+    this.selectionManager.clearSelection()
+
+    const change = new DeleteSelectionSetChange(
+      selectionSet,
+      this.selectionSets,
+      this.eventEmitter
+    )
+    this.selectionSets.splice(index, 1)
+    this.undoRedoManager.addChange(change)
+
+    this.eventEmitter.emit('selectionSetsListChanged')
+  }
+
+  public renameSelectionSet(index: number, newName: string) {
+    const selectionSet = this.selectionSets[index]
+    const change = new RenameSelectionSetChange(
+      selectionSet,
+      newName,
+      this.eventEmitter
+    )
+    selectionSet.name = newName
+    this.undoRedoManager.addChange(change)
+    this.eventEmitter.emit('selectionSetsListChanged')
+  }
+
+  public duplicateSelectionSet(fromSelectionSetIndex: number) {
+    const selectionSet = this.selectionSets[fromSelectionSetIndex]
+    this.createSelectionSet(selectionSet, selectionSet.name + '-duplicated')
+    this.eventEmitter.emit('selectionSetsListChanged')
   }
 
   public activateSelectionSet(index: number) {
     const selectionSet = this.selectionSets[index]
     const set = new Set(selectionSet.items)
     this.selectionManager.setSelection(set)
-    this.eventEmitter.emit('selectionSetListChanged')
+  }
+
+  public deactivateSelectionSet() {
+    this.selectionManager.clearSelection()
+    this.eventEmitter.emit('selectionSetsListChanged')
   }
 
   public hideSelection() {
