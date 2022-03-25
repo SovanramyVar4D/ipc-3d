@@ -6,6 +6,11 @@ class NumberParameterWidget extends ParameterWidget {
   parameter: NumberParameter | null = null
   $input: HTMLInputElement
 
+  // Note: range inputs are not able to hanle scalar values, and so
+  // we multiply the value by 100 when displaying and then divide again
+  // when setting to the parameter.
+  multiplier = 1
+
   constructor() {
     super()
 
@@ -28,14 +33,16 @@ class NumberParameterWidget extends ParameterWidget {
 
     let change: ParameterValueChange | null = null
     this.$input.addEventListener('input', () => {
-      const value = this.$input.valueAsNumber / 100
-      if (!change) {
-        change = new ParameterValueChange(this.parameter!, value)
-        UndoRedoManager.getInstance().addChange(change)
-      } else {
-        change.update({
-          value
-        })
+      if (this.parameter) {
+        const value = this.$input.valueAsNumber / this.multiplier
+        if (!change) {
+          change = new ParameterValueChange(this.parameter, value)
+          UndoRedoManager.getInstance().addChange(change)
+        } else {
+          change.update({
+            value
+          })
+        }
       }
     })
     this.$input.addEventListener('change', () => {
@@ -46,21 +53,22 @@ class NumberParameterWidget extends ParameterWidget {
   }
 
   updateValue(): void {
-    this.$input.value = `${this.parameter?.value! * 100}`
+    this.$input.value = `${this.parameter?.value! * this.multiplier}`
   }
 
   setParameter(parameter: NumberParameter) {
-    super.setParameter(parameter)
     const range = parameter.getRange()
     if (range) {
+      this.multiplier = 100
       this.$input.type = `range`
-      this.$input.min = `${range[0] * 100}`
-      this.$input.max = `${range[1] * 100}`
+      this.$input.min = `${range[0] * this.multiplier}`
+      this.$input.max = `${range[1] * this.multiplier}`
     }
     const step = parameter.getStep()
     if (step) {
-      this.$input.step = `${step * 100}`
+      this.$input.step = `${step * this.multiplier}`
     }
+    super.setParameter(parameter)
   }
 
   static checkParam(param: Parameter<any>) {
