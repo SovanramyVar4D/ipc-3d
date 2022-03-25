@@ -1585,10 +1585,10 @@
     "@types/parse5" "^6.0.1"
     parse5 "^6.0.1"
 
-"@zeainc/zea-engine@4.2.0-81aa8c9":
-  version "4.2.0-81aa8c9"
-  resolved "https://registry.yarnpkg.com/@zeainc/zea-engine/-/zea-engine-4.2.0-81aa8c9.tgz#154dc8fc6b06695558461676abe7804cf0b7bbe1"
-  integrity sha512-fHV46H+B7qgr8/JQWEGaOH1rv/cnff1qp5toboJd+Did6akmB0DeRsldDinUjYSFe7ik4eH4czNoHNlwDtEYYw==
+"@zeainc/zea-engine@4.3.0-d5826fb":
+  version "4.3.0-d5826fb"
+  resolved "https://registry.yarnpkg.com/@zeainc/zea-engine/-/zea-engine-4.3.0-d5826fb.tgz#69c626f7ca98f6cb1fcaa659dc704d03ca949ed4"
+  integrity sha512-4WCAOvj1TcGQs91l/6jMn03kNBkSMdOVglEQMHCkVj86o3IUUKjbVeyU9WYnK1b/cgEld6OQDUY2LUCc9DOE+w==
   dependencies:
     lodash-es "^4.17.21"
 
