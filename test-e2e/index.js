@@ -182,6 +182,16 @@ function generateViewButtons() {
     $viewButton.style.textAlign = 'center'
     $viewButton.textContent = view.name
 
+    const setButtonActive = () => {
+      $viewButton.className =
+        'border rounded text-white bg-blue-300 px-2 border-blue-500'
+      $viewButton.classList.add('active-view')
+    }
+
+    if ($ipc3d.getActiveViewName() == view.name) {
+      setButtonActive()
+    }
+
     $viewButton.addEventListener('click', event => {
       const $activeViewButton = document.querySelector('.active-view')
       event.stopPropagation()
@@ -196,9 +206,7 @@ function generateViewButtons() {
       if ($activeViewButton === $viewButton) {
         $ipc3d.deactivateView()
       } else {
-        $viewButton.className =
-          'border rounded text-white bg-blue-300 px-2 border-blue-500'
-        $viewButton.classList.add('active-view')
+        setButtonActive()
       }
     })
 

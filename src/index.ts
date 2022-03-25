@@ -114,11 +114,11 @@ class Ipd3d extends HTMLElement {
     this.selectionManager.selectionGroup.highlightFillParam.value =
       selectionOutlineColor.a
 
-    this.selectionManager.on('selectionChanged', (event: any) => {
-      console.log('selectionChanged', event)
-    })
+    // this.selectionManager.on('selectionChanged', (event: any) => {
+    //   console.log('selectionChanged', event)
+    // })
     this.selectionManager.on('leadSelectionChanged', (event: any) => {
-      console.log('leadSelectionChanged', event)
+      // console.log('leadSelectionChanged', event)
       this.eventEmitter.emit('leadSelectionChanged', event)
     })
 
@@ -191,6 +191,14 @@ class Ipd3d extends HTMLElement {
         } else {
           this.neutralPose.storeTreeItemsPose(change.treeItems)
         }
+      } else if (change instanceof ParameterValueChange) {
+        const param = change.param
+        if (this.activeView) {
+          this.neutralPose.storeParamValue(param, change.prevValue)
+          this.activeView.pose.storeParamValue(param, change.nextValue)
+        } else {
+          this.neutralPose.storeParamValue(param, change.nextValue)
+        }
       }
     })
 
@@ -201,9 +209,9 @@ class Ipd3d extends HTMLElement {
           this.activeView.pose.storeTreeItemsPose(change.treeItems)
         }
       } else if (change instanceof ParameterValueChange) {
-        const param = <BooleanParameter>change.param
+        const param = change.param
         if (this.activeView) {
-          this.activeView.pose.storeParamValue(param, change.nextValue.clone())
+          this.activeView.pose.storeParamValue(param, change.nextValue)
         }
       }
     })
@@ -356,7 +364,8 @@ class Ipd3d extends HTMLElement {
 
     this.undoRedoManager.addChange(change)
 
-    // this.activeView = newView
+    // Make the new view the active view.
+    this.activeView = newView
 
     this.eventEmitter.emit('viewsListChanged')
   }
@@ -394,6 +403,11 @@ class Ipd3d extends HTMLElement {
     view.activate(this.renderer.getViewport().getCamera(), this.neutralPose)
 
     this.activeView = view
+  }
+
+  public getActiveViewName(): string {
+    if (this.activeView) return this.activeView.name
+    return ''
   }
 
   public saveViewCamera() {
