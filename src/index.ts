@@ -79,6 +79,7 @@ class Ipd3d extends HTMLElement {
   private highlightedItem?: TreeItem
 
   private neutralPose: Pose
+  private initialView!: View
 
   private materials: Material[] = []
   private materialAssignments: Record<string, number> = {}
@@ -113,6 +114,7 @@ class Ipd3d extends HTMLElement {
 
     this.scene = new Scene()
 
+    // Replaced by an Initial View
     this.neutralPose = new Pose(this.scene)
 
     const envMap = new EnvMap()
@@ -212,7 +214,7 @@ class Ipd3d extends HTMLElement {
       // @ts-ignore
       const change = event.change
       if (change instanceof SelectionXfoChange) {
-        if (this.activeView) {
+        if (this.activeView && this.activeView !== this.initialView) {
           this.neutralPose.storeNeutralPose(change.treeItems)
           this.activeView.pose.storeTreeItemsPose(change.treeItems)
         } else {
@@ -224,12 +226,12 @@ class Ipd3d extends HTMLElement {
     this.undoRedoManager.on('changeUpdated', (event: Object) => {
       const change = this.undoRedoManager.getCurrentChange()
       if (change instanceof SelectionXfoChange) {
-        if (this.activeView) {
+        if (this.activeView && this.activeView !== this.initialView) {
           this.activeView.pose.storeTreeItemsPose(change.treeItems)
         }
       } else if (change instanceof ParameterValueChange) {
         const param = change.param
-        if (this.activeView) {
+        if (this.activeView && this.activeView !== this.initialView) {
           this.activeView.pose.storeParamValue(param, change.nextValue)
         }
       }
@@ -394,6 +396,16 @@ class Ipd3d extends HTMLElement {
     }
   }
 
+  private createInitialView() {
+    const initialView = new View('Initial View', this.scene)
+    initialView.setCameraParams(this.renderer.getViewport().getCamera())
+    this.initialView = initialView
+  }
+
+  public getInitialView(): View {
+    return this.initialView
+  }
+
   public createView(view?: View, name?: string) {
     const viewName = name ? name : 'View' + this.views.length
 
@@ -437,6 +449,16 @@ class Ipd3d extends HTMLElement {
     this.undoRedoManager.addChange(change)
 
     this.eventEmitter.emit('viewsListChanged')
+  }
+
+  public activateInitialView() {
+    this.selectionManager.clearSelection(false)
+
+    const view = this.initialView
+    view.activate(this.renderer.getViewport().getCamera(), this.neutralPose)
+
+    this.activeView = view
+    this.eventEmitter.emit('initialViewActivated')
   }
 
   public activateView(index: number) {
@@ -772,7 +794,9 @@ class Ipd3d extends HTMLElement {
     return new Promise<void>(resolve => {
       const promises: Promise<string>[] = []
       projectJson.assets.forEach((assetJson: AssetJson) => {
-        promises.push(this.loadAsset(assetJson.url))
+        promises.push(this.loadAsset(assetJson.url)
+            .then(() => this.createInitialView())
+        )
       })
 
       Promise.all(promises).then(() => {
@@ -786,6 +810,7 @@ class Ipd3d extends HTMLElement {
         })
         this.eventEmitter.emit('viewsListChanged')
 
+        this.selectionSets = []
         projectJson.selectionSets.forEach(
           (selectionSetJson: SelectionSetJson) => {
             const sel = new SelectionSet('', [], this.scene)

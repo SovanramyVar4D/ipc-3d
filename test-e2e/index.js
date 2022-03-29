@@ -1,5 +1,7 @@
-const DEFAULT_INACTIVE_ITEM_BUTTON_CLASSNAME = 'border rounded bg-gray-300 px-2  hover:bg-gray-100'
+const DEFAULT_INACTIVE_ITEM_BUTTON_CLASSNAME = 'border rounded bg-gray-300 px-2 hover:bg-gray-100'
 const DEFAULT_ACTIVE_ITEM_BUTTON_CLASSNAME = 'border rounded text-white bg-blue-300 px-2 border-blue-500 active'
+const INITIAL_VIEW_INACTIVE_BUTTON_CLASSNAME = 'initial-view-button border rounded bg-gray-600 px-2 text-white'
+const INITIAL_VIEW_ACTIVE_BUTTON_CLASSNAME = 'initial-view-button border rounded bg-red-300 px-2 border-black-500 active'
 
 const $ipc3d = document.getElementById('ipc-3d')
 
@@ -9,6 +11,22 @@ $ipc3d.on('saveKeyboardShortcutTriggered', () => {
 
 $ipc3d.on('viewsListChanged', () => {
   generateViewButtons()
+})
+
+$ipc3d.on('initialViewActivated', () => {
+  const $button = document.querySelector('div.initial-view-button')
+  if ($button) {
+    $button.className = INITIAL_VIEW_ACTIVE_BUTTON_CLASSNAME
+    $button.querySelector('button').classList.remove('hidden')
+  }
+})
+
+$ipc3d.on('initialViewDeactivated', () => {
+  const $button = document.querySelector('div.initial-view-button.active')
+  if ($button) {
+    $button.className = INITIAL_VIEW_INACTIVE_BUTTON_CLASSNAME
+    $button.querySelector('button').classList.add('hidden')
+  }
 })
 
 $ipc3d.on('viewActivated', (data) => {
@@ -260,6 +278,47 @@ function generateViewButtons() {
   const $viewButtons = document.getElementById('viewButtons')
   $viewButtons.replaceChildren()
 
+  // //////////////////////////////////////////
+  // Initial View (no editable/exportable view)
+  const $initialViewButton = document.createElement('div')
+
+  $initialViewButton.className = INITIAL_VIEW_INACTIVE_BUTTON_CLASSNAME
+  $initialViewButton.style.textAlign = 'center'
+  $initialViewButton.textContent = 'Initial View'
+
+  $initialViewButton.addEventListener('click', () => {
+    const isInitialViewButtonActive = $initialViewButton.classList.contains('active')
+    if (isInitialViewButtonActive) {
+      $ipc3d.deactivateView()
+    } else {
+      $ipc3d.deactivateView()
+      $ipc3d.activateInitialView()
+    }
+  })
+  /// Options Buttons ///
+  const $optionsWrapper = document.createElement('div')
+  $optionsWrapper.style.display = 'block'
+
+  // Save View Camera
+  const $saveViewCameraButton = document.createElement('button')
+  $saveViewCameraButton.className = 'hidden border rounded text-black bg-yellow-200 px-5 mx-0.5 hover:bg-yellow-150'
+
+  const $saveViewCameraIcon = document.createElement('i')
+  $saveViewCameraIcon.className = 'fa-solid fa-video'
+  $saveViewCameraButton.appendChild($saveViewCameraIcon)
+
+  $saveViewCameraButton.addEventListener('click', (event) => {
+    const changeCameraViewPoint = confirm("Are you sure to change the initial view camera viewpoint ?")
+    if (changeCameraViewPoint) $ipc3d.saveViewCamera()
+  })
+  $optionsWrapper.appendChild($saveViewCameraButton)
+  $initialViewButton.appendChild($optionsWrapper)
+
+  $viewButtons.appendChild($initialViewButton)
+
+
+  // //////////////////////////////////////////
+  // Editable Views
   $ipc3d.views.forEach((view, index) => {
     const $viewButton = document.createElement('div')
     $viewButton.className = 'view-button border rounded bg-gray-300 px-2  hover:bg-gray-100'
