@@ -91,6 +91,8 @@ class Ipd3d extends HTMLElement {
 
   private eventEmitter = new EventEmitter()
 
+  private autoSaveIntervalId?: NodeJS.Timer
+
   constructor() {
     super()
 
@@ -346,7 +348,7 @@ class Ipd3d extends HTMLElement {
     this.undoRedoManager.flush()
 
     this.eventEmitter.emit('viewsListChanged')
-    this.eventEmitter.emit('selectionSetListChanged')
+    this.eventEmitter.emit('selectionSetsListChanged')
     this.eventEmitter.emit('materialsListChanged')
   }
 
@@ -724,6 +726,14 @@ class Ipd3d extends HTMLElement {
 
   // /////////////////////////////////////////
   // Persistence
+
+  public activateAutoSave(delay: number = 1000) {
+    this.autoSaveIntervalId = setInterval(this.saveJson, delay)
+  }
+
+  public deactivateAutoSave() {
+    if (this.autoSaveIntervalId) clearInterval(this.autoSaveIntervalId)
+  }
 
   public saveJson(): ProjectJson {
     const projectJson: ProjectJson = {

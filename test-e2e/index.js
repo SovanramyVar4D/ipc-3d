@@ -163,9 +163,26 @@ document.getElementById('addCallout').addEventListener('click', () => {
 document
   .getElementById('enable-handle')
   .addEventListener('change', changeEvent => {
-    var checked = changeEvent.currentTarget.checked
+    const checked = changeEvent.currentTarget.checked
     $ipc3d.selectionManager.showHandles(checked)
     $ipc3d.selectionManager.updateHandleVisibility()
+  })
+
+// Auto save
+let autoSaveIntervalId
+document
+  .getElementById('activate-auto-save')
+  .addEventListener('change', changeEvent => {
+    const delay = parseInt(document.getElementById('auto-save-delay').value, 10)
+
+    const checked = changeEvent.currentTarget.checked
+    if (checked && delay) {
+      autoSaveIntervalId = setInterval(() => this.saveProjectOnLocalStorage(), delay)
+    }
+    else {
+      clearInterval(autoSaveIntervalId)
+    }
+    changeEvent.stopPropagation()
   })
 
 // ////////////////////////////////////////////////
@@ -251,7 +268,6 @@ function generateViewButtons() {
 
     $viewButton.addEventListener('click', (event) => {
       const $activeViewButton = document.querySelector('div.view-button.active')
-
        if ($activeViewButton === $viewButton) {
          $ipc3d.deactivateView()
        } else {
@@ -261,8 +277,7 @@ function generateViewButtons() {
       event.stopPropagation()
     })
 
-    // ////////////////////////////
-    // Options Buttons
+    /// Options Buttons ///
     const $optionsWrapper = document.createElement('div')
     $optionsWrapper.style.display = 'block'
 

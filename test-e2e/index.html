@@ -117,12 +117,20 @@
       </button>
 
       <label
-        class="border rounded bg-blue-300 px-2 hover:bg-gray-100 hover:border-blue-500"
-      >
-        Gizmo
-        <input id="enable-handle" type="checkbox" checked />
-      </label>
-    </header>
+          class="border rounded bg-blue-300 px-2 hover:bg-gray-100 hover:border-blue-500"
+        >
+          Gizmo
+          <input id="enable-handle" type="checkbox" checked />
+        </label>
+        <label
+                class="border rounded bg-yellow-300 px-2 hover:bg-yellow-100 hover:border-yellow-500"
+        >
+          Auto-Save
+          <input id="activate-auto-save" type="checkbox"/>
+          <input id="auto-save-delay" class="w-16" type="number" value="10000" />
+          ms
+        </label>
+      </header>
 
     <main class="flex flex-1">
         <nav class="Sidebar flex flex-col px-2 pt-2 space-y-2 w-96">
