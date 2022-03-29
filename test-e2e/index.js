@@ -144,14 +144,19 @@ function download(file, text) {
 // ///////////////////////////////////////////////
 // Undo and Redo
 
-document.getElementById('undo').addEventListener('click', event => {
+document.getElementById('undo').addEventListener('click', () => {
   console.log('undo')
   $ipc3d.undo()
 })
-document.getElementById('redo').addEventListener('click', event => {
+document.getElementById('redo').addEventListener('click', () => {
   console.log('redo')
   $ipc3d.redo()
 })
+
+$ipc3d.undoRedoManager.on('changeAdded', () => console.log('changeAdded'))
+$ipc3d.undoRedoManager.on('changeUndone', () => console.log('changeUndone'))
+$ipc3d.undoRedoManager.on('changeRedone', () => console.log('changeRedone'))
+
 
 // ///////////////////////////////////////////////
 // Assets
