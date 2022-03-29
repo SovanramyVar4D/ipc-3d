@@ -78,6 +78,9 @@ class Ipd3d extends HTMLElement {
   private activeView?: View
   private highlightedItem?: TreeItem
 
+  private rectangleSelectionHotKey: string | undefined
+  private rectangleSelectionOn: boolean = false
+
   private neutralPose: Pose
   private initialView!: View
 
@@ -88,7 +91,7 @@ class Ipd3d extends HTMLElement {
   private callouts: BillboardItem[] = []
 
   // private highlightColor = new Color(0.8, 0.2, 0.2, 0.3)
-  private selectionColor = new Color(1, 0.8, 0, 0.1)
+  private selectionColor = new Color(1, 0.8, 0, 0.5)
 
   private eventEmitter = new EventEmitter()
 
@@ -109,7 +112,7 @@ class Ipd3d extends HTMLElement {
     this.shadowRoot?.appendChild($mainWrapper)
 
     this.renderer = new GLRenderer($canvas)
-    this.renderer.outlineThickness = 0.5
+    // this.renderer.outlineThickness = 0.5
     this.renderer.outlineSensitivity = 5
 
     this.scene = new Scene()
@@ -165,15 +168,14 @@ class Ipd3d extends HTMLElement {
       0.2
     )
 
-    let selectionOn = false
     const setToolToSelectionTool = () => {
       this.renderer.getViewport().setManipulator(selectionTool)
-      selectionOn = true
+      this.activateRectangleSelection()
     }
 
     const setToolToCameraManipulator = () => {
       this.renderer.getViewport().setManipulator(cameraManipulator)
-      selectionOn = false
+      this.deactivateRectangleSelection()
     }
 
     // ////////////////////////////////////////////
@@ -181,6 +183,16 @@ class Ipd3d extends HTMLElement {
 
     document.addEventListener('keydown', (e: KeyboardEvent) => {
       switch (e.key) {
+        case 'q':
+          if (!this.rectangleSelectionOn) setToolToSelectionTool()
+      }
+    })
+
+    document.addEventListener('keyup', (e: KeyboardEvent) => {
+      switch (e.key) {
+        case 'q':
+          if (this.rectangleSelectionOn) setToolToCameraManipulator()
+          break
         case 's':
           if (!selectionOn) setToolToSelectionTool()
           if (e.ctrlKey) {
@@ -188,22 +200,14 @@ class Ipd3d extends HTMLElement {
             this.eventEmitter.emit('saveKeyboardShortcutTriggered')
           }
           break
-        case 'z':
-          if (e.ctrlKey) {
-            UndoRedoManager.getInstance().undo()
-          }
+        case 'n':
+          if (e.ctrlKey) this.newProject()
           break
         case 'y':
-          if (e.ctrlKey) {
-            UndoRedoManager.getInstance().redo()
-          }
+          if (e.ctrlKey) this.redo()
           break
-      }
-    })
-    document.addEventListener('keyup', (e: KeyboardEvent) => {
-      switch (e.key) {
-        case 's':
-          if (selectionOn) setToolToCameraManipulator()
+        case 'z':
+          if (e.ctrlKey) this.undo()
           break
       }
     })
@@ -239,11 +243,10 @@ class Ipd3d extends HTMLElement {
 
     this.renderer.setScene(this.scene)
 
-    /*
     // Disabling the highlighting as it is distracting.
     this.renderer.getViewport().on('pointerMove', (event: ZeaPointerEvent) => {
       // If the SelectionTool is on, it will draw a selection rect during pointerMove events.
-      if (selectionOn) return
+      if (this.rectangleSelectionOn) return
       if (event.intersectionData) {
         const item = this.filterItem(event.intersectionData.geomItem)
         if (item) {
@@ -261,20 +264,12 @@ class Ipd3d extends HTMLElement {
       }
       event.stopPropagation()
     })
-    */
 
     let pointerDownPos: Vec2 | null = null
     this.renderer.getViewport().on('pointerDown', (event: ZeaPointerEvent) => {
       // If the SelectionTool is on, it will handle selection changes.
-      if (selectionOn) return
+      if (this.rectangleSelectionOn) return
       pointerDownPos = event.pointerPos
-      if (event.intersectionData) {
-        const item = this.filterItem(event.intersectionData.geomItem)
-        this.selectionManager.toggleItemSelection(
-          item,
-          !(<ZeaMouseEvent>event).ctrlKey
-        )
-      }
     })
     this.renderer.getViewport().on('pointerUp', (event: ZeaPointerEvent) => {
       if (this.picking) {
@@ -289,20 +284,20 @@ class Ipd3d extends HTMLElement {
         }
       }
       // If the SelectionTool is on, it will handle selection changes.
-      if (selectionOn) return
-      if (pointerDownPos && event.pointerPos.distanceTo(pointerDownPos) < 2) {
-        if (!event.intersectionData) {
-          if (!(<ZeaMouseEvent>event).ctrlKey) {
-            // Clear the selection if the pointer is released close to the press location.
-            this.selectionManager.setSelection(new Set(), true)
+      if (this.rectangleSelectionOn) return
+      if (!event.intersectionData) {
+        if (!(<ZeaMouseEvent>event).ctrlKey) {
+          // Clear the selection if the pointer is released close to the press location.
+          if (
+            pointerDownPos &&
+            event.pointerPos.distanceTo(pointerDownPos) < 2
+          ) {
+            this.selectionManager.clearSelection(false)
           }
-        } else {
-          const item = this.filterItem(event.intersectionData.geomItem)
-          this.selectionManager.toggleItemSelection(
-            item,
-            !(<ZeaMouseEvent>event).ctrlKey
-          )
         }
+      } else {
+        const item = this.filterItem(event.intersectionData.geomItem)
+        this.toggleSelection(item, !(<ZeaMouseEvent>event).ctrlKey)
       }
     })
 
@@ -330,6 +325,23 @@ class Ipd3d extends HTMLElement {
     //
     // this.renderer.getViewport().backgroundColorParam.value = new Color(.9, .4, .4)
     this.newProject()
+  }
+
+
+  // ///////////////////////////////
+  // Public functions
+
+  // Rectangle Selection
+  public setRectangleSelectionHotKey(key: string) {
+    this.rectangleSelectionHotKey = key
+  }
+
+  public activateRectangleSelection() {
+    this.rectangleSelectionOn = true
+  }
+
+  public deactivateRectangleSelection() {
+    this.rectangleSelectionOn = false
   }
 
   public newProject(): void {
@@ -462,7 +474,7 @@ class Ipd3d extends HTMLElement {
   }
 
   public activateView(index: number) {
-    this.selectionManager.clearSelection()
+    this.selectionManager.clearSelection(false)
 
     const view = this.views[index]
     view.activate(this.renderer.getViewport().getCamera(), this.neutralPose)
@@ -478,23 +490,24 @@ class Ipd3d extends HTMLElement {
 
   public saveViewCamera() {
     if (this.activeView) {
-      const change = new ChangeViewCamera(this.activeView)
-      this.activeView.setCameraParams(this.renderer.getViewport().getCamera())
-      change.updateCameraView()
+      const camera = this.renderer.getViewport().getCamera()
+
+      const change = new ChangeViewCamera(this.activeView, camera)
+      this.activeView.setCameraParams(camera)
       this.undoRedoManager.addChange(change)
+
+      this.eventEmitter.emit('viewCameraChanged', this.activeView.name)
     }
   }
 
-  public activateInitialView() {
-    this.deactivateView()
-    this.neutralPose.lerpPose()
-  }
-
   public deactivateView() {
-    this.selectionManager.clearSelection()
-
+    this.selectionManager.clearSelection(false)
+    if (this.activeView === this.initialView) {
+      this.eventEmitter.emit('initialViewDeactivated')
+    } else {
+      this.eventEmitter.emit('viewDeactivated')
+    }
     this.activeView = undefined
-    this.eventEmitter.emit('viewDeactivated')
   }
 
   // /////////////////////////////////////////
@@ -535,7 +548,7 @@ class Ipd3d extends HTMLElement {
   public deleteSelectionSet(index: number) {
     const selectionSet = this.selectionSets[index]
 
-    this.selectionManager.clearSelection()
+    this.selectionManager.clearSelection(false)
 
     const change = new DeleteSelectionSetChange(
       selectionSet,
@@ -574,18 +587,18 @@ class Ipd3d extends HTMLElement {
     const change = new UpdateSelectionSetChange(selectionSet, selection)
     this.undoRedoManager.addChange(change)
 
-    selectionSet.items = Array.from(this.selectionManager.getSelection())
+    selectionSet.items = selection
   }
 
   public activateSelectionSet(index: number) {
     const selectionSet = this.selectionSets[index]
     const set = new Set(selectionSet.items)
-    this.selectionManager.setSelection(set)
+    this.selectionManager.setSelection(set, false)
     this.eventEmitter.emit('selectionSetActivated', selectionSet.name)
   }
 
   public deactivateSelectionSet() {
-    this.selectionManager.clearSelection()
+    this.selectionManager.clearSelection(false)
     this.eventEmitter.emit('selectionSetDeactivated')
   }
 
@@ -604,6 +617,13 @@ class Ipd3d extends HTMLElement {
     this.hiddenParts = []
   }
 
+  public activateSelectionSetInActiveView(selectionSet: SelectionSet) {
+    if (this.activeView) {
+      this.activeView.selectionSet = selectionSet.getIdAndName()
+      this.eventEmitter.emit('selectionSetActivatedInView', this.activeView)
+    }
+  }
+
   // /////////////////////////////////////////
   // Cutting Planes
 
@@ -618,7 +638,8 @@ class Ipd3d extends HTMLElement {
     this.cuttingPlanes.push(cuttingPlane)
 
     this.selectionManager.setSelection(
-      new Set<TreeItem>([cuttingPlane.cuttingPlane])
+      new Set<TreeItem>([cuttingPlane.cuttingPlane]),
+        false
     )
     this.eventEmitter.emit('cuttingPlaneListChanged')
   }
@@ -876,6 +897,30 @@ class Ipd3d extends HTMLElement {
 
   public redo() {
     this.undoRedoManager.redo()
+  }
+
+  // Same as SelectionManager.toggleItemSelection without undo/redo (only possible in setSelection function)
+  private toggleSelection(item: CADPart | CADAssembly, replaceSelection?: boolean | undefined) {
+    const selection = Array.from(this.selectionManager.getSelection())
+
+    if (selection.length == 1 && selection.includes(item)) {
+      this.selectionManager.clearSelection(false)
+    } else {
+      if (replaceSelection != undefined && replaceSelection) {
+        this.selectionManager.setSelection(new Set([item]), false)
+      } else {
+        const newSelection = selection
+        // newSelection.push(item)
+        if (selection.includes(item)) {
+          newSelection.splice(selection.indexOf(item),1)
+          this.selectionManager.setSelection(new Set(newSelection), false)
+          console.log(selection)
+        } else {
+          newSelection.push(item)
+          this.selectionManager.setSelection(new Set(newSelection), false)
+        }
+      }
+    }
   }
 }
 

@@ -1,15 +1,19 @@
 import { Scene, TreeItem } from '@zeainc/zea-engine'
+import { UUID } from "./Utils";
 
 export interface SelectionSetJson {
+  id: string
   name: string
   items: Array<Array<string>>
 }
 export class SelectionSet {
-  name: string
+  private id: string
+  name: any
   items: Array<TreeItem> = []
   scene: Scene
 
   constructor(name: string = '', items: Array<TreeItem>, scene: Scene) {
+    this.id = UUID()
     this.name = name
     this.items = items
     this.scene = scene
@@ -17,6 +21,13 @@ export class SelectionSet {
 
   // /////////////////////////////////////////
   // Persistence
+
+  getIdAndName() {
+    return {
+      id: this.id,
+      name: this.name
+    }
+  }
 
 
   copyFrom(selectionSet: SelectionSet) {
@@ -26,7 +37,7 @@ export class SelectionSet {
   }
 
   saveJson(): SelectionSetJson {
-    const json: SelectionSetJson = { name: this.name, items: [] }
+    const json: SelectionSetJson = { id: this.id, name: this.name, items: [] }
 
     this.items.forEach(item => {
       json.items.push(item.getPath())
@@ -36,6 +47,7 @@ export class SelectionSet {
   }
 
   loadJson(selectionSetJson: SelectionSetJson) {
+    this.id = selectionSetJson.id
     this.name = selectionSetJson.name
     this.items = []
     selectionSetJson.items.forEach(itemPath => {

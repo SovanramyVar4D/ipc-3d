@@ -76,16 +76,9 @@
         <button
           id="loadBike"
           class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
-          data-bs-toggle="tooltip" data-bs-placement="bottom" title="Load 3D Bike"
-      >
-          <i class="fa-solid fa-bicycle"></i>
-        </button>
-        <button
-          id="loadGearbox"
-          class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
-          data-bs-toggle="tooltip" data-bs-placement="bottom" title="Load 3D Gearbox"
+          data-bs-toggle="tooltip" data-bs-placement="bottom" title="Load Asset"
         >
-          <i class="fa-solid fa-gears"></i>
+          <i class="fa-solid fa-cube"></i>
         </button>
         <button
           id="frameView"
@@ -165,7 +158,7 @@
           </button>
         </div>
 
-          <div id="tab1">
+          <div id="tab1" class="tab-panel">
             <button
               id="createView"
               class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
@@ -183,33 +176,27 @@
 
           <hr />
 
-            <button
-              id="activate-initial-view"
-              class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
-            >
-              Initial View
-            </button>
             <div id="viewButtons" class="flex flex-col space-y-2"></div>
           </div>
 
-        <div id="tab2" class="overflow-auto" style="display: none;">
-          <zea-tree-view id="treeView"></zea-tree-view>
-        </div>
+          <div id="tab2" class="overflow-auto tab-panel" style="display: none;">
+            <zea-tree-view id="treeView"></zea-tree-view>
+          </div>
 
-        <div id="tab3" class="overflow-auto" style="display: none;">
-          <button
-            id="createSelectionSet"
-            class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
-          >
-            <i class="fa-solid fa-plus"></i>
-          </button>
+          <div id="tab3" class="overflow-auto tab-panel" style="display: none;">
+            <button
+              id="createSelectionSet"
+              class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
+            >
+              <i class="fa-solid fa-plus"></i>
+            </button>
 
           <hr />
 
           <div id="selectionSetButtons" class="flex flex-col space-y-2"></div>
         </div>
 
-        <div id="tab4" class="overflow-auto" style="display: none;">
+        <div id="tab4" class="overflow-auto tab-panel" style="display: none;">
           <button
             id="createCuttingPlane"
             class="border rounded bg-gray-300 px-2 hover:bg-gray-100"

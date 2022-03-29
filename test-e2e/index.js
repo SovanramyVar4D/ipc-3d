@@ -5,8 +5,20 @@ const INITIAL_VIEW_ACTIVE_BUTTON_CLASSNAME = 'initial-view-button border rounded
 
 const $ipc3d = document.getElementById('ipc-3d')
 
+$ipc3d.on('selectionSetActivatedInView', (view) => {
+  document.querySelectorAll('.selection-set-button .link-view-button').forEach((linkBtn) => {
+    linkBtn.remove()
+  })
+  displayPanel('Views')
+  alert(`SelectionSet activated in View ${view.name} : ${view.selectionSet.name}`)
+})
+
 $ipc3d.on('saveKeyboardShortcutTriggered', () => {
   saveProjectOnLocalStorage()
+})
+
+$ipc3d.on('viewCameraChanged', (viewName) => {
+  console.log('View camera changed : ', viewName)
 })
 
 $ipc3d.on('viewsListChanged', () => {
@@ -205,37 +217,33 @@ document
 
 // ////////////////////////////////////////////////
 //  Tabs
-const $tab1 = document.querySelector('#tab1')
-const $tab2 = document.querySelector('#tab2')
-const $tab3 = document.querySelector('#tab3')
-const $tab4 = document.querySelector('#tab4')
-
-document.querySelector('#showTab1').addEventListener('click', () => {
-  $tab1.style.display = ''
-  $tab2.style.display = 'none'
-  $tab3.style.display = 'none'
-  $tab4.style.display = 'none'
-})
-
-document.querySelector('#showTab2').addEventListener('click', () => {
-  $tab1.style.display = 'none'
-  $tab2.style.display = ''
-  $tab3.style.display = 'none'
-  $tab4.style.display = 'none'
-})
-
-document.querySelector('#showTab3').addEventListener('click', () => {
-  $tab1.style.display = 'none'
-  $tab2.style.display = 'none'
-  $tab3.style.display = ''
-  $tab4.style.display = 'none'
-})
-document.querySelector('#showTab4').addEventListener('click', () => {
-  $tab1.style.display = 'none'
-  $tab2.style.display = 'none'
-  $tab3.style.display = 'none'
-  $tab4.style.display = ''
-})
+function displayPanel(panel) {
+  const panels = document.querySelectorAll('.tab-panel')
+  panels.forEach((tab) => {
+    switch (panel) {
+      case 'Views':
+        if (tab.id === 'tab1') tab.style.display = ''
+        else tab.style.display = 'none'
+        break
+      case 'Tree':
+        if (tab.id === 'tab2') tab.style.display = ''
+        else tab.style.display = 'none'
+        break
+      case 'SelectionSets':
+        if (tab.id === 'tab3') tab.style.display = ''
+        else tab.style.display = 'none'
+        break
+      case 'CuttingPlanes':
+        if (tab.id === 'tab4') tab.style.display = ''
+        else tab.style.display = 'none'
+        break
+    }
+  })
+}
+document.querySelector('#showTab1').addEventListener('click', () => displayPanel('Views'))
+document.querySelector('#showTab2').addEventListener('click', () => displayPanel('Tree'))
+document.querySelector('#showTab3').addEventListener('click', () => displayPanel('SelectionSets'))
+document.querySelector('#showTab4').addEventListener('click', () => displayPanel('CuttingPlanes'))
 
 // ////////////////////////////////////////////////
 //  Tree view
@@ -254,24 +262,6 @@ document.getElementById('createView').addEventListener('click', () => {
     )
   }
   if (viewName) $ipc3d.createView(null, viewName)
-})
-document.getElementById('saveViewCamera').addEventListener('click', () => {
-  $ipc3d.saveViewCamera()
-})
-document.getElementById('activate-initial-view').addEventListener('click', () => {
-  $ipc3d.activateInitialView()
-})
-
-$ipc3d.undoRedoManager.on('changeAdded', () => {
-  console.log('changeAdded')
-})
-
-$ipc3d.undoRedoManager.on('changeUndone', () => {
-  console.log('changeUndone')
-})
-
-$ipc3d.undoRedoManager.on('changeRedone', () => {
-  console.log('changeRedone')
 })
 
 function generateViewButtons() {
@@ -343,7 +333,8 @@ function generateViewButtons() {
     // Rename
     const $RenameViewButton = document.createElement('button')
     $RenameViewButton.className =
-      'hidden border rounded text-black bg-yellow-200 px-5 mx-0.5 hover:bg-yellow-150'
+      'hidden border rounded text-black bg-yellow-200 px-2 mx-0.5 hover:bg-yellow-150'
+    setTooltip($RenameViewButton, 'Rename')
 
     const renameViewIcon = document.createElement('i')
     renameViewIcon.className = 'fa-solid fa-pen-to-square'
@@ -359,13 +350,15 @@ function generateViewButtons() {
         )
       }
       if (newName) $ipc3d.renameView(index, newName)
+      event.stopPropagation()
     })
     $optionsWrapper.appendChild($RenameViewButton)
 
     // Duplicate
     const $duplicateViewButton = document.createElement('button')
     $duplicateViewButton.className =
-      'hidden border rounded text-black bg-yellow-200 px-5 mx-0.5 hover:bg-red-150'
+      'hidden border rounded text-black bg-yellow-200 px-2 mx-0.5 hover:bg-yellow-150'
+    setTooltip($duplicateViewButton, 'Duplicate')
 
     const duplicateViewIcon = document.createElement('i')
     duplicateViewIcon.className = 'fa-solid fa-clone'
@@ -374,13 +367,71 @@ function generateViewButtons() {
     $duplicateViewButton.addEventListener('click', event => {
       event.stopPropagation()
       $ipc3d.duplicateView(index)
+      event.stopPropagation()
     })
     $optionsWrapper.appendChild($duplicateViewButton)
+
+    // Save View Camera
+    const $saveViewCameraButton = document.createElement('button')
+    $saveViewCameraButton.className = 'hidden border rounded text-black bg-yellow-200 px-2 mx-0.5 hover:bg-yellow-150'
+    setTooltip($saveViewCameraButton, 'Save viewpoint')
+
+    const $saveViewCameraIcon = document.createElement('i')
+    $saveViewCameraIcon.className = 'fa-solid fa-video'
+    $saveViewCameraButton.appendChild($saveViewCameraIcon)
+
+    $saveViewCameraButton.addEventListener('click', (event) => {
+      $ipc3d.saveViewCamera()
+      event.stopPropagation()
+    })
+    $optionsWrapper.appendChild($saveViewCameraButton)
+
+    // Link SelectionSet
+    const $linkSelectionSetButton = document.createElement('button')
+    $linkSelectionSetButton.className = 'hidden border rounded text-black bg-yellow-200 px-2 mx-0.5 hover:bg-yellow-150'
+    if ($ipc3d.views[index].selectionSet === undefined) {
+      setTooltip($linkSelectionSetButton, 'Link SelectionSet')
+    } else {
+      setTooltip($linkSelectionSetButton, `Linked SelectionSet : ${$ipc3d.views[index].selectionSet.name}&#013;Click to change`)
+    }
+
+    const $linkSelectionSetIcon = document.createElement('i')
+    $linkSelectionSetIcon.className = 'fa-solid fa-link'
+    $linkSelectionSetButton.appendChild($linkSelectionSetIcon)
+
+    $linkSelectionSetButton.addEventListener('click', (event) => {
+      $ipc3d.deactivateSelectionSet()
+      displayPanel("SelectionSets")
+
+      document.querySelectorAll('.selection-set-button').forEach((btn) => {
+        const $linkViewBtn = document.createElement('button')
+        $linkViewBtn.className = 'hidden border rounded text-black bg-yellow-200 px-2 mx-0.5 hover:bg-yellow-150 link-view-button'
+        setTooltip($linkViewBtn, 'Link View')
+
+        const $linkViewIcon = document.createElement('i')
+        $linkViewIcon.className = 'fa-solid fa-link'
+
+        $linkViewBtn.addEventListener('click', (event) => {
+          const currentElement = event.currentTarget
+          const container = currentElement.closest('.selection-set-button')
+          const currentSelectionSet =  $ipc3d.selectionSets.find((selSet) => selSet.name === container.textContent)
+          $ipc3d.activateSelectionSetInActiveView(currentSelectionSet)
+
+          event.stopPropagation()
+        })
+        $linkViewBtn.appendChild($linkViewIcon)
+        btn.querySelector('.delete-button').before($linkViewBtn)
+      })
+      event.stopPropagation()
+    })
+
+    $optionsWrapper.appendChild($linkSelectionSetButton)
 
     // Delete
     const $deleteViewButton = document.createElement('button')
     $deleteViewButton.className =
-      'hidden border rounded text-black bg-red-200 px-5 ml-5 hover:bg-red-150'
+      'hidden border rounded text-black bg-red-200 px-2 ml-5 hover:bg-red-150'
+    setTooltip($deleteViewButton, 'Delete')
 
     const deleteViewIcon = document.createElement('i')
     deleteViewIcon.className = 'fa-solid fa-trash'
@@ -396,27 +447,6 @@ function generateViewButtons() {
     $viewButtons.appendChild($viewButton)
   })
 }
-
-function activateButton(btnText, selector) {
-  const $buttonToActivate =
-    [...document.querySelectorAll(selector)]
-      .find((btn) => btn.innerText === btnText)
-
-  if ($buttonToActivate) {
-    $buttonToActivate.className = DEFAULT_ACTIVE_ITEM_BUTTON_CLASSNAME
-  }
-  return $buttonToActivate
-}
-
-function deactivateButton(selector) {
-  const $buttonToDeactivate = document.querySelector(selector)
-
-  if ($buttonToDeactivate) {
-    $buttonToDeactivate.className = DEFAULT_INACTIVE_ITEM_BUTTON_CLASSNAME
-  }
-  return $buttonToDeactivate
-}
-
 
 // ////////////////////////////////////////////////////
 // Selection Sets
@@ -442,21 +472,21 @@ function generateSelSetButtons() {
   $ipc3d.selectionSets.forEach((selectionSet, index) => {
     const $selectionSetButton = document.createElement('div')
     $selectionSetButton.className = 'selection-set-button border rounded bg-gray-300 px-2 hover:bg-gray-100'
-      $selectionSetButton.style.textAlign = 'center'
-      $selectionSetButton.textContent = selectionSet.name
+    $selectionSetButton.style.textAlign = 'center'
+    $selectionSetButton.textContent = selectionSet.name
 
-      $selectionSetButton.addEventListener('click', (event) => {
-        const $activeSelectionSetButton = document.querySelector('div.selection-set-button.active')
+    $selectionSetButton.addEventListener('click', (event) => {
+      const $activeSelectionSetButton = document.querySelector('div.selection-set-button.active')
 
-        if ($activeSelectionSetButton === $selectionSetButton) {
-          $ipc3d.deactivateSelectionSet()
-        } else {
-          $ipc3d.deactivateSelectionSet()
-          $ipc3d.activateSelectionSet(index)
-        }
+      if ($activeSelectionSetButton === $selectionSetButton) {
+        $ipc3d.deactivateSelectionSet()
+      } else {
+        $ipc3d.deactivateSelectionSet()
+        $ipc3d.activateSelectionSet(index)
+      }
 
-        event.stopPropagation()
-      })
+      event.stopPropagation()
+    })
 
     // ////////////////////////////
     // Options Buttons
@@ -466,14 +496,15 @@ function generateSelSetButtons() {
     // Rename
     const $RenameSelectionSetButton = document.createElement('button')
     $RenameSelectionSetButton.className =
-      'hidden border rounded text-black bg-yellow-200 px-5 mx-0.5 hover:bg-yellow-150'
+      'hidden border rounded text-black bg-yellow-200 px-2 mx-0.5 hover:bg-yellow-150'
+    $RenameSelectionSetButton.className = 'hidden border rounded text-black bg-yellow-200 px-2 mx-0.5 hover:bg-yellow-150'
+    setTooltip($RenameSelectionSetButton, 'Rename')
 
     const renameSelectionSetIcon = document.createElement('i')
     renameSelectionSetIcon.className = 'fa-solid fa-pen-to-square'
     $RenameSelectionSetButton.appendChild(renameSelectionSetIcon)
 
     $RenameSelectionSetButton.addEventListener('click', event => {
-      event.stopPropagation()
       let newName = prompt(
         'Rename Selection Set',
         selectionSet.name + '-renamed'
@@ -489,16 +520,22 @@ function generateSelSetButtons() {
         )
       }
       if (newName) $ipc3d.renameSelectionSet(index, newName)
+
+      event.stopPropagation()
     })
     $optionsWrapper.appendChild($RenameSelectionSetButton)
 
     // Duplicate
     const $duplicateSelectionSetButton = document.createElement('button')
     $duplicateSelectionSetButton.className =
-      'hidden border rounded text-black bg-yellow-200 px-5 mx-0.5 hover:bg-red-150'
+      'hidden border rounded text-black bg-yellow-200 px-2 mx-0.5 hover:bg-red-150'
+    setTooltip($duplicateSelectionSetButton, 'Duplicate')
 
     const duplicateSelectionSetIcon = document.createElement('i')
     duplicateSelectionSetIcon.className = 'fa-solid fa-clone'
+
+    $duplicateSelectionSetButton.addEventListener('click', () => $ipc3d.duplicateSelectionSet(index))
+
     $duplicateSelectionSetButton.appendChild(duplicateSelectionSetIcon)
 
     $duplicateSelectionSetButton.addEventListener('click', event => {
@@ -507,6 +544,22 @@ function generateSelSetButtons() {
     })
     $optionsWrapper.appendChild($duplicateSelectionSetButton)
 
+    // Update
+    const $updateSelectionSetButton = document.createElement('button')
+    $updateSelectionSetButton.className = 'hidden border rounded text-black bg-yellow-200 px-2 mx-0.5 hover:bg-red-150'
+    setTooltip($updateSelectionSetButton, 'Update')
+
+    const $updateSelectionSetIcon = document.createElement('i')
+    $updateSelectionSetIcon.className = 'fa-solid fa-arrows-rotate'
+
+    $updateSelectionSetButton.addEventListener('click', (event) => {
+      $ipc3d.updateSelectionSet(index)
+      alert("SelectionSet updated !")
+    })
+
+    $updateSelectionSetButton.appendChild($updateSelectionSetIcon)
+    $optionsWrapper.appendChild($updateSelectionSetButton)
+
     // Delete
     const $deleteSelectionSetButton = document.createElement('button')
     $deleteSelectionSetButton.className =
@@ -514,12 +567,13 @@ function generateSelSetButtons() {
 
     const deleteSelectionSetIcon = document.createElement('i')
     deleteSelectionSetIcon.className = 'fa-solid fa-trash'
-    $deleteSelectionSetButton.appendChild(deleteSelectionSetIcon)
 
     $deleteSelectionSetButton.addEventListener('click', event => {
-      event.stopPropagation()
       $ipc3d.deleteSelectionSet(index)
+      event.stopPropagation()
     })
+
+    $deleteSelectionSetButton.appendChild(deleteSelectionSetIcon)
     $optionsWrapper.appendChild($deleteSelectionSetButton)
 
     $selectionSetButton.appendChild($optionsWrapper)
@@ -553,6 +607,34 @@ function generateCuttingPlanes() {
 
     $cuttingPlaneButtons.appendChild($button)
   })
+}
+
+// ///////////////////////////
+// HTML
+function setTooltip($buttonElement, title) {
+  $buttonElement.setAttribute('data-bs-toggle', 'tooltip')
+  $buttonElement.setAttribute('data-bs-placement', 'bottom')
+  $buttonElement.setAttribute('title', title)
+}
+
+function activateButton(btnText, selector) {
+  const $buttonToActivate =
+    [...document.querySelectorAll(selector)]
+      .find((btn) => btn.innerText === btnText)
+
+  if ($buttonToActivate) {
+    $buttonToActivate.className = DEFAULT_ACTIVE_ITEM_BUTTON_CLASSNAME
+  }
+  return $buttonToActivate
+}
+
+function deactivateButton(selector) {
+  const $buttonToDeactivate = document.querySelector(selector)
+
+  if ($buttonToDeactivate) {
+    $buttonToDeactivate.className = DEFAULT_INACTIVE_ITEM_BUTTON_CLASSNAME
+  }
+  return $buttonToDeactivate
 }
 
 // ////////////////////////////////////////////////////
