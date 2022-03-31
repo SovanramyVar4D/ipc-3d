@@ -1,5 +1,5 @@
 import {Change} from '@zeainc/zea-ux'
-import {View} from '../View'
+import {View} from '../../View'
 import {EventEmitter} from "@zeainc/zea-engine";
 import * as events from "events";
 

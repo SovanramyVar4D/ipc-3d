@@ -1,2 +1,2 @@
-export * from './CreateViewChange'
-export * from './CreateSelectionSetChange'
+export * from './ViewChanges'
+export * from './SelectionSetChanges'

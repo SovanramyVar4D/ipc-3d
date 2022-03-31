@@ -1,6 +1,6 @@
 import {EventEmitter} from '@zeainc/zea-engine'
 import {Change} from '@zeainc/zea-ux'
-import {SelectionSet} from "../SelectionSet";
+import {SelectionSet} from "../../SelectionSet";
 
 export default class DeleteSelectionSetChange extends Change {
   selectionSet: SelectionSet

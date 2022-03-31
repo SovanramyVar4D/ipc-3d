@@ -39,17 +39,24 @@ import {
 import './ParamEditor'
 
 import { View, ViewJson } from './View'
-import CreateViewChange from './Changes/CreateViewChange'
-import ChangeViewCamera from './Changes/ChangeViewCamera'
 import { Pose, PoseJson } from './Pose'
 import { SelectionSet, SelectionSetJson } from './SelectionSet'
 
+import {
+  CreateViewChange,
+  DeleteViewChange,
+  RenameViewChange,
+  UpdateViewCameraChange
+} from './Changes/ViewChanges'
+
+import {
+  CreateSelectionSetChange,
+  DeleteSelectionSetChange,
+  RenameSelectionSetChange,
+  UpdateSelectionSetChange
+} from './Changes/SelectionSetChanges'
+
 import CuttingPlaneWrapper, { CuttingPlaneJson } from './CuttingPlane'
-import DeleteViewChange from './Changes/DeleteViewChange'
-import RenameViewChange from './Changes/RenameViewChange'
-import CreateSelectionSetChange from './Changes/CreateSelectionSetChange'
-import DeleteSelectionSetChange from './Changes/DeleteSelectionSetChange'
-import RenameSelectionSetChange from './Changes/RenameSelectionSetChange'
 
 interface AssetJson {
   url: string

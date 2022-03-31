@@ -1,6 +1,6 @@
 import {Change} from '@zeainc/zea-ux'
 import {TreeItem} from "@zeainc/zea-engine";
-import {SelectionSet} from "../SelectionSet";
+import {SelectionSet} from "../../SelectionSet";
 
 export default class UpdateSelectionSetChange extends Change {
   selectionSet: SelectionSet

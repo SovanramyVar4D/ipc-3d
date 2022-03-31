@@ -1,8 +1,8 @@
 import {Camera, Vec3, Xfo} from '@zeainc/zea-engine'
 import { Change } from '@zeainc/zea-ux'
-import { View } from '../View'
+import { View } from '../../View'
 
-export default class ChangeViewCamera extends Change {
+export default class UpdateViewCameraChange extends Change {
   view: View
   prevCameraXfo: Xfo
   prevCameraTarget: Vec3
@@ -20,16 +20,16 @@ export default class ChangeViewCamera extends Change {
   }
 
   undo(): void {
-    console.log('Undo ChangeViewCamera')
+    console.log('Undo UpdateViewCameraChange')
     this.view.cameraXfo = this.prevCameraXfo
     this.view.cameraTarget = this.prevCameraTarget
   }
 
   redo(): void {
-    console.log('Redo ChangeViewCamera')
+    console.log('Redo UpdateViewCameraChange')
     this.view.cameraXfo = this.newCameraXfo
     this.view.cameraTarget = this.newCameraTarget
   }
 }
 
-export { ChangeViewCamera }
+export { UpdateViewCameraChange }
