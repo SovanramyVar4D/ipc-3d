@@ -1,5 +1,6 @@
 import {
   AssetLoadContext,
+  BaseTool,
   BillboardItem,
   BooleanParameter,
   CADAssembly,
@@ -85,8 +86,10 @@ class Ipd3d extends HTMLElement {
   private activeView?: View
   private highlightedItem?: TreeItem
 
-  private rectangleSelectionHotKey: string | undefined
+  private rectangleSelectionHotKey: string = ''
   private rectangleSelectionOn: boolean = false
+  private readonly cameraManipulator: BaseTool
+  private readonly rectangleSelectionManipulator: SelectionTool
 
   private neutralPose: Pose
   private initialView!: View
@@ -162,46 +165,30 @@ class Ipd3d extends HTMLElement {
     // ////////////////////////////////////////////
     // Setup Selection Tool
 
-    const cameraManipulator = this.renderer.getViewport().getManipulator()
-    const selectionTool = new SelectionTool({
+    this.cameraManipulator = this.renderer.getViewport().getManipulator()
+
+    this.rectangleSelectionManipulator = new SelectionTool({
       scene: this.scene,
       renderer: this.renderer,
       selectionManager: this.selectionManager
     })
-
-    selectionTool.selectionRectMat.getParameter('BaseColor')!.value = new Color(
-      0.2,
-      0.2,
-      0.2
-    )
-
-    const setToolToSelectionTool = () => {
-      this.renderer.getViewport().setManipulator(selectionTool)
-      this.activateRectangleSelection()
-    }
-
-    const setToolToCameraManipulator = () => {
-      this.renderer.getViewport().setManipulator(cameraManipulator)
-      this.deactivateRectangleSelection()
-    }
+    this.setRectangleSelectionColor(new Color(0.2, 0.2, 0.2))
 
     // ////////////////////////////////////////////
     // HotKeys
-
     document.addEventListener('keydown', (e: KeyboardEvent) => {
       switch (e.key) {
-        case 'q':
-          if (!this.rectangleSelectionOn) setToolToSelectionTool()
+        case this.rectangleSelectionHotKey:
+          if (!this.rectangleSelectionOn) this.setSelectionToolToRectangle()
       }
     })
 
     document.addEventListener('keyup', (e: KeyboardEvent) => {
       switch (e.key) {
-        case 'q':
-          if (this.rectangleSelectionOn) setToolToCameraManipulator()
+        case this.rectangleSelectionHotKey:
+          if (this.rectangleSelectionOn) this.setSelectionToolToCamera()
           break
         case 's':
-          if (!selectionOn) setToolToSelectionTool()
           if (e.ctrlKey) {
             e.preventDefault()
             this.eventEmitter.emit('saveKeyboardShortcutTriggered')
@@ -329,8 +316,6 @@ class Ipd3d extends HTMLElement {
     )
     this.shadowRoot?.appendChild(styleTag)
 
-    //
-    // this.renderer.getViewport().backgroundColorParam.value = new Color(.9, .4, .4)
     this.newProject()
   }
 
@@ -343,14 +328,26 @@ class Ipd3d extends HTMLElement {
     this.rectangleSelectionHotKey = key
   }
 
-  public activateRectangleSelection() {
-    this.rectangleSelectionOn = true
+  // Selection Tool (Rectangle/Camera manipulator)
+  public setRectangleSelectionColor(color: Color) {
+    this.rectangleSelectionManipulator
+        .selectionRectMat.getParameter('BaseColor')!.value = color
   }
 
-  public deactivateRectangleSelection() {
+  public setSelectionToolToRectangle() {
+    this.renderer.getViewport().setManipulator(this.rectangleSelectionManipulator)
+    this.rectangleSelectionOn = true
+  }
+  public setSelectionToolToCamera() {
+    this.renderer.getViewport().setManipulator(this.cameraManipulator)
     this.rectangleSelectionOn = false
   }
 
+  public setRectangleSelectionHotKey(key: string) {
+    this.rectangleSelectionHotKey = key
+  }
+
+  // Project
   public newProject(): void {
     this.renderer
       .getViewport()
