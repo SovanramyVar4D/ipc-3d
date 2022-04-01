@@ -968,9 +968,6 @@ class Ipd3d extends HTMLElement {
 
   public setUndoLimit(limit: number) {
     this.undoLimit = limit
-    const undoStack = Array.from(this.undoRedoManager.__undoStack)
-    this.undoRedoManager.__undoStack = undoStack.filter(undo => undoStack.indexOf(undo) > undoStack.length - (this.undoLimit! + 1))
-    console.log(this.undoRedoManager.__undoStack)
   }
 }
 

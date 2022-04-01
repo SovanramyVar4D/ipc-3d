@@ -233,7 +233,9 @@ let autoSaveIntervalId
 document
   .getElementById('activate-auto-save')
   .addEventListener('change', changeEvent => {
-    const delay = parseInt(document.getElementById('auto-save-delay').value, 10)
+    const delayTextField = document.getElementById('auto-save-delay')
+    delayTextField.setAttribute('disabled', 'disabled')
+    const delay = parseInt(delayTextField.value, 10)
 
     const checked = changeEvent.currentTarget.checked
     if (checked && delay) {
@@ -241,6 +243,7 @@ document
     }
     else {
       clearInterval(autoSaveIntervalId)
+      delayTextField.removeAttribute('disabled')
     }
     changeEvent.stopPropagation()
   })
@@ -262,9 +265,7 @@ document
     changeEvent.stopPropagation()
   })
 
-document.getElementById('undo-limit').addEventListener('change', event => {
-  event.preventDefault()
-})
+
 
 // ////////////////////////////////////////////////
 //  Tabs

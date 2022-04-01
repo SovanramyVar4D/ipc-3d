@@ -1,10 +1,13 @@
 <!DOCTYPE html>
-<html lang="en" class="h-full">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link href="/node_modules/@fortawesome/fontawesome-free/css/all.css" rel="stylesheet">
+    <link
+      href="/node_modules/@fortawesome/fontawesome-free/css/all.css"
+      rel="stylesheet"
+    />
 
     <title>3D IPC</title>
 
@@ -37,7 +40,7 @@
           data-bs-toggle="tooltip" data-bs-placement="bottom" title="New Project"
       >
           <i class="fa-solid fa-plus"></i>
-          <div>New</div>
+          <span class="block">New</span>
         </button>
         <button
           id="save"
@@ -45,15 +48,15 @@
           data-bs-toggle="tooltip" data-bs-placement="bottom" title="Save&#013;(Ctrl+Shift+S)"
         >
           <i class="fa-solid fa-floppy-disk"></i>
-          <div>Save</div>
+          <span class="block">Save</span>
         </button>
         <button
           id="save-as"
-        class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
+          class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
           data-bs-toggle="tooltip" data-bs-placement="bottom" title="Save As...&#013;(Ctrl+Alt+S)"
         >
           <i class="fa-solid fa-cloud-arrow-down"></i>
-          <div>Save As</div>
+          <span class="block">Save As</span>
         </button>
         <button
           id="load"
@@ -61,7 +64,7 @@
           data-bs-toggle="tooltip" data-bs-placement="bottom" title="Load Project"
         >
           <i class="fa-solid fa-cloud-arrow-up"></i>
-          <div>Load Project</div>
+          <span class="block">Load Project</span>
         </button>
         <button
           id="loadAsset"
@@ -69,7 +72,7 @@
           data-bs-toggle="tooltip" data-bs-placement="bottom" title="Load Asset"
         >
           <i class="fa-solid fa-cube"></i>
-          <div>Load 3D</div>
+          <span class="block">Load 3D</span>
         </button>
         <button
           id="loadBike"
@@ -77,7 +80,7 @@
           data-bs-toggle="tooltip" data-bs-placement="bottom" title="Load Bike"
          >
           <i class="fa-solid fa-bicycle"></i>
-          <div>Load Bike</div>
+          <span class="block">Load Bike</span>
         </button>
         <button
           id="loadGearbox"
@@ -85,15 +88,15 @@
           data-bs-toggle="tooltip" data-bs-placement="bottom" title="Load Gearbox"
           >
             <i class="fa-solid fa-gear"></i>
-            <div>Load Gearbox</div>
+            <span class="block">Load Gearbox</span>
         </button>
         <button
           id="undo"
           class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
           data-bs-toggle="tooltip" data-bs-placement="bottom" title="Undo&#013;(Ctrl+Z)"
         >
-        <i class="fa-solid fa-rotate-left"></i>
-          <div>Undo</div>
+          <i class="fa-solid fa-rotate-left"></i>
+          <span class="block">Undo</span>
         </button>
         <button
           id="redo"
@@ -101,7 +104,7 @@
           data-bs-toggle="tooltip" data-bs-placement="bottom" title="Redo&#013;(Ctrl+Y)"
         >
           <i class="fa-solid fa-rotate-right"></i>
-          <div>Redo</div>
+          <span class="block">Redo</span>
         </button>
         <button
           id="frameView"
@@ -109,7 +112,7 @@
           data-bs-toggle="tooltip" data-bs-placement="bottom" title="Fit"
         >
           <i class="fa-solid fa-crop-simple"></i>
-          <div>Fit</div>
+          <span class="block">Fit</span>
       </button>
 
         <button
@@ -118,7 +121,7 @@
           data-bs-toggle="tooltip" data-bs-placement="bottom" title="Hide Selection"
         >
           <i class="fa-solid fa-eye-slash"></i>
-          <div>Hide</div>
+          <span class="block">Hide</span>
         </button>
         <button
           id="unHideAll"
@@ -126,36 +129,34 @@
           data-bs-toggle="tooltip" data-bs-placement="bottom" title="UnHide All"
         >
           <i class="fa-solid fa-eye"></i>
-          <div>UnHide</div>
+          <span class="block">UnHide</span>
         </button>
         <button
         id="addCallout"
         class="border rounded bg-blue-300 px-2 hover:bg-gray-100 hover:border-blue-500"
         >
           <i class="fa-solid fa-tag"></i>
-          <div>Add Callout</div>
+          <span class="block">Add Callout</span>
        </button>
         <label
           class="text-center border rounded bg-blue-300 px-2 hover:bg-gray-100 hover:border-blue-500"
         >
           <i class="fa-solid fa-arrows"></i>
-          <div>
+          <span class="block">
             Manipulator
             <input id="enable-handle" type="checkbox" checked />
-          </div>
+          </span>
         </label>
         <label
                 class="text-center border rounded bg-yellow-300 px-2 hover:bg-yellow-100 hover:border-yellow-500"
         >
           <i class="fa-solid fa-floppy-disk"></i>
           Auto-Save
-          <div>
           <input id="activate-auto-save" type="checkbox"/>
-
+          <span class="block">
           <input id="auto-save-delay" class="w-16" type="number" value="10000" />
           ms
-          </div>
-
+          </span>
         </label>
         <label
                 class="text-center border rounded bg-yellow-300 px-2 hover:bg-yellow-100 hover:border-yellow-500"
@@ -163,9 +164,9 @@
           <i class="fa-solid fa-delete-left"></i>
           Undo Limit
           <input id="activate-undo-limit" type="checkbox"/>
-          <div>
+          <span class="block">
             <input id="undo-limit" class="w-16" type="number" value="100" />
-          </div>
+          </span>
         </label>
       </header>
 
@@ -178,7 +179,7 @@
               data-bs-toggle="tooltip" data-bs-placement="bottom" title="Views"
             >
               <i class="fa-solid fa-images"></i>
-              <div>Views</div>
+              <span class="block">Views</span>
             </button>
             <button
               id="showTab2"
@@ -186,7 +187,7 @@
               data-bs-toggle="tooltip" data-bs-placement="bottom" title="Tree"
             >
               <i class="fa-solid fa-folder-tree"></i>
-              <div>Tree</div>
+              <span class="block">Tree</span>
             </button>
             <button
               id="showTab3"
@@ -194,7 +195,7 @@
               data-bs-toggle="tooltip" data-bs-placement="bottom" title="Selection Sets"
           >
               <i class="fa-solid fa-cubes"></i>
-              <div>SelectionSets</div>
+              <span class="block">SelectionSets</span>
             </button>
             <button
               id="showTab4"
@@ -202,7 +203,7 @@
               data-bs-toggle="tooltip" data-bs-placement="bottom" title="Cut Planes"
             >
               <i class="fa-solid fa-scissors"></i>
-              <div>Cut Planes</div>
+              <span class="block">Cut Planes</span>
           </button>
         </div>
 
