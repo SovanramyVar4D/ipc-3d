@@ -5,6 +5,11 @@ const INITIAL_VIEW_ACTIVE_BUTTON_CLASSNAME = 'initial-view-button border rounded
 
 const $ipc3d = document.getElementById('ipc-3d')
 
+$ipc3d.on('assetLoaded', (assetName) => {
+  console.log('loaded', assetName)
+  $ipc3d.setRectangleSelectionHotKey('r')
+})
+
 $ipc3d.on('selectionSetActivatedInView', (view) => {
   document.querySelectorAll('.selection-set-button .link-view-button').forEach((linkBtn) => {
     linkBtn.remove()

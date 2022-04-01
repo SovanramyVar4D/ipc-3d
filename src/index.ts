@@ -2,11 +2,9 @@ import {
   AssetLoadContext,
   BaseTool,
   BillboardItem,
-  BooleanParameter,
   CADAssembly,
   CADAsset,
   CADPart,
-  Camera,
   Color,
   EnvMap,
   EventEmitter,
@@ -124,7 +122,7 @@ class Ipd3d extends HTMLElement {
     this.shadowRoot?.appendChild($mainWrapper)
 
     this.renderer = new GLRenderer($canvas)
-    // this.renderer.outlineThickness = 0.5
+    this.renderer.outlineThickness = 0.5
     this.renderer.outlineSensitivity = 5
 
     this.scene = new Scene()
@@ -348,7 +346,8 @@ class Ipd3d extends HTMLElement {
   // Items / Selection
 
   /*
-  * Same as SelectionManager.toggleItemSelection without undo/redo (only possible in setSelection function)
+  * Same as SelectionManager.toggleItemSelection without undo/redo (only possible in SelectionManager.setSelection function)
+  * Remark: rectangle selection emit selectionChange, is not possible to disable undo / redo with it (SelectionManager.toggleItemSelection function called).
   */
   private toggleSelection(item: CADPart | CADAssembly, replaceSelection?: boolean | undefined) {
     const selection = Array.from(this.selectionManager.getSelection())
@@ -458,7 +457,9 @@ class Ipd3d extends HTMLElement {
       })
 
       cadAsset.geomLibrary.once('loaded', () => {
-        resolve(cadAsset.getName())
+        const assetName = cadAsset.getName();
+        this.eventEmitter.emit('assetLoaded', assetName)
+        resolve(assetName)
       })
 
       this.scene.getRoot().addChild(cadAsset)
@@ -927,11 +928,11 @@ class Ipd3d extends HTMLElement {
   // /////////////////////////////////////////
   // Events
 
-  on(eventName: string, listener?: (event: any) => void): number {
+  public on(eventName: string, listener?: (event: any) => void): number {
     return this.eventEmitter.on(eventName, listener)
   }
 
-  once(eventName: string, listener?: (event: any) => void): number {
+  public once(eventName: string, listener?: (event: any) => void): number {
     // @ts-ignore
     return this.eventEmitter.once(eventName, listener)
   }
