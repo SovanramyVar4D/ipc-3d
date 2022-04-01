@@ -37,6 +37,7 @@
           data-bs-toggle="tooltip" data-bs-placement="bottom" title="New Project"
       >
           <i class="fa-solid fa-plus"></i>
+          <div>New</div>
         </button>
         <button
           id="save"
@@ -44,6 +45,7 @@
           data-bs-toggle="tooltip" data-bs-placement="bottom" title="Save&#013;(Ctrl+Shift+S)"
         >
           <i class="fa-solid fa-floppy-disk"></i>
+          <div>Save</div>
         </button>
         <button
           id="save-as"
@@ -51,6 +53,7 @@
           data-bs-toggle="tooltip" data-bs-placement="bottom" title="Save As...&#013;(Ctrl+Alt+S)"
         >
           <i class="fa-solid fa-cloud-arrow-down"></i>
+          <div>Save As</div>
         </button>
         <button
           id="load"
@@ -58,13 +61,39 @@
           data-bs-toggle="tooltip" data-bs-placement="bottom" title="Load Project"
         >
           <i class="fa-solid fa-cloud-arrow-up"></i>
+          <div>Load Project</div>
+        </button>
+        <button
+          id="loadAsset"
+          lass="border rounded bg-gray-300 px-2 hover:bg-gray-100"
+          data-bs-toggle="tooltip" data-bs-placement="bottom" title="Load Asset"
+        >
+          <i class="fa-solid fa-cube"></i>
+          <div>Load 3D</div>
+        </button>
+        <button
+          id="loadBike"
+          class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
+          data-bs-toggle="tooltip" data-bs-placement="bottom" title="Load Bike"
+         >
+          <i class="fa-solid fa-bicycle"></i>
+          <div>Load Bike</div>
+        </button>
+        <button
+          id="loadGearbox"
+          class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
+          data-bs-toggle="tooltip" data-bs-placement="bottom" title="Load Gearbox"
+          >
+            <i class="fa-solid fa-gear"></i>
+            <div>Load Gearbox</div>
         </button>
         <button
           id="undo"
           class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
           data-bs-toggle="tooltip" data-bs-placement="bottom" title="Undo&#013;(Ctrl+Z)"
-      >
+        >
         <i class="fa-solid fa-rotate-left"></i>
+          <div>Undo</div>
         </button>
         <button
           id="redo"
@@ -72,20 +101,15 @@
           data-bs-toggle="tooltip" data-bs-placement="bottom" title="Redo&#013;(Ctrl+Y)"
         >
           <i class="fa-solid fa-rotate-right"></i>
-        </button>
-        <button
-          id="loadAsset"
-          class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
-          data-bs-toggle="tooltip" data-bs-placement="bottom" title="Load Asset"
-        >
-          <i class="fa-solid fa-cube"></i>
+          <div>Redo</div>
         </button>
         <button
           id="frameView"
-          class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
+          class="border rounded bg-blue-300 px-2 hover:bg-gray-100 hover:border-blue-500"
           data-bs-toggle="tooltip" data-bs-placement="bottom" title="Fit"
         >
           <i class="fa-solid fa-crop-simple"></i>
+          <div>Fit</div>
       </button>
 
         <button
@@ -94,6 +118,7 @@
           data-bs-toggle="tooltip" data-bs-placement="bottom" title="Hide Selection"
         >
           <i class="fa-solid fa-eye-slash"></i>
+          <div>Hide</div>
         </button>
         <button
           id="unHideAll"
@@ -101,34 +126,46 @@
           data-bs-toggle="tooltip" data-bs-placement="bottom" title="UnHide All"
         >
           <i class="fa-solid fa-eye"></i>
+          <div>UnHide</div>
         </button>
-  <button
+        <button
         id="addCallout"
         class="border rounded bg-blue-300 px-2 hover:bg-gray-100 hover:border-blue-500"
-      >
-        Add Callout
-      </button>
-
-      <label
-          class="border rounded bg-blue-300 px-2 hover:bg-gray-100 hover:border-blue-500"
         >
-          Gizmo
-          <input id="enable-handle" type="checkbox" checked />
+          <i class="fa-solid fa-tag"></i>
+          <div>Add Callout</div>
+       </button>
+        <label
+          class="text-center border rounded bg-blue-300 px-2 hover:bg-gray-100 hover:border-blue-500"
+        >
+          <i class="fa-solid fa-arrows"></i>
+          <div>
+            Manipulator
+            <input id="enable-handle" type="checkbox" checked />
+          </div>
         </label>
         <label
-                class="border rounded bg-yellow-300 px-2 hover:bg-yellow-100 hover:border-yellow-500"
+                class="text-center border rounded bg-yellow-300 px-2 hover:bg-yellow-100 hover:border-yellow-500"
         >
+          <i class="fa-solid fa-floppy-disk"></i>
           Auto-Save
+          <div>
           <input id="activate-auto-save" type="checkbox"/>
+
           <input id="auto-save-delay" class="w-16" type="number" value="10000" />
           ms
+          </div>
+
         </label>
         <label
-                class="border rounded bg-yellow-300 px-2 hover:bg-yellow-100 hover:border-yellow-500"
+                class="text-center border rounded bg-yellow-300 px-2 hover:bg-yellow-100 hover:border-yellow-500"
         >
+          <i class="fa-solid fa-delete-left"></i>
           Undo Limit
           <input id="activate-undo-limit" type="checkbox"/>
-          <input id="undo-limit" class="w-16" type="number" value="100" />
+          <div>
+            <input id="undo-limit" class="w-16" type="number" value="100" />
+          </div>
         </label>
       </header>
 
@@ -141,6 +178,7 @@
               data-bs-toggle="tooltip" data-bs-placement="bottom" title="Views"
             >
               <i class="fa-solid fa-images"></i>
+              <div>Views</div>
             </button>
             <button
               id="showTab2"
@@ -148,6 +186,7 @@
               data-bs-toggle="tooltip" data-bs-placement="bottom" title="Tree"
             >
               <i class="fa-solid fa-folder-tree"></i>
+              <div>Tree</div>
             </button>
             <button
               id="showTab3"
@@ -155,6 +194,7 @@
               data-bs-toggle="tooltip" data-bs-placement="bottom" title="Selection Sets"
           >
               <i class="fa-solid fa-cubes"></i>
+              <div>SelectionSets</div>
             </button>
             <button
               id="showTab4"
@@ -162,6 +202,7 @@
               data-bs-toggle="tooltip" data-bs-placement="bottom" title="Cut Planes"
             >
               <i class="fa-solid fa-scissors"></i>
+              <div>Cut Planes</div>
           </button>
         </div>
 

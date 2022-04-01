@@ -96,13 +96,33 @@ document.getElementById('save-as').addEventListener('click', () => {
 })
 
 document.getElementById('load').addEventListener('click', () => {
+  // File picker
+  /*
+  const input = document.createElement('input')
+  input.type = 'file'
+  input.accept = '.proj'
+
+  input.onchange = (event) => {
+    const projFile = event.target.files[0]
+
+    const fr = new FileReader()
+
+    fr.onload = function () {
+      $ipc3d.loadJson(JSON.parse(fr.result))
+        .then(() => console.log('Project file loaded'))
+    }
+    fr.readAsText(projFile)
+  }
+  input.click()
+  */
+
+  // Local Storage
   const jsonStr = localStorage.getItem('ipc-project')
 
   if (!jsonStr) {
     console.warn('No project data available')
     return
   }
-
   $ipc3d.loadJson(JSON.parse(jsonStr)).then(() => {})
 })
 
