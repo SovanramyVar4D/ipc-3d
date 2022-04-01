@@ -220,6 +220,27 @@ document
     changeEvent.stopPropagation()
   })
 
+// Undo limit
+document
+  .getElementById('activate-undo-limit')
+  .addEventListener('change', changeEvent => {
+    const limitTextField = document.getElementById('undo-limit')
+    limitTextField.setAttribute('disabled', 'disabled')
+    const limit = parseInt(limitTextField.value, 10)
+
+    const checked = changeEvent.currentTarget.checked
+    if (checked && limit) {
+      $ipc3d.setUndoLimit(limit)
+    } else {
+      limitTextField.removeAttribute('disabled')
+    }
+    changeEvent.stopPropagation()
+  })
+
+document.getElementById('undo-limit').addEventListener('change', event => {
+  event.preventDefault()
+})
+
 // ////////////////////////////////////////////////
 //  Tabs
 function displayPanel(panel) {
@@ -685,7 +706,11 @@ const $toggleFooter = document.getElementById('toggle-footer')
 
 $toggleFooter.addEventListener('click', () => {
   const $footer = document.querySelector('footer')
-  $footer.classList.toggle('hidden')
+  if ($footer.classList.toggle('hidden')) {
+    $ipc3d.setSelectionFillParamValue(0.5)
+  } else {
+    $ipc3d.setSelectionFillParamValue(0)
+  }
 })
 
 let activeMaterial = -1

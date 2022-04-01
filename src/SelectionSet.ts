@@ -7,28 +7,25 @@ export interface SelectionSetJson {
   items: Array<Array<string>>
 }
 export class SelectionSet {
-  private id: string
+
+  private _id: string
   name: any
   items: Array<TreeItem> = []
   scene: Scene
 
   constructor(name: string = '', items: Array<TreeItem>, scene: Scene) {
-    this.id = UUID()
+    this._id = UUID()
     this.name = name
     this.items = items
     this.scene = scene
   }
 
-  // /////////////////////////////////////////
-  // Persistence
-
-  getIdAndName() {
-    return {
-      id: this.id,
-      name: this.name
-    }
+  getId(): string {
+    return this._id;
   }
 
+  // /////////////////////////////////////////
+  // Persistence
 
   copyFrom(selectionSet: SelectionSet) {
     this.name = selectionSet.name
@@ -37,7 +34,7 @@ export class SelectionSet {
   }
 
   saveJson(): SelectionSetJson {
-    const json: SelectionSetJson = { id: this.id, name: this.name, items: [] }
+    const json: SelectionSetJson = { id: this._id, name: this.name, items: [] }
 
     this.items.forEach(item => {
       json.items.push(item.getPath())
@@ -47,7 +44,7 @@ export class SelectionSet {
   }
 
   loadJson(selectionSetJson: SelectionSetJson) {
-    this.id = selectionSetJson.id
+    this._id = selectionSetJson.id
     this.name = selectionSetJson.name
     this.items = []
     selectionSetJson.items.forEach(itemPath => {

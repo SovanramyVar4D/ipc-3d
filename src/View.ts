@@ -23,17 +23,12 @@ class View {
     this.id = UUID()
     this.name = name
     this.pose = new Pose(scene)
-    this.selectionSet = {
-      id: 'nothing',
-      name: 'nothing'
-    }
+    this.selectionSet = {id: '', name: ''}
   }
 
   setSelectionSet(id: string, name: string) {
-    this.selectionSet = {
-      id: id,
-      name: name
-    }
+    this.selectionSet.id = id
+    this.selectionSet.name = name
   }
 
   setCameraParams(camera: Camera) {

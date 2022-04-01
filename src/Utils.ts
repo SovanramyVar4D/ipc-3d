@@ -1,3 +1,6 @@
+/*
+* Generates an unique ID
+*/
 export const UUID = () => {
     function s(n: number) {
         return h((Math.random() * (1 << (n << 2))) ^ Date.now()).slice(-n)

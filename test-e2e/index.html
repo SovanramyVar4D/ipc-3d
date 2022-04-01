@@ -74,7 +74,7 @@
           <i class="fa-solid fa-rotate-right"></i>
         </button>
         <button
-          id="loadBike"
+          id="loadAsset"
           class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
           data-bs-toggle="tooltip" data-bs-placement="bottom" title="Load Asset"
         >
@@ -123,6 +123,13 @@
           <input id="auto-save-delay" class="w-16" type="number" value="10000" />
           ms
         </label>
+        <label
+                class="border rounded bg-yellow-300 px-2 hover:bg-yellow-100 hover:border-yellow-500"
+        >
+          Undo Limit
+          <input id="activate-undo-limit" type="checkbox"/>
+          <input id="undo-limit" class="w-16" type="number" value="100" />
+        </label>
       </header>
 
     <main class="flex flex-1">
@@ -166,13 +173,6 @@
             >
               <i class="fa-solid fa-plus"></i>
             </button>
-            <button
-              id="saveViewCamera"
-              class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
-              data-bs-toggle="tooltip" data-bs-placement="bottom" title="Save"
-            >
-              <i class="fa-solid fa-floppy-disk"></i>
-          </button>
 
           <hr />
 
