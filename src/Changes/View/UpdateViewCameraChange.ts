@@ -2,7 +2,7 @@ import {Camera, Vec3, Xfo} from '@zeainc/zea-engine'
 import { Change } from '@zeainc/zea-ux'
 import { View } from '../../View'
 
-export default class UpdateViewCameraChange extends Change {
+class UpdateViewCameraChange extends Change {
   view: View
   prevCameraXfo: Xfo
   prevCameraTarget: Vec3

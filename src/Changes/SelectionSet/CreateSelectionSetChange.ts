@@ -2,7 +2,7 @@ import {EventEmitter} from '@zeainc/zea-engine'
 import {Change} from '@zeainc/zea-ux'
 import {SelectionSet} from "../../SelectionSet";
 
-export default class CreateSelectionSetChange extends Change {
+class CreateSelectionSetChange extends Change {
   selectionSet: SelectionSet
   selectionSetsList: SelectionSet[]
   eventEmitter: EventEmitter

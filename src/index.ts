@@ -124,8 +124,8 @@ export class Ipd3d extends HTMLElement {
     this.shadowRoot?.appendChild($mainWrapper)
 
     this.renderer = new GLRenderer($canvas)
-    this.renderer.outlineThickness = 0.5
-    this.renderer.outlineSensitivity = 5
+    this.setOutlineThickness(0)
+    this.setOutlineSensitivity(5)
 
     this.scene = new Scene()
     this.renderer.setScene(this.scene)
@@ -975,6 +975,18 @@ export class Ipd3d extends HTMLElement {
         .then(() => {
           this.scene.setEnvMap(envMap)
         })
+  }
+
+  public setOutlineThickness(thickness: number) {
+    let thicknessValue: number = 0
+    if (!(thickness < 0) && !(thickness > 1)) {
+      thicknessValue = thickness
+    }
+    this.renderer.outlineThickness = thicknessValue
+  }
+
+  public setOutlineSensitivity(outlineSensitivity: number) {
+    this.renderer.outlineSensitivity = outlineSensitivity
   }
 }
 

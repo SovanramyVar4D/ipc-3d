@@ -2,7 +2,7 @@ import { EventEmitter } from '@zeainc/zea-engine'
 import { Change } from '@zeainc/zea-ux'
 import { View } from '../../View'
 
-export default class CreateViewChange extends Change {
+class CreateViewChange extends Change {
   view: View
   viewsList: View[]
   eventEmitter: EventEmitter

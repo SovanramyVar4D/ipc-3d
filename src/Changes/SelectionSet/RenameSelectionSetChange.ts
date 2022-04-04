@@ -2,7 +2,7 @@ import {Change} from '@zeainc/zea-ux'
 import {EventEmitter} from "@zeainc/zea-engine";
 import {SelectionSet} from "../../SelectionSet";
 
-export default class RenameSelectionSetChange extends Change {
+class RenameSelectionSetChange extends Change {
   selectionSet: SelectionSet
   prevName: string
   newName: string
