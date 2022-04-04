@@ -5,7 +5,12 @@ const INITIAL_VIEW_ACTIVE_BUTTON_CLASSNAME = 'initial-view-button border rounded
 
 const $ipc3d = document.getElementById('ipc-3d')
 
+// Set environment map at startup
+const envMap = $ipc3d.getAttribute('asset-env')
+$ipc3d.setEnvironmentMap(envMap)
+
 $ipc3d.on('assetLoaded', (assetName) => {
+  // console.log(envMap)
   console.log('loaded', assetName)
   $ipc3d.setRectangleSelectionHotKey('r')
 })

@@ -71,17 +71,19 @@ interface ProjectJson {
   materialAssignments: Record<string, number>
 }
 
-class Ipd3d extends HTMLElement {
+export class Ipd3d extends HTMLElement {
   private scene: Scene
   private renderer: GLRenderer
-  private selectionManager: SelectionManager
+
+  public selectionManager: SelectionManager
   private undoRedoManager: UndoRedoManager
   private assets: CADAsset[] = []
-  private views: View[] = []
-  private cuttingPlanes: CuttingPlaneWrapper[] = []
-  private selectionSets: SelectionSet[] = []
-  private hiddenParts: TreeItem[] = []
-  private activeView?: View
+  public views: View[] = []
+  public cuttingPlanes: CuttingPlaneWrapper[] = []
+  public selectionSets: SelectionSet[] = []
+
+  public hiddenParts: TreeItem[] = []
+  public activeView?: View
   private highlightedItem?: TreeItem
 
   private rectangleSelectionHotKey: string = ''
@@ -89,10 +91,10 @@ class Ipd3d extends HTMLElement {
   private readonly cameraManipulator: BaseTool
   private readonly rectangleSelectionManipulator: SelectionTool
 
-  private neutralPose: Pose
-  private initialView!: View
+  public neutralPose: Pose
+  public initialView!: View
 
-  private materials: Material[] = []
+  public materials: Material[] = []
   private materialAssignments: Record<string, number> = {}
 
   picking = false
@@ -126,13 +128,11 @@ class Ipd3d extends HTMLElement {
     this.renderer.outlineSensitivity = 5
 
     this.scene = new Scene()
+    this.renderer.setScene(this.scene)
 
     // Replaced by an Initial View
     this.neutralPose = new Pose(this.scene)
 
-    const envMap = new EnvMap()
-    envMap.load('data/StudioG.zenv')
-    this.scene.setEnvMap(envMap)
 
     // ////////////////////////////////////////////
     // Setup Selection Manager
@@ -234,8 +234,6 @@ class Ipd3d extends HTMLElement {
         }
       }
     })
-
-    this.renderer.setScene(this.scene)
 
     // Disabling the highlighting as it is distracting.
     this.renderer.getViewport().on('pointerMove', (event: ZeaPointerEvent) => {
@@ -968,6 +966,15 @@ class Ipd3d extends HTMLElement {
 
   public setUndoLimit(limit: number) {
     this.undoLimit = limit
+  }
+
+  public setEnvironmentMap(zenvFilePath: string) {
+    console.log(zenvFilePath)
+    const envMap = new EnvMap()
+    envMap.load(zenvFilePath)
+        .then(() => {
+          this.scene.setEnvMap(envMap)
+        })
   }
 }
 
