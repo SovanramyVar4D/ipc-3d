@@ -10,7 +10,6 @@ const envMap = $ipc3d.getAttribute('asset-env')
 $ipc3d.setEnvironmentMap(envMap)
 
 $ipc3d.on('assetLoaded', (assetName) => {
-  // console.log(envMap)
   console.log('loaded', assetName)
   $ipc3d.setRectangleSelectionHotKey('r')
 })
