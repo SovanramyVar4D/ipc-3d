@@ -6,6 +6,9 @@ jobs:
   IPC-3D-E2E:
     runs-on: ubuntu-latest
     steps:
+      - name: Check out repository code
+        uses: actions/checkout@v3
+
       - run: yarn install --frozen-lockfile
 
       - run: yarn run build
