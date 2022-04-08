@@ -6,6 +6,8 @@ jobs:
   IPC-3D-E2E:
     runs-on: ubuntu-latest
     steps:
+      - run: yarn install --frozen-lockfile
+
       - run: yarn run build
 
       - run: yarn run serve:ci
