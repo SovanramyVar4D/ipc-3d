@@ -60,11 +60,15 @@ document.getElementById('redo').addEventListener('click', event => {
 
 // ///////////////////////////////////////////////
 // Assets
-document.getElementById('loadBike').addEventListener('click', () => {
-  $ipc3d.loadAsset('data/Mountain Bike.zcad')
+const $assetIndicator = document.querySelector('#assetIndicator')
+
+document.getElementById('loadBike').addEventListener('click', async () => {
+  const assetName = await $ipc3d.loadAsset('data/Mountain Bike.zcad')
+  $assetIndicator.textContent = assetName
 })
-document.getElementById('loadGearbox').addEventListener('click', () => {
-  $ipc3d.loadAsset('data/gear_box_final_asm.stp.zcad')
+document.getElementById('loadGearbox').addEventListener('click', async () => {
+  const assetName = await $ipc3d.loadAsset('data/gear_box_final_asm.stp.zcad')
+  $assetIndicator.textContent = assetName
 })
 
 function download(file, text) {

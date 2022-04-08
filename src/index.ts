@@ -346,8 +346,8 @@ class Ipd3d extends HTMLElement {
     this.eventEmitter.emit('materialsListChanged')
   }
 
-  public async loadAsset(url: string): Promise<void> {
-    return new Promise<void>(resolve => {
+  public async loadAsset(url: string): Promise<string> {
+    return new Promise<string>(resolve => {
       const cadAsset = new CADAsset()
 
       const context = new AssetLoadContext()
@@ -355,8 +355,10 @@ class Ipd3d extends HTMLElement {
 
       cadAsset.load(url, context).then(() => {
         this.renderer.frameAll()
-        console.log('loaded', cadAsset.getName())
-        resolve()
+      })
+
+      cadAsset.geomLibrary.once('loaded', () => {
+        resolve(cadAsset.getName())
       })
 
       this.scene.getRoot().addChild(cadAsset)
@@ -740,7 +742,7 @@ class Ipd3d extends HTMLElement {
   public loadJson(projectJson: ProjectJson): Promise<void> {
     this.newProject()
     return new Promise<void>(resolve => {
-      const promises: Promise<void>[] = []
+      const promises: Promise<string>[] = []
       projectJson.assets.forEach((assetJson: AssetJson) => {
         promises.push(this.loadAsset(assetJson.url))
       })
