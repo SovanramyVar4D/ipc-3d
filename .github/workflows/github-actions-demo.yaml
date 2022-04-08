@@ -13,4 +13,4 @@ jobs:
 
       - run: yarn run serve:ci &
 
-      - run: yarn run cypress run --browser chrome --headless --record --key ${{ secrets.CYPRESS_KEY }}
+      - run: yarn run cypress run --browser chrome --headless
