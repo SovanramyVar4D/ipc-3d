@@ -450,8 +450,8 @@ export class Ipd3d extends HTMLElement {
       context.units = 'Millimeters'
 
       cadAsset.load(url, context).then(() => {
-        this.createInitialView()
         this.renderer.frameAll()
+        this.createInitialView()
       })
 
       cadAsset.geomLibrary.once('loaded', () => {

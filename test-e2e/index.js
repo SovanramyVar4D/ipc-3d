@@ -104,9 +104,9 @@ document.getElementById('save-as').addEventListener('click', () => {
   downloadProjectFile()
 })
 
-document.getElementById('load').addEventListener('click', () => {
+
+document.getElementById('loadProjectFile').addEventListener('click', () => {
   // File picker
-  /*
   const input = document.createElement('input')
   input.type = 'file'
   input.accept = '.proj'
@@ -123,8 +123,9 @@ document.getElementById('load').addEventListener('click', () => {
     fr.readAsText(projFile)
   }
   input.click()
-  */
+})
 
+document.getElementById('load').addEventListener('click', () => {
   // Local Storage
   const jsonStr = localStorage.getItem('ipc-project')
 
@@ -189,6 +190,28 @@ $ipc3d.undoRedoManager.on('changeRedone', () => console.log('changeRedone'))
 
 // ///////////////////////////////////////////////
 // Assets
+document.getElementById('loadAsset').addEventListener('click',  event => {
+  window.URL = window.URL || window.webkitURL
+
+  const input = document.createElement('input')
+  input.type = 'file'
+  input.accept = '.zcad'
+
+  input.onchange = async (event) => {
+    const projFile = event.target.files[0]
+    const projFilePath = window.URL.createObjectURL(projFile)
+
+    await $ipc3d.loadAsset(projFilePath)
+      .then((assetName) => {
+        window.URL.revokeObjectURL(projFilePath)
+        $assetIndicator.textContent = assetName
+      })
+  }
+  input.click()
+
+  event.stopPropagation()
+})
+
 const $assetIndicator = document.querySelector('#assetIndicator')
 
 document.getElementById('loadBike').addEventListener('click', async () => {

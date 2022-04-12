@@ -9,7 +9,7 @@ export interface SelectionSetJson {
 export class SelectionSet {
 
   private _id: string
-  name: any
+  name: string
   items: Array<TreeItem> = []
   scene: Scene
 
