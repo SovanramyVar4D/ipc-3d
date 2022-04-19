@@ -214,6 +214,15 @@ export class IPC_3d extends HTMLElement {
         } else {
           this.neutralPose.storeTreeItemsPose(change.treeItems)
         }
+      } else if (change instanceof ParameterValueChange) {
+        const param = change.param
+        if (param.getOwner() instanceof Material) return
+        if (this.activeView) {
+          this.neutralPose.storeParamValue(param, change.prevValue)
+          this.activeView.pose.storeParamValue(param, change.nextValue)
+        } else {
+          this.neutralPose.storeParamValue(param, change.nextValue)
+        }
       }
     })
 
