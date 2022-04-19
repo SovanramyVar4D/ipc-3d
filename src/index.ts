@@ -71,7 +71,7 @@ interface ProjectJson {
   materialAssignments: Record<string, number>
 }
 
-export class Ipd3d extends HTMLElement {
+export class IPC_3d extends HTMLElement {
   private scene: Scene
   private renderer: GLRenderer
 
@@ -990,4 +990,4 @@ export class Ipd3d extends HTMLElement {
   }
 }
 
-customElements.define('ipc-3d', Ipd3d)
+customElements.define('ipc-3d', IPC_3d)
