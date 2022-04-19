@@ -105,10 +105,6 @@ export class IPC_3d extends HTMLElement {
 
   private eventEmitter = new EventEmitter()
 
-  // Undo redo management
-  private undoLimit?: number
-  private undoCounter: number = 0
-
   constructor() {
     super()
 
@@ -327,18 +323,6 @@ export class IPC_3d extends HTMLElement {
     initialView.setCameraParams(this.renderer.getViewport().getCamera())
     this.initialView = initialView
     this.eventEmitter.emit('viewsListChanged')
-  }
-
-  // Undo Limit
-  private increaseUndoCounter() {
-    this.undoCounter += 1
-  }
-
-  private decreaseUndoCounter() {
-    if (this.undoCounter > 0)
-    {
-      this.undoCounter -= 1
-    }
   }
 
   // Items / Selection
@@ -939,33 +923,11 @@ export class IPC_3d extends HTMLElement {
   // Undo /Redo
 
   public undo() {
-    if (this.undoLimit) {
-      if (this.undoCounter < this.undoLimit) {
-        this.increaseUndoCounter()
-        this.undoRedoManager.undo()
-      } else {
-        console.log('Undo limit reached')
-      }
-    } else {
-      this.undoRedoManager.undo()
-    }
-    console.log(this.undoRedoManager.__redoStack)
+    this.undoRedoManager.undo()
   }
 
   public redo() {
-    if (this.undoLimit) {
-      if (this.undoCounter > 0) {
-        this.decreaseUndoCounter()
-        this.undoRedoManager.redo()
-      }
-    } else {
-      this.undoRedoManager.redo()
-    }
-    console.log(this.undoRedoManager.__redoStack)
-  }
-
-  public setUndoLimit(limit: number) {
-    this.undoLimit = limit
+    this.undoRedoManager.redo()
   }
 
   public setEnvironmentMap(zenvFilePath: string) {

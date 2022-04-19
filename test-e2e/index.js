@@ -275,24 +275,6 @@ document
     changeEvent.stopPropagation()
   })
 
-// Undo limit
-document
-  .getElementById('activate-undo-limit')
-  .addEventListener('change', changeEvent => {
-    const limitTextField = document.getElementById('undo-limit')
-    limitTextField.setAttribute('disabled', 'disabled')
-    const limit = parseInt(limitTextField.value, 10)
-
-    const checked = changeEvent.currentTarget.checked
-    if (checked && limit) {
-      $ipc3d.setUndoLimit(limit)
-    } else {
-      limitTextField.removeAttribute('disabled')
-    }
-    changeEvent.stopPropagation()
-  })
-
-
 
 // ////////////////////////////////////////////////
 //  Tabs
