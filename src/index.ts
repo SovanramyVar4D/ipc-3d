@@ -63,10 +63,10 @@ interface AssetJson {
 
 interface ProjectJson {
   assets: AssetJson[]
+  initialView: ViewJson
   views: ViewJson[]
   selectionSets: SelectionSetJson[]
   cuttingPlanes: CuttingPlaneJson[]
-  neutralPose: PoseJson
   materials: Record<string, any>[]
   materialAssignments: Record<string, number>
 }
@@ -91,7 +91,6 @@ export class IPC_3d extends HTMLElement {
   private readonly cameraManipulator: BaseTool
   private readonly rectangleSelectionManipulator: SelectionTool
 
-  public neutralPose: Pose
   public initialView!: View
 
   public materials: Material[] = []
@@ -125,10 +124,6 @@ export class IPC_3d extends HTMLElement {
 
     this.scene = new Scene()
     this.renderer.setScene(this.scene)
-
-    // Replaced by an Initial View
-    this.neutralPose = new Pose(this.scene)
-
 
     // ////////////////////////////////////////////
     // Setup Selection Manager
@@ -209,19 +204,19 @@ export class IPC_3d extends HTMLElement {
       const change = event.change
       if (change instanceof SelectionXfoChange) {
         if (this.activeView && this.activeView !== this.initialView) {
-          this.neutralPose.storeNeutralPose(change.treeItems)
+          this.initialView.pose.storeNeutralPose(change.treeItems)
           this.activeView.pose.storeTreeItemsPose(change.treeItems)
         } else {
-          this.neutralPose.storeTreeItemsPose(change.treeItems)
+          this.initialView.pose.storeTreeItemsPose(change.treeItems)
         }
       } else if (change instanceof ParameterValueChange) {
         const param = change.param
         if (param.getOwner() instanceof Material) return
-        if (this.activeView) {
-          this.neutralPose.storeParamValue(param, change.prevValue)
+        if (this.activeView && this.activeView !== this.initialView) {
+          this.initialView.pose.storeParamValue(param, change.prevValue)
           this.activeView.pose.storeParamValue(param, change.nextValue)
         } else {
-          this.neutralPose.storeParamValue(param, change.nextValue)
+          this.initialView.pose.storeParamValue(param, change.nextValue)
         }
       }
     })
@@ -332,6 +327,7 @@ export class IPC_3d extends HTMLElement {
     initialView.setCameraParams(this.renderer.getViewport().getCamera())
     this.initialView = initialView
     this.eventEmitter.emit('viewsListChanged')
+    this.activateInitialView()
   }
 
   // Items / Selection
@@ -417,7 +413,7 @@ export class IPC_3d extends HTMLElement {
     this.renderer
       .getViewport()
       .getCamera()
-      .setPositionAndTarget(new Vec3(2, 2, 2), new Vec3(0, 0, 0))
+      .setPositionAndTarget(new Vec3(1200, 1200, 1200), new Vec3(0, 0, 0))
 
     this.scene.getRoot().removeAllChildren()
     this.scene.setupGrid(1000, 10)
@@ -428,6 +424,8 @@ export class IPC_3d extends HTMLElement {
     this.materials = []
     this.materialAssignments = {}
 
+    this.createInitialView()
+    
     this.undoRedoManager.flush()
 
     this.eventEmitter.emit('viewsListChanged')
@@ -444,7 +442,6 @@ export class IPC_3d extends HTMLElement {
 
       cadAsset.load(url, context).then(() => {
         this.renderer.frameAll()
-        this.createInitialView()
       })
 
       cadAsset.geomLibrary.once('loaded', () => {
@@ -469,8 +466,12 @@ export class IPC_3d extends HTMLElement {
   public activateInitialView() {
     this.selectionManager.clearSelection(false)
 
+    if (this.activeView !== this.initialView) {
+      this.eventEmitter.emit('viewDeactivated')
+    }
+
     const view = this.initialView
-    view.activate(this.renderer.getViewport().getCamera(), this.neutralPose)
+    view.lerpPose(this.renderer.getViewport().getCamera())
 
     this.activeView = view
     this.eventEmitter.emit('initialViewActivated')
@@ -529,8 +530,14 @@ export class IPC_3d extends HTMLElement {
   public activateView(index: number) {
     this.selectionManager.clearSelection(false)
 
+    if (this.activeView === this.initialView) {
+      this.eventEmitter.emit('initialViewDeactivated')
+    } else {
+      this.eventEmitter.emit('viewDeactivated')
+    }
+
     const view = this.views[index]
-    view.activate(this.renderer.getViewport().getCamera(), this.neutralPose)
+    view.lerpPose(this.renderer.getViewport().getCamera(), this.initialView.pose)
 
     this.activeView = view
     this.eventEmitter.emit('viewActivated', view.name)
@@ -551,16 +558,6 @@ export class IPC_3d extends HTMLElement {
 
       this.eventEmitter.emit('viewCameraChanged', this.activeView.name)
     }
-  }
-
-  public deactivateView() {
-    this.selectionManager.clearSelection(false)
-    if (this.activeView === this.initialView) {
-      this.eventEmitter.emit('initialViewDeactivated')
-    } else {
-      this.eventEmitter.emit('viewDeactivated')
-    }
-    this.activeView = undefined
   }
 
   public frameView() {
@@ -823,12 +820,12 @@ export class IPC_3d extends HTMLElement {
   public saveJson(): ProjectJson {
     const projectJson: ProjectJson = {
       assets: [],
+      initialView: this.initialView.saveJson(),
       views: [],
       selectionSets: [],
       cuttingPlanes: [],
       materials: [],
-      materialAssignments: this.materialAssignments,
-      neutralPose: this.neutralPose.saveJson()
+      materialAssignments: this.materialAssignments
     }
     this.assets.forEach((asset: CADAsset) => {
       const assetJson: AssetJson = {
@@ -861,8 +858,8 @@ export class IPC_3d extends HTMLElement {
       })
 
       Promise.all(promises).then(() => {
-        this.neutralPose.loadJson(projectJson.neutralPose)
-        this.neutralPose.activate()
+        this.initialView.loadJson(projectJson.initialView)
+        this.initialView.activate(this.renderer.getViewport().getCamera())
         this.views = []
         projectJson.views.forEach((viewJson: ViewJson) => {
           const view = new View('', this.scene)

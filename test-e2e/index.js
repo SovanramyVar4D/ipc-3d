@@ -337,12 +337,10 @@ function generateViewButtons() {
   $initialViewButton.style.textAlign = 'center'
   $initialViewButton.textContent = 'Initial View'
 
+
   $initialViewButton.addEventListener('click', () => {
     const isInitialViewButtonActive = $initialViewButton.classList.contains('active')
-    if (isInitialViewButtonActive) {
-      $ipc3d.deactivateView()
-    } else {
-      $ipc3d.deactivateView()
+    if (!isInitialViewButtonActive) {
       $ipc3d.activateInitialView()
     }
   })
@@ -367,6 +365,10 @@ function generateViewButtons() {
 
   $viewButtons.appendChild($initialViewButton)
 
+  if ($ipc3d.activeView == $ipc3d.initialView) {
+    $initialViewButton.className = INITIAL_VIEW_ACTIVE_BUTTON_CLASSNAME
+    $initialViewButton.querySelector('button').classList.remove('hidden')
+  }
 
   // //////////////////////////////////////////
   // Editable Views
@@ -379,9 +381,8 @@ function generateViewButtons() {
     $viewButton.addEventListener('click', (event) => {
       const $activeViewButton = document.querySelector('div.view-button.active')
        if ($activeViewButton === $viewButton) {
-         $ipc3d.deactivateView()
+         $ipc3d.activateInitialView()
        } else {
-         $ipc3d.deactivateView()
          $ipc3d.activateView(index)
        }
       event.stopPropagation()
@@ -508,6 +509,9 @@ function generateViewButtons() {
     $viewButtons.appendChild($viewButton)
   })
 }
+
+// The project already has an 'initialView' so we need to display it.
+generateViewButtons()
 
 // ////////////////////////////////////////////////////
 // Selection Sets

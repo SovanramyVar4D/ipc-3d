@@ -35,8 +35,15 @@ class View {
     this.cameraXfo = camera.globalXfoParam.value.clone()
     this.cameraTarget = camera.getTargetPosition()
   }
-
+  
   activate(camera: Camera, neutralPose?: Pose) {
+    camera.globalXfoParam.value = this.cameraXfo
+    const dist = this.cameraXfo.tr.distanceTo(this.cameraTarget)
+    camera.setFocalDistance(dist)
+    this.pose.activate(neutralPose)
+  }
+
+  lerpPose(camera: Camera, neutralPose?: Pose) {
     // camera.globalXfoParam.value = this.cameraXfo.clone()
 
     const startXfo = camera.globalXfoParam.value.clone()
