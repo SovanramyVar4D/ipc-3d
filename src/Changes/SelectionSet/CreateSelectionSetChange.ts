@@ -1,8 +1,8 @@
 import {EventEmitter} from '@zeainc/zea-engine'
 import {Change} from '@zeainc/zea-ux'
-import {SelectionSet} from "../SelectionSet";
+import {SelectionSet} from "../../SelectionSet";
 
-export default class DeleteSelectionSetChange extends Change {
+class CreateSelectionSetChange extends Change {
   selectionSet: SelectionSet
   selectionSetsList: SelectionSet[]
   eventEmitter: EventEmitter
@@ -15,17 +15,17 @@ export default class DeleteSelectionSetChange extends Change {
   }
 
   undo(): void {
-    console.log('Undo DeleteSelectionSet')
-    this.selectionSetsList.push(this.selectionSet)
+    console.log('Undo CreateSelectionSet')
+    this.selectionSetsList.pop()
 
     this.eventEmitter.emit('selectionSetsListChanged')
   }
 
   redo(): void {
-    this.selectionSetsList.pop()
-    console.log('Redo DeleteSelectionSet')
+    this.selectionSetsList.push(this.selectionSet)
+    console.log('Redo CreateSelectionSet')
     this.eventEmitter.emit('selectionSetsListChanged')
   }
 }
 
-export { DeleteSelectionSetChange }
+export { CreateSelectionSetChange }

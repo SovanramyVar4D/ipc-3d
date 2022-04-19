@@ -1,22 +1,34 @@
-import { Camera, MathFunctions, Scene, Vec3, Xfo } from '@zeainc/zea-engine'
-import { Pose, PoseJson } from './Pose'
+import {Camera, MathFunctions, Scene, Vec3, Xfo} from '@zeainc/zea-engine'
+import {Pose, PoseJson} from './Pose'
+import {UUID} from "./Utils";
 
 interface ViewJson {
+  id: string
   name: string
   cameraXfo: Record<string, any>
   cameraTarget: Record<string, any>
   pose: PoseJson
+  selectionSet: Record<string, string>
 }
 
 class View {
+  private id: string
   name = 'View'
   cameraXfo: Xfo = new Xfo()
   cameraTarget: Vec3 = new Vec3()
+  selectionSet: Record<string, string>
 
   pose: Pose
   constructor(name: string = '', scene: Scene) {
+    this.id = UUID()
     this.name = name
     this.pose = new Pose(scene)
+    this.selectionSet = {id: '', name: ''}
+  }
+
+  setSelectionSet(id: string, name: string) {
+    this.selectionSet.id = id
+    this.selectionSet.name = name
   }
 
   setCameraParams(camera: Camera) {
@@ -65,6 +77,7 @@ class View {
   copyFrom(view: View) {
     this.cameraTarget = view.cameraTarget.clone()
     this.cameraXfo = view.cameraXfo.clone()
+    this.selectionSet = view.selectionSet
     this.pose.copyFrom(view.pose)
   }
 
@@ -73,18 +86,22 @@ class View {
 
   saveJson(): ViewJson {
     return {
+      id: this.id,
       name: this.name,
       cameraXfo: this.cameraXfo.toJSON(),
       cameraTarget: this.cameraTarget.toJSON(),
-      pose: this.pose.saveJson()
+      pose: this.pose.saveJson(),
+      selectionSet: this.selectionSet
     }
   }
 
   loadJson(viewJson: ViewJson) {
+    this.id = viewJson.id
     this.name = viewJson.name
     this.cameraXfo.fromJSON(viewJson.cameraXfo)
     this.cameraTarget.fromJSON(viewJson.cameraTarget)
     this.pose?.loadJson(viewJson.pose)
+    this.selectionSet = viewJson.selectionSet
   }
 }
 

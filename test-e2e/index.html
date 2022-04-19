@@ -28,161 +28,225 @@
 
     <script src="../dist/ipc3d.umd.development.js"></script>
 
-    <script async src="index.js"></script>
+    <script type="module" src="index.js"></script>
   </head>
 
   <body class="flex flex-col h-screen overflow-hidden">
-    <header class="flex space-x-2 p-2 border-b">
-      <h1>3D IPC</h1>
+      <header class="flex space-x-2 p-2 border-b">
+        <h1>3D IPC</h1>
+        <button
+          id="newProject"
+          class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
+          data-bs-toggle="tooltip" data-bs-placement="bottom" title="New Project"
+      >
+          <i class="fa-solid fa-plus"></i>
+          <span class="block">New</span>
+        </button>
+        <button
+          id="save"
+          class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
+          data-bs-toggle="tooltip" data-bs-placement="bottom" title="Save&#013;(Ctrl+Shift+S)"
+        >
+          <i class="fa-solid fa-floppy-disk"></i>
+          <span class="block">Save</span>
+        </button>
+        <button
+          id="save-as"
+          class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
+          data-bs-toggle="tooltip" data-bs-placement="bottom" title="Save As...&#013;(Ctrl+Alt+S)"
+        >
+          <i class="fa-solid fa-cloud-arrow-down"></i>
+          <span class="block">Save As</span>
+        </button>
+        <button
+          id="load"
+          class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
+          data-bs-toggle="tooltip" data-bs-placement="bottom" title="Load Project"
+        >
+          <i class="fa-solid fa-cloud-arrow-up"></i>
+          <span class="block">Load Project</span>
+        </button>
+        <button
+                id="loadProjectFile"
+                class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
+                data-bs-toggle="tooltip" data-bs-placement="bottom" title="Load Project File"
+        >
+          <i class="fa-solid fa-cloud-arrow-up"></i>
+          <span class="block">Load Project File</span>
+        </button>
+        <button
+          id="loadAsset"
+          class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
+          data-bs-toggle="tooltip" data-bs-placement="bottom" title="Load Asset"
+        >
+          <i class="fa-solid fa-cube"></i>
+          <span class="block">Load 3D</span>
+        </button>
+        <button
+          id="loadBike"
+          class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
+          data-bs-toggle="tooltip" data-bs-placement="bottom" title="Load Bike"
+         >
+          <i class="fa-solid fa-bicycle"></i>
+          <span class="block">Load Bike</span>
+        </button>
+        <button
+          id="loadGearbox"
+          class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
+          data-bs-toggle="tooltip" data-bs-placement="bottom" title="Load Gearbox"
+          >
+            <i class="fa-solid fa-gear"></i>
+            <span class="block">Load Gearbox</span>
+        </button>
+        <button
+          id="undo"
+          class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
+          data-bs-toggle="tooltip" data-bs-placement="bottom" title="Undo&#013;(Ctrl+Z)"
+        >
+          <i class="fa-solid fa-rotate-left"></i>
+          <span class="block">Undo</span>
+        </button>
+        <button
+          id="redo"
+          class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
+          data-bs-toggle="tooltip" data-bs-placement="bottom" title="Redo&#013;(Ctrl+Y)"
+        >
+          <i class="fa-solid fa-rotate-right"></i>
+          <span class="block">Redo</span>
+        </button>
+        <button
+          id="frameView"
+          class="border rounded bg-blue-300 px-2 hover:bg-gray-100 hover:border-blue-500"
+          data-bs-toggle="tooltip" data-bs-placement="bottom" title="Fit"
+        >
+          <i class="fa-solid fa-crop-simple"></i>
+          <span class="block">Fit</span>
+      </button>
 
-      <button
-        id="newProject"
-        class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
-      >
-        New Project
-      </button>
-      <button
-        id="save"
-        class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
-      >
-        Save
-      </button>
-      <button
-        id="load"
-        class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
-      >
-        Load
-      </button>
-      <button
-        id="undo"
-        class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
-      >
-        Undo
-      </button>
-      <button
-        id="redo"
-        class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
-      >
-        Redo
-      </button>
-      <button
-        id="loadBike"
-        class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
-      >
-        Load Bike
-      </button>
-      <button
-        id="loadGearbox"
-        class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
-      >
-        Load Gearbox
-      </button>
-      <button
-        id="frameView"
-        class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
-      >
-        Frame View
-      </button>
-
-      <button
-        id="hideSelection"
-        class="border rounded bg-blue-300 px-2 hover:bg-gray-100 hover:border-blue-500"
-      >
-        Hide Selection
-      </button>
-      <button
-        id="unHideAll"
-        class="border rounded bg-blue-300 px-2 hover:bg-gray-100 hover:border-blue-500"
-      >
-        Unhide all
-      </button>
-      <button
+        <button
+          id="hideSelection"
+          class="border rounded bg-blue-300 px-2 hover:bg-gray-100 hover:border-blue-500"
+          data-bs-toggle="tooltip" data-bs-placement="bottom" title="Hide Selection"
+        >
+          <i class="fa-solid fa-eye-slash"></i>
+          <span class="block">Hide</span>
+        </button>
+        <button
+          id="unHideAll"
+          class="border rounded bg-blue-300 px-2 hover:bg-gray-100 hover:border-blue-500"
+          data-bs-toggle="tooltip" data-bs-placement="bottom" title="UnHide All"
+        >
+          <i class="fa-solid fa-eye"></i>
+          <span class="block">UnHide</span>
+        </button>
+        <button
         id="addCallout"
         class="border rounded bg-blue-300 px-2 hover:bg-gray-100 hover:border-blue-500"
-      >
-        Add Callout
-      </button>
-
-      <label
-        class="border rounded bg-blue-300 px-2 hover:bg-gray-100 hover:border-blue-500"
-      >
-        Enable Handle
-        <input id="enable-handle" type="checkbox" checked />
-      </label>
-    </header>
+        >
+          <i class="fa-solid fa-tag"></i>
+          <span class="block">Add Callout</span>
+       </button>
+        <label
+          class="text-center border rounded bg-blue-300 px-2 hover:bg-gray-100 hover:border-blue-500"
+        >
+          <i class="fa-solid fa-arrows"></i>
+          <span class="block">
+            Manipulator
+            <input id="enable-handle" type="checkbox" checked />
+          </span>
+        </label>
+        <label
+                class="text-center border rounded bg-yellow-300 px-2 hover:bg-yellow-100 hover:border-yellow-500"
+        >
+          <i class="fa-solid fa-floppy-disk"></i>
+          Auto-Save
+          <input id="activate-auto-save" type="checkbox"/>
+          <span class="block">
+          <input id="auto-save-delay" class="w-16" type="number" value="10000" />
+          ms
+          </span>
+        </label>
+        <label
+                class="text-center border rounded bg-yellow-300 px-2 hover:bg-yellow-100 hover:border-yellow-500"
+        >
+          <i class="fa-solid fa-delete-left"></i>
+          Undo Limit
+          <input id="activate-undo-limit" type="checkbox"/>
+          <span class="block">
+            <input id="undo-limit" class="w-16" type="number" value="100" />
+          </span>
+        </label>
+      </header>
 
     <main class="flex flex-1">
-      <nav class="Sidebar flex flex-col px-2 pt-2 space-y-2 w-96">
-        <div class="TabBar">
-          <button
-            id="showTab1"
-            class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
+        <nav class="Sidebar flex flex-col px-2 pt-2 space-y-2 w-96">
+          <div class="TabBar">
+            <button
+              id="showTab1"
+              class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
+              data-bs-toggle="tooltip" data-bs-placement="bottom" title="Views"
+            >
+              <i class="fa-solid fa-images"></i>
+              <span class="block">Views</span>
+            </button>
+            <button
+              id="showTab2"
+              class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
+              data-bs-toggle="tooltip" data-bs-placement="bottom" title="Tree"
+            >
+              <i class="fa-solid fa-folder-tree"></i>
+              <span class="block">Tree</span>
+            </button>
+            <button
+              id="showTab3"
+              class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
+              data-bs-toggle="tooltip" data-bs-placement="bottom" title="Selection Sets"
           >
-            Views
-          </button>
-          <button
-            id="showTab2"
-            class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
-          >
-            Tree View
-          </button>
-          <button
-            id="showTab3"
-            class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
-          >
-            Selection Sets
-          </button>
-          <button
-            id="showTab4"
-            class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
-          >
-            Cutting planes
+              <i class="fa-solid fa-cubes"></i>
+              <span class="block">SelectionSets</span>
+            </button>
+            <button
+              id="showTab4"
+              class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
+              data-bs-toggle="tooltip" data-bs-placement="bottom" title="Cut Planes"
+            >
+              <i class="fa-solid fa-scissors"></i>
+              <span class="block">Cut Planes</span>
           </button>
         </div>
 
-        <div id="tab1">
-          <button
-            id="createView"
-            class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
-          >
-            Create View
-          </button>
-          <button
-            id="saveViewCamera"
-            class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
-          >
-            Save View
-          </button>
+          <div id="tab1" class="tab-panel">
+            <button
+              id="createView"
+              class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
+              data-bs-toggle="tooltip" data-bs-placement="bottom" title="Create"
+            >
+              <i class="fa-solid fa-plus"></i>
+            </button>
 
           <hr />
 
-          <button
-            id="activateNeutralPose"
-            class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
-          >
-            Neutral Pose
-          </button>
-          <div id="viewButtons" class="flex flex-col space-y-2"></div>
-        </div>
+            <div id="viewButtons" class="flex flex-col space-y-2"></div>
+          </div>
 
-        <div id="tab2" class="overflow-auto" style="display: none;">
-          <zea-tree-view id="treeView"></zea-tree-view>
-        </div>
+          <div id="tab2" class="overflow-auto tab-panel" style="display: none;">
+            <zea-tree-view id="treeView"></zea-tree-view>
+          </div>
 
-        <div id="tab3" class="overflow-auto" style="display: none;">
-          <button
-            id="createSelectionSet"
-            class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
-          >
-            Create Selection Set
-          </button>
+          <div id="tab3" class="overflow-auto tab-panel" style="display: none;">
+            <button
+              id="createSelectionSet"
+              class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
+            >
+              <i class="fa-solid fa-plus"></i>
+            </button>
 
           <hr />
 
           <div id="selectionSetButtons" class="flex flex-col space-y-2"></div>
         </div>
 
-        <div id="tab4" class="overflow-auto" style="display: none;">
+        <div id="tab4" class="overflow-auto tab-panel" style="display: none;">
           <button
             id="createCuttingPlane"
             class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
@@ -197,11 +261,10 @@
       </nav>
 
       <div class="flex-1 h-full relative">
-        <ipc-3d id="ipc-3d" class="h-full"></ipc-3d>
+        <ipc-3d id="ipc-3d" asset-env="data/StudioG.zenv" class="h-full"></ipc-3d>
 
         <span class="absolute top-0 left-1" id="assetIndicator"></span>
       </div>
-
       <nav
         id="right-panel"
         class="Sidebar flex flex-col px-2 pt-2 space-y-2  w-2"

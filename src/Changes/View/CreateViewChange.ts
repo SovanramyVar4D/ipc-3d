@@ -1,8 +1,8 @@
 import { EventEmitter } from '@zeainc/zea-engine'
 import { Change } from '@zeainc/zea-ux'
-import { View } from '../View'
+import { View } from '../../View'
 
-export default class DeleteViewChange extends Change {
+class CreateViewChange extends Change {
   view: View
   viewsList: View[]
   eventEmitter: EventEmitter
@@ -15,17 +15,17 @@ export default class DeleteViewChange extends Change {
   }
 
   undo(): void {
-    console.log('Undo DeleteView')
-    this.viewsList.push(this.view)
+    console.log('Undo CreateView')
+    this.viewsList.pop()
 
     this.eventEmitter.emit('viewsListChanged')
   }
 
   redo(): void {
-    this.viewsList.pop()
-    console.log('Redo DeleteView')
+    this.viewsList.push(this.view)
+    console.log('Redo CreateView')
     this.eventEmitter.emit('viewsListChanged')
   }
 }
 
-export { DeleteViewChange }
+export { CreateViewChange }

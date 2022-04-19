@@ -1,11 +1,93 @@
+const DEFAULT_INACTIVE_ITEM_BUTTON_CLASSNAME = 'border rounded bg-gray-300 px-2 hover:bg-gray-100'
+const DEFAULT_ACTIVE_ITEM_BUTTON_CLASSNAME = 'border rounded text-white bg-blue-300 px-2 border-blue-500 active'
+const INITIAL_VIEW_INACTIVE_BUTTON_CLASSNAME = 'initial-view-button border rounded bg-gray-600 px-2 text-white'
+const INITIAL_VIEW_ACTIVE_BUTTON_CLASSNAME = 'initial-view-button border rounded bg-red-300 px-2 border-black-500 active'
+
 const $ipc3d = document.getElementById('ipc-3d')
+
+// Set environment map at startup
+const envMap = $ipc3d.getAttribute('asset-env')
+$ipc3d.setEnvironmentMap(envMap)
+
+$ipc3d.on('assetLoaded', (assetName) => {
+  console.log('loaded', assetName)
+  $ipc3d.setRectangleSelectionHotKey('r')
+})
+
+$ipc3d.on('selectionSetActivatedInView', (view) => {
+  document.querySelectorAll('.selection-set-button .link-view-button').forEach((linkBtn) => {
+    linkBtn.remove()
+  })
+  displayPanel('Views')
+  alert(`SelectionSet activated in View ${view.name} : ${view.selectionSet.name}`)
+})
+
+$ipc3d.on('saveKeyboardShortcutTriggered', () => {
+  saveProjectOnLocalStorage()
+})
+
+$ipc3d.on('viewCameraChanged', (viewName) => {
+  console.log('View camera changed : ', viewName)
+})
 
 $ipc3d.on('viewsListChanged', () => {
   generateViewButtons()
 })
 
+$ipc3d.on('initialViewActivated', () => {
+  const $button = document.querySelector('div.initial-view-button')
+  if ($button) {
+    $button.className = INITIAL_VIEW_ACTIVE_BUTTON_CLASSNAME
+    $button.querySelector('button').classList.remove('hidden')
+  }
+})
+
+$ipc3d.on('initialViewDeactivated', () => {
+  const $button = document.querySelector('div.initial-view-button.active')
+  if ($button) {
+    $button.className = INITIAL_VIEW_INACTIVE_BUTTON_CLASSNAME
+    $button.querySelector('button').classList.add('hidden')
+  }
+})
+
+$ipc3d.on('viewActivated', (data) => {
+  const $button = activateButton(data, 'div.view-button')
+  if ($button) {
+    $button.classList.add('view-button')
+    $button.querySelectorAll('button')
+      .forEach((btn) => btn.classList.remove('hidden'))
+  }
+})
+
+$ipc3d.on('viewDeactivated', () => {
+  const $button = deactivateButton('div.view-button.active')
+  if ($button) {
+    $button.classList.add('view-button')
+    $button.querySelectorAll('button')
+      .forEach((btn) => btn.classList.add('hidden'))
+  }
+})
+
 $ipc3d.on('selectionSetsListChanged', () => {
   generateSelSetButtons()
+})
+
+$ipc3d.on('selectionSetActivated', (data) => {
+  const $button = activateButton(data, 'div.selection-set-button')
+  if ($button) {
+    $button.classList.add('selection-set-button')
+    $button.querySelectorAll('button')
+      .forEach((btn) => btn.classList.remove('hidden'))
+  }
+})
+
+$ipc3d.on('selectionSetDeactivated', () => {
+  const $button = deactivateButton('div.selection-set-button.active')
+  if ($button) {
+    $button.classList.add('selection-set-button')
+    $button.querySelectorAll('button')
+      .forEach((btn) => btn.classList.add('hidden'))
+  }
 })
 
 // ///////////////////////////////////////////////
@@ -14,25 +96,43 @@ document.getElementById('newProject').addEventListener('click', () => {
   $ipc3d.newProject()
 })
 
-document.getElementById('save').addEventListener('click', event => {
-  const json = $ipc3d.saveJson()
-  console.log(json)
+document.getElementById('save').addEventListener('click', () => {
+  saveProjectOnLocalStorage()
+})
 
-  if (event.ctrlKey) {
-    download('ipc.proj', JSON.stringify(json))
-  } else {
-    localStorage.setItem('ipc-project', JSON.stringify(json))
+document.getElementById('save-as').addEventListener('click', () => {
+  downloadProjectFile()
+})
+
+
+document.getElementById('loadProjectFile').addEventListener('click', () => {
+  // File picker
+  const input = document.createElement('input')
+  input.type = 'file'
+  input.accept = '.proj'
+
+  input.onchange = (event) => {
+    const projFile = event.target.files[0]
+
+    const fr = new FileReader()
+
+    fr.onload = function () {
+      $ipc3d.loadJson(JSON.parse(fr.result))
+        .then(() => console.log('Project file loaded'))
+    }
+    fr.readAsText(projFile)
   }
+  input.click()
 })
 
 document.getElementById('load').addEventListener('click', () => {
+  // Local Storage
   const jsonStr = localStorage.getItem('ipc-project')
 
   if (!jsonStr) {
     console.warn('No project data available')
     return
   }
-
   $ipc3d.loadJson(JSON.parse(jsonStr)).then(() => {})
 })
 
@@ -46,34 +146,20 @@ if (urlParams.has('proj')) {
     })
 }
 
-// ///////////////////////////////////////////////
-// Undo and Redo
+function downloadProjectFile() {
+  const json = $ipc3d.saveJson()
+  download('ipc.proj', JSON.stringify(json))
+}
 
-document.getElementById('undo').addEventListener('click', event => {
-  console.log('undo')
-  $ipc3d.undo()
-})
-document.getElementById('redo').addEventListener('click', event => {
-  console.log('redo')
-  $ipc3d.redo()
-})
-
-// ///////////////////////////////////////////////
-// Assets
-const $assetIndicator = document.querySelector('#assetIndicator')
-
-document.getElementById('loadBike').addEventListener('click', async () => {
-  const assetName = await $ipc3d.loadAsset('data/Mountain Bike.zcad')
-  $assetIndicator.textContent = assetName
-})
-document.getElementById('loadGearbox').addEventListener('click', async () => {
-  const assetName = await $ipc3d.loadAsset('data/gear_box_final_asm.stp.zcad')
-  $assetIndicator.textContent = assetName
-})
+function saveProjectOnLocalStorage() {
+  const json = $ipc3d.saveJson()
+  console.log(json)
+  localStorage.setItem('ipc-project', JSON.stringify(json))
+}
 
 function download(file, text) {
   //creating an invisible element
-  var element = document.createElement('a')
+  const element = document.createElement('a')
   element.setAttribute(
     'href',
     'data:text/plain;charset=utf-8, ' + encodeURIComponent(text)
@@ -84,6 +170,58 @@ function download(file, text) {
   element.click()
   document.body.removeChild(element)
 }
+
+// ///////////////////////////////////////////////
+// Undo and Redo
+
+document.getElementById('undo').addEventListener('click', () => {
+  console.log('undo')
+  $ipc3d.undo()
+})
+document.getElementById('redo').addEventListener('click', () => {
+  console.log('redo')
+  $ipc3d.redo()
+})
+
+$ipc3d.undoRedoManager.on('changeAdded', () => console.log('changeAdded'))
+$ipc3d.undoRedoManager.on('changeUndone', () => console.log('changeUndone'))
+$ipc3d.undoRedoManager.on('changeRedone', () => console.log('changeRedone'))
+
+
+// ///////////////////////////////////////////////
+// Assets
+document.getElementById('loadAsset').addEventListener('click',  event => {
+  window.URL = window.URL || window.webkitURL
+
+  const input = document.createElement('input')
+  input.type = 'file'
+  input.accept = '.zcad'
+
+  input.onchange = async (event) => {
+    const projFile = event.target.files[0]
+    const projFilePath = window.URL.createObjectURL(projFile)
+
+    await $ipc3d.loadAsset(projFilePath)
+      .then((assetName) => {
+        window.URL.revokeObjectURL(projFilePath)
+        $assetIndicator.textContent = assetName
+      })
+  }
+  input.click()
+
+  event.stopPropagation()
+})
+
+const $assetIndicator = document.querySelector('#assetIndicator')
+
+document.getElementById('loadBike').addEventListener('click', async () => {
+  const assetName = await $ipc3d.loadAsset('data/Mountain Bike.zcad')
+  $assetIndicator.textContent = assetName
+})
+document.getElementById('loadGearbox').addEventListener('click', async () => {
+  const assetName = await $ipc3d.loadAsset('data/gear_box_final_asm.stp.zcad')
+  $assetIndicator.textContent = assetName
+})
 
 document.getElementById('frameView').addEventListener('click', () => {
   $ipc3d.frameView()
@@ -112,44 +250,79 @@ document.getElementById('addCallout').addEventListener('click', () => {
 document
   .getElementById('enable-handle')
   .addEventListener('change', changeEvent => {
-    var checked = changeEvent.currentTarget.checked
+    const checked = changeEvent.currentTarget.checked
     $ipc3d.selectionManager.showHandles(checked)
     $ipc3d.selectionManager.updateHandleVisibility()
   })
 
+// Auto save
+let autoSaveIntervalId
+document
+  .getElementById('activate-auto-save')
+  .addEventListener('change', changeEvent => {
+    const delayTextField = document.getElementById('auto-save-delay')
+    delayTextField.setAttribute('disabled', 'disabled')
+    const delay = parseInt(delayTextField.value, 10)
+
+    const checked = changeEvent.currentTarget.checked
+    if (checked && delay) {
+      autoSaveIntervalId = setInterval(() => this.saveProjectOnLocalStorage(), delay)
+    }
+    else {
+      clearInterval(autoSaveIntervalId)
+      delayTextField.removeAttribute('disabled')
+    }
+    changeEvent.stopPropagation()
+  })
+
+// Undo limit
+document
+  .getElementById('activate-undo-limit')
+  .addEventListener('change', changeEvent => {
+    const limitTextField = document.getElementById('undo-limit')
+    limitTextField.setAttribute('disabled', 'disabled')
+    const limit = parseInt(limitTextField.value, 10)
+
+    const checked = changeEvent.currentTarget.checked
+    if (checked && limit) {
+      $ipc3d.setUndoLimit(limit)
+    } else {
+      limitTextField.removeAttribute('disabled')
+    }
+    changeEvent.stopPropagation()
+  })
+
+
+
 // ////////////////////////////////////////////////
 //  Tabs
-const $tab1 = document.querySelector('#tab1')
-const $tab2 = document.querySelector('#tab2')
-const $tab3 = document.querySelector('#tab3')
-const $tab4 = document.querySelector('#tab4')
-
-document.querySelector('#showTab1').addEventListener('click', () => {
-  $tab1.style.display = ''
-  $tab2.style.display = 'none'
-  $tab3.style.display = 'none'
-  $tab4.style.display = 'none'
-})
-
-document.querySelector('#showTab2').addEventListener('click', () => {
-  $tab1.style.display = 'none'
-  $tab2.style.display = ''
-  $tab3.style.display = 'none'
-  $tab4.style.display = 'none'
-})
-
-document.querySelector('#showTab3').addEventListener('click', () => {
-  $tab1.style.display = 'none'
-  $tab2.style.display = 'none'
-  $tab3.style.display = ''
-  $tab4.style.display = 'none'
-})
-document.querySelector('#showTab4').addEventListener('click', () => {
-  $tab1.style.display = 'none'
-  $tab2.style.display = 'none'
-  $tab3.style.display = 'none'
-  $tab4.style.display = ''
-})
+function displayPanel(panel) {
+  const panels = document.querySelectorAll('.tab-panel')
+  panels.forEach((tab) => {
+    switch (panel) {
+      case 'Views':
+        if (tab.id === 'tab1') tab.style.display = ''
+        else tab.style.display = 'none'
+        break
+      case 'Tree':
+        if (tab.id === 'tab2') tab.style.display = ''
+        else tab.style.display = 'none'
+        break
+      case 'SelectionSets':
+        if (tab.id === 'tab3') tab.style.display = ''
+        else tab.style.display = 'none'
+        break
+      case 'CuttingPlanes':
+        if (tab.id === 'tab4') tab.style.display = ''
+        else tab.style.display = 'none'
+        break
+    }
+  })
+}
+document.querySelector('#showTab1').addEventListener('click', () => displayPanel('Views'))
+document.querySelector('#showTab2').addEventListener('click', () => displayPanel('Tree'))
+document.querySelector('#showTab3').addEventListener('click', () => displayPanel('SelectionSets'))
+document.querySelector('#showTab4').addEventListener('click', () => displayPanel('CuttingPlanes'))
 
 // ////////////////////////////////////////////////
 //  Tree view
@@ -169,72 +342,78 @@ document.getElementById('createView').addEventListener('click', () => {
   }
   if (viewName) $ipc3d.createView(null, viewName)
 })
-document.getElementById('saveViewCamera').addEventListener('click', () => {
-  $ipc3d.saveViewCamera()
-})
-document.getElementById('activateNeutralPose').addEventListener('click', () => {
-  $ipc3d.activateNeutralPose()
-})
-
-$ipc3d.undoRedoManager.on('changeAdded', () => {
-  console.log('changeAdded')
-})
-
-$ipc3d.undoRedoManager.on('changeUndone', () => {
-  console.log('changeUndone')
-})
-
-$ipc3d.undoRedoManager.on('changeRedone', () => {
-  console.log('changeRedone')
-})
 
 function generateViewButtons() {
   const $viewButtons = document.getElementById('viewButtons')
   $viewButtons.replaceChildren()
 
+  // //////////////////////////////////////////
+  // Initial View (no editable/exportable view)
+  const $initialViewButton = document.createElement('div')
+
+  $initialViewButton.className = INITIAL_VIEW_INACTIVE_BUTTON_CLASSNAME
+  $initialViewButton.style.textAlign = 'center'
+  $initialViewButton.textContent = 'Initial View'
+
+  $initialViewButton.addEventListener('click', () => {
+    const isInitialViewButtonActive = $initialViewButton.classList.contains('active')
+    if (isInitialViewButtonActive) {
+      $ipc3d.deactivateView()
+    } else {
+      $ipc3d.deactivateView()
+      $ipc3d.activateInitialView()
+    }
+  })
+  /// Options Buttons ///
+  const $optionsWrapper = document.createElement('div')
+  $optionsWrapper.style.display = 'block'
+
+  // Save View Camera
+  const $saveViewCameraButton = document.createElement('button')
+  $saveViewCameraButton.className = 'hidden border rounded text-black bg-yellow-200 px-5 mx-0.5 hover:bg-yellow-150'
+
+  const $saveViewCameraIcon = document.createElement('i')
+  $saveViewCameraIcon.className = 'fa-solid fa-video'
+  $saveViewCameraButton.appendChild($saveViewCameraIcon)
+
+  $saveViewCameraButton.addEventListener('click', (event) => {
+    const changeCameraViewPoint = confirm("Are you sure to change the initial view camera viewpoint ?")
+    if (changeCameraViewPoint) $ipc3d.saveViewCamera()
+  })
+  $optionsWrapper.appendChild($saveViewCameraButton)
+  $initialViewButton.appendChild($optionsWrapper)
+
+  $viewButtons.appendChild($initialViewButton)
+
+
+  // //////////////////////////////////////////
+  // Editable Views
   $ipc3d.views.forEach((view, index) => {
     const $viewButton = document.createElement('div')
-    $viewButton.className = 'border rounded bg-gray-300 px-2 hover:bg-gray-100'
+    $viewButton.className = 'view-button border rounded bg-gray-300 px-2  hover:bg-gray-100'
     $viewButton.style.textAlign = 'center'
     $viewButton.textContent = view.name
 
-    const setButtonActive = () => {
-      $viewButton.className =
-        'border rounded text-white bg-blue-300 px-2 border-blue-500'
-      $viewButton.classList.add('active-view')
-    }
-
-    if ($ipc3d.getActiveViewName() == view.name) {
-      setButtonActive()
-    }
-
-    $viewButton.addEventListener('click', event => {
-      const $activeViewButton = document.querySelector('.active-view')
+    $viewButton.addEventListener('click', (event) => {
+      const $activeViewButton = document.querySelector('div.view-button.active')
+       if ($activeViewButton === $viewButton) {
+         $ipc3d.deactivateView()
+       } else {
+         $ipc3d.deactivateView()
+         $ipc3d.activateView(index)
+       }
       event.stopPropagation()
-      $ipc3d.activateView(index)
-
-      if ($activeViewButton) {
-        $activeViewButton.className =
-          'border rounded bg-gray-300 px-2  hover:bg-gray-100'
-        $activeViewButton.classList.remove('active-view')
-      }
-
-      if ($activeViewButton === $viewButton) {
-        $ipc3d.deactivateView()
-      } else {
-        setButtonActive()
-      }
     })
 
-    // ////////////////////////////
-    // Options Buttons
+    /// Options Buttons ///
     const $optionsWrapper = document.createElement('div')
     $optionsWrapper.style.display = 'block'
 
     // Rename
     const $RenameViewButton = document.createElement('button')
     $RenameViewButton.className =
-      'border rounded text-black bg-yellow-200 px-5 mx-0.5 hover:bg-yellow-150'
+      'hidden border rounded text-black bg-yellow-200 px-2 mx-0.5 hover:bg-yellow-150'
+    setTooltip($RenameViewButton, 'Rename')
 
     const renameViewIcon = document.createElement('i')
     renameViewIcon.className = 'fa-solid fa-pen-to-square'
@@ -250,13 +429,15 @@ function generateViewButtons() {
         )
       }
       if (newName) $ipc3d.renameView(index, newName)
+      event.stopPropagation()
     })
     $optionsWrapper.appendChild($RenameViewButton)
 
     // Duplicate
     const $duplicateViewButton = document.createElement('button')
     $duplicateViewButton.className =
-      'border rounded text-black bg-yellow-200 px-5 mx-0.5 hover:bg-red-150'
+      'hidden border rounded text-black bg-yellow-200 px-2 mx-0.5 hover:bg-yellow-150'
+    setTooltip($duplicateViewButton, 'Duplicate')
 
     const duplicateViewIcon = document.createElement('i')
     duplicateViewIcon.className = 'fa-solid fa-clone'
@@ -265,13 +446,71 @@ function generateViewButtons() {
     $duplicateViewButton.addEventListener('click', event => {
       event.stopPropagation()
       $ipc3d.duplicateView(index)
+      event.stopPropagation()
     })
     $optionsWrapper.appendChild($duplicateViewButton)
+
+    // Save View Camera
+    const $saveViewCameraButton = document.createElement('button')
+    $saveViewCameraButton.className = 'hidden border rounded text-black bg-yellow-200 px-2 mx-0.5 hover:bg-yellow-150'
+    setTooltip($saveViewCameraButton, 'Save viewpoint')
+
+    const $saveViewCameraIcon = document.createElement('i')
+    $saveViewCameraIcon.className = 'fa-solid fa-video'
+    $saveViewCameraButton.appendChild($saveViewCameraIcon)
+
+    $saveViewCameraButton.addEventListener('click', (event) => {
+      $ipc3d.saveViewCamera()
+      event.stopPropagation()
+    })
+    $optionsWrapper.appendChild($saveViewCameraButton)
+
+    // Link SelectionSet
+    const $linkSelectionSetButton = document.createElement('button')
+    $linkSelectionSetButton.className = 'hidden border rounded text-black bg-yellow-200 px-2 mx-0.5 hover:bg-yellow-150'
+    if ($ipc3d.views[index].selectionSet === undefined) {
+      setTooltip($linkSelectionSetButton, 'Link SelectionSet')
+    } else {
+      setTooltip($linkSelectionSetButton, `Linked SelectionSet : ${$ipc3d.views[index].selectionSet.name}&#013;Click to change`)
+    }
+
+    const $linkSelectionSetIcon = document.createElement('i')
+    $linkSelectionSetIcon.className = 'fa-solid fa-link'
+    $linkSelectionSetButton.appendChild($linkSelectionSetIcon)
+
+    $linkSelectionSetButton.addEventListener('click', (event) => {
+      $ipc3d.deactivateSelectionSet()
+      displayPanel("SelectionSets")
+
+      document.querySelectorAll('.selection-set-button').forEach((btn) => {
+        const $linkViewBtn = document.createElement('button')
+        $linkViewBtn.className = 'hidden border rounded text-black bg-yellow-200 px-2 mx-0.5 hover:bg-yellow-150 link-view-button'
+        setTooltip($linkViewBtn, 'Link View')
+
+        const $linkViewIcon = document.createElement('i')
+        $linkViewIcon.className = 'fa-solid fa-link'
+
+        $linkViewBtn.addEventListener('click', (event) => {
+          const currentElement = event.currentTarget
+          const container = currentElement.closest('.selection-set-button')
+          const currentSelectionSet =  $ipc3d.selectionSets.find((selSet) => selSet.name === container.textContent)
+          $ipc3d.activateSelectionSetInActiveView(currentSelectionSet)
+
+          event.stopPropagation()
+        })
+        $linkViewBtn.appendChild($linkViewIcon)
+        btn.querySelector('.delete-button').before($linkViewBtn)
+      })
+      event.stopPropagation()
+    })
+
+    $optionsWrapper.appendChild($linkSelectionSetButton)
 
     // Delete
     const $deleteViewButton = document.createElement('button')
     $deleteViewButton.className =
-      'border rounded text-black bg-red-200 px-5 ml-5 hover:bg-red-150'
+      'hidden border rounded text-black bg-red-200 px-2 ml-5 hover:bg-red-150'
+    setTooltip($deleteViewButton, 'Delete')
 
     const deleteViewIcon = document.createElement('i')
     deleteViewIcon.className = 'fa-solid fa-trash'
@@ -311,31 +550,21 @@ function generateSelSetButtons() {
 
   $ipc3d.selectionSets.forEach((selectionSet, index) => {
     const $selectionSetButton = document.createElement('div')
-    $selectionSetButton.className =
-      'border rounded bg-gray-300 px-2 hover:bg-gray-100'
+    $selectionSetButton.className = 'selection-set-button border rounded bg-gray-300 px-2 hover:bg-gray-100'
     $selectionSetButton.style.textAlign = 'center'
     $selectionSetButton.textContent = selectionSet.name
 
-    $selectionSetButton.addEventListener('click', event => {
-      event.stopPropagation()
-      $ipc3d.activateSelectionSet(index)
-
-      const $activeSelectionSetButton = document.querySelector(
-        '.active-selection-set'
-      )
-      if ($activeSelectionSetButton) {
-        $activeSelectionSetButton.className =
-          'border rounded bg-gray-300 px-2 hover:bg-gray-100'
-        $activeSelectionSetButton.classList.remove('active-selection-set')
-      }
+    $selectionSetButton.addEventListener('click', (event) => {
+      const $activeSelectionSetButton = document.querySelector('div.selection-set-button.active')
 
       if ($activeSelectionSetButton === $selectionSetButton) {
         $ipc3d.deactivateSelectionSet()
       } else {
-        $selectionSetButton.className =
-          'border rounded text-white bg-blue-300 px-2 border-blue-500'
-        $selectionSetButton.classList.add('active-selection-set')
+        $ipc3d.deactivateSelectionSet()
+        $ipc3d.activateSelectionSet(index)
       }
+
+      event.stopPropagation()
     })
 
     // ////////////////////////////
@@ -346,14 +575,15 @@ function generateSelSetButtons() {
     // Rename
     const $RenameSelectionSetButton = document.createElement('button')
     $RenameSelectionSetButton.className =
-      'border rounded text-black bg-yellow-200 px-5 mx-0.5 hover:bg-yellow-150'
+      'hidden border rounded text-black bg-yellow-200 px-2 mx-0.5 hover:bg-yellow-150'
+    $RenameSelectionSetButton.className = 'hidden border rounded text-black bg-yellow-200 px-2 mx-0.5 hover:bg-yellow-150'
+    setTooltip($RenameSelectionSetButton, 'Rename')
 
     const renameSelectionSetIcon = document.createElement('i')
     renameSelectionSetIcon.className = 'fa-solid fa-pen-to-square'
     $RenameSelectionSetButton.appendChild(renameSelectionSetIcon)
 
     $RenameSelectionSetButton.addEventListener('click', event => {
-      event.stopPropagation()
       let newName = prompt(
         'Rename Selection Set',
         selectionSet.name + '-renamed'
@@ -369,16 +599,22 @@ function generateSelSetButtons() {
         )
       }
       if (newName) $ipc3d.renameSelectionSet(index, newName)
+
+      event.stopPropagation()
     })
     $optionsWrapper.appendChild($RenameSelectionSetButton)
 
     // Duplicate
     const $duplicateSelectionSetButton = document.createElement('button')
     $duplicateSelectionSetButton.className =
-      'border rounded text-black bg-yellow-200 px-5 mx-0.5 hover:bg-red-150'
+      'hidden border rounded text-black bg-yellow-200 px-2 mx-0.5 hover:bg-red-150'
+    setTooltip($duplicateSelectionSetButton, 'Duplicate')
 
     const duplicateSelectionSetIcon = document.createElement('i')
     duplicateSelectionSetIcon.className = 'fa-solid fa-clone'
+
+    $duplicateSelectionSetButton.addEventListener('click', () => $ipc3d.duplicateSelectionSet(index))
+
     $duplicateSelectionSetButton.appendChild(duplicateSelectionSetIcon)
 
     $duplicateSelectionSetButton.addEventListener('click', event => {
@@ -387,19 +623,36 @@ function generateSelSetButtons() {
     })
     $optionsWrapper.appendChild($duplicateSelectionSetButton)
 
+    // Update
+    const $updateSelectionSetButton = document.createElement('button')
+    $updateSelectionSetButton.className = 'hidden border rounded text-black bg-yellow-200 px-2 mx-0.5 hover:bg-red-150'
+    setTooltip($updateSelectionSetButton, 'Update')
+
+    const $updateSelectionSetIcon = document.createElement('i')
+    $updateSelectionSetIcon.className = 'fa-solid fa-arrows-rotate'
+
+    $updateSelectionSetButton.addEventListener('click', (event) => {
+      $ipc3d.updateSelectionSet(index)
+      alert("SelectionSet updated !")
+    })
+
+    $updateSelectionSetButton.appendChild($updateSelectionSetIcon)
+    $optionsWrapper.appendChild($updateSelectionSetButton)
+
     // Delete
     const $deleteSelectionSetButton = document.createElement('button')
     $deleteSelectionSetButton.className =
-      'border rounded text-black bg-red-200 px-5 ml-5 hover:bg-red-150'
+      'hidden border rounded text-black bg-red-200 px-5 ml-5 hover:bg-red-150'
 
     const deleteSelectionSetIcon = document.createElement('i')
     deleteSelectionSetIcon.className = 'fa-solid fa-trash'
-    $deleteSelectionSetButton.appendChild(deleteSelectionSetIcon)
 
     $deleteSelectionSetButton.addEventListener('click', event => {
-      event.stopPropagation()
       $ipc3d.deleteSelectionSet(index)
+      event.stopPropagation()
     })
+
+    $deleteSelectionSetButton.appendChild(deleteSelectionSetIcon)
     $optionsWrapper.appendChild($deleteSelectionSetButton)
 
     $selectionSetButton.appendChild($optionsWrapper)
@@ -418,13 +671,13 @@ function generateCuttingPlanes() {
   $cuttingPlaneButtons.replaceChildren()
 
   let $highlightedSelectionSetBtn
-  $ipc3d.cuttingPlanes.forEach((cuttingPlane, i) => {
+  $ipc3d.cuttingPlanes.forEach((cuttingPlane, index) => {
     const $button = document.createElement('button')
     $button.className = 'border rounded bg-gray-300 px-2  hover:bg-gray-100'
     $button.textContent = cuttingPlane.name
 
     $button.addEventListener('click', () => {
-      $ipc3d.activateCuttingPlane(i)
+      $ipc3d.activateCuttingPlane(index)
       if ($highlightedSelectionSetBtn)
         $highlightedSelectionSetBtn.style.borderColor = ''
       $button.style.borderColor = 'red'
@@ -433,6 +686,34 @@ function generateCuttingPlanes() {
 
     $cuttingPlaneButtons.appendChild($button)
   })
+}
+
+// ///////////////////////////
+// HTML
+function setTooltip($buttonElement, title) {
+  $buttonElement.setAttribute('data-bs-toggle', 'tooltip')
+  $buttonElement.setAttribute('data-bs-placement', 'bottom')
+  $buttonElement.setAttribute('title', title)
+}
+
+function activateButton(btnText, selector) {
+  const $buttonToActivate =
+    [...document.querySelectorAll(selector)]
+      .find((btn) => btn.innerText === btnText)
+
+  if ($buttonToActivate) {
+    $buttonToActivate.className = DEFAULT_ACTIVE_ITEM_BUTTON_CLASSNAME
+  }
+  return $buttonToActivate
+}
+
+function deactivateButton(selector) {
+  const $buttonToDeactivate = document.querySelector(selector)
+
+  if ($buttonToDeactivate) {
+    $buttonToDeactivate.className = DEFAULT_INACTIVE_ITEM_BUTTON_CLASSNAME
+  }
+  return $buttonToDeactivate
 }
 
 // ////////////////////////////////////////////////////
@@ -478,7 +759,11 @@ const $toggleFooter = document.getElementById('toggle-footer')
 
 $toggleFooter.addEventListener('click', () => {
   const $footer = document.querySelector('footer')
-  $footer.classList.toggle('hidden')
+  if ($footer.classList.toggle('hidden')) {
+    $ipc3d.setSelectionFillParamValue(0.5)
+  } else {
+    $ipc3d.setSelectionFillParamValue(0)
+  }
 })
 
 let activeMaterial = -1
