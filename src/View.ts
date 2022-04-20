@@ -1,6 +1,7 @@
 import {Camera, MathFunctions, Scene, Vec3, Xfo} from '@zeainc/zea-engine'
 import {Pose, PoseJson} from './Pose'
 import {UUID} from "./Utils";
+import {SelectionSet} from "./SelectionSet";
 
 interface ViewJson {
   id: string
@@ -8,27 +9,36 @@ interface ViewJson {
   cameraXfo: Record<string, any>
   cameraTarget: Record<string, any>
   pose: PoseJson
-  selectionSet: Record<string, string>
+  selectionSets?: SelectionSetKey[]
 }
+
+interface SelectionSetKey {
+  id: string
+  name: string
+}
+
 
 class View {
   private id: string
   name = 'View'
   cameraXfo: Xfo = new Xfo()
   cameraTarget: Vec3 = new Vec3()
-  selectionSet: Record<string, string>
+  selectionSets: SelectionSet[] = []
 
   pose: Pose
   constructor(name: string = '', scene: Scene) {
     this.id = UUID()
     this.name = name
     this.pose = new Pose(scene)
-    this.selectionSet = {id: '', name: ''}
   }
 
-  setSelectionSet(id: string, name: string) {
-    this.selectionSet.id = id
-    this.selectionSet.name = name
+  attachSelectionSet(selectionSet: SelectionSet) {
+    this.selectionSets.push(selectionSet)
+  }
+
+  detachSelectionSet(selectionSet: SelectionSet) {
+    const selIndex = this.selectionSets.indexOf(selectionSet)
+    this.selectionSets.splice(selIndex, 1)
   }
 
   setCameraParams(camera: Camera) {
@@ -84,7 +94,7 @@ class View {
   copyFrom(view: View) {
     this.cameraTarget = view.cameraTarget.clone()
     this.cameraXfo = view.cameraXfo.clone()
-    this.selectionSet = view.selectionSet
+    this.selectionSets = view.selectionSets
     this.pose.copyFrom(view.pose)
   }
 
@@ -98,7 +108,10 @@ class View {
       cameraXfo: this.cameraXfo.toJSON(),
       cameraTarget: this.cameraTarget.toJSON(),
       pose: this.pose.saveJson(),
-      selectionSet: this.selectionSet
+      selectionSets: this.selectionSets?.map((sel) => <SelectionSetKey>{
+        id: sel.saveJson().id,
+        name: sel.saveJson().name
+      })
     }
   }
 
@@ -108,7 +121,6 @@ class View {
     this.cameraXfo.fromJSON(viewJson.cameraXfo)
     this.cameraTarget.fromJSON(viewJson.cameraTarget)
     this.pose?.loadJson(viewJson.pose)
-    this.selectionSet = viewJson.selectionSet
   }
 }
 

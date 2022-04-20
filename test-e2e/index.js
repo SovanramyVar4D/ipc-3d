@@ -15,12 +15,12 @@ $ipc3d.on('assetLoaded', (assetName) => {
   $ipc3d.setRectangleSelectionHotKey('r')
 })
 
-$ipc3d.on('selectionSetActivatedInView', (view) => {
+$ipc3d.on('selectionSetAttachedToCurrentView', (view) => {
   document.querySelectorAll('.selection-set-button .link-view-button').forEach((linkBtn) => {
     linkBtn.remove()
   })
   displayPanel('Views')
-  alert(`SelectionSet activated in View ${view.name} : ${view.selectionSet.name}`)
+  console.log(`SelectionSet activated in View ${view.name}`)
 })
 
 $ipc3d.on('saveKeyboardShortcutTriggered', () => {
@@ -224,6 +224,7 @@ document.getElementById('loadGearbox').addEventListener('click', async () => {
   $assetIndicator.textContent = assetName
 })
 
+/* Fit scene/parts */
 document.getElementById('frameView').addEventListener('click', () => {
   $ipc3d.frameView()
 })
@@ -302,10 +303,18 @@ function displayPanel(panel) {
     }
   })
 }
-document.querySelector('#showTab1').addEventListener('click', () => displayPanel('Views'))
-document.querySelector('#showTab2').addEventListener('click', () => displayPanel('Tree'))
-document.querySelector('#showTab3').addEventListener('click', () => displayPanel('SelectionSets'))
-document.querySelector('#showTab4').addEventListener('click', () => displayPanel('CuttingPlanes'))
+document.querySelector('#showTab1')
+  .addEventListener('click', () => displayPanel('Views'))
+
+document.querySelector('#showTab2')
+  .addEventListener('click', () => displayPanel('Tree'))
+
+document.querySelector('#showTab3')
+  .addEventListener('click', () => displayPanel('SelectionSets'))
+
+document.querySelector('#showTab4')
+  .addEventListener('click', () => displayPanel('CuttingPlanes'))
+
 
 // ////////////////////////////////////////////////
 //  Tree view
@@ -323,7 +332,11 @@ document.getElementById('createView').addEventListener('click', () => {
       'This view name already exists ! \n Please enter a new name for the View'
     )
   }
-  if (viewName) $ipc3d.createView(null, viewName)
+  if (viewName) {
+    viewName !== '' || ' '
+      ? $ipc3d.createView(viewName)
+      : $ipc3d.createView()
+  }
 })
 
 function generateViewButtons() {
@@ -478,7 +491,7 @@ function generateViewButtons() {
           const currentElement = event.currentTarget
           const container = currentElement.closest('.selection-set-button')
           const currentSelectionSet =  $ipc3d.selectionSets.find((selSet) => selSet.name === container.textContent)
-          $ipc3d.activateSelectionSetInActiveView(currentSelectionSet)
+          $ipc3d.attachSelectionSetToActiveView(currentSelectionSet)
 
           event.stopPropagation()
         })
@@ -591,25 +604,6 @@ function generateSelSetButtons() {
     })
     $optionsWrapper.appendChild($RenameSelectionSetButton)
 
-    // Duplicate
-    const $duplicateSelectionSetButton = document.createElement('button')
-    $duplicateSelectionSetButton.className =
-      'hidden border rounded text-black bg-yellow-200 px-2 mx-0.5 hover:bg-red-150'
-    setTooltip($duplicateSelectionSetButton, 'Duplicate')
-
-    const duplicateSelectionSetIcon = document.createElement('i')
-    duplicateSelectionSetIcon.className = 'fa-solid fa-clone'
-
-    $duplicateSelectionSetButton.addEventListener('click', () => $ipc3d.duplicateSelectionSet(index))
-
-    $duplicateSelectionSetButton.appendChild(duplicateSelectionSetIcon)
-
-    $duplicateSelectionSetButton.addEventListener('click', event => {
-      event.stopPropagation()
-      $ipc3d.duplicateSelectionSet(index)
-    })
-    $optionsWrapper.appendChild($duplicateSelectionSetButton)
-
     // Update
     const $updateSelectionSetButton = document.createElement('button')
     $updateSelectionSetButton.className = 'hidden border rounded text-black bg-yellow-200 px-2 mx-0.5 hover:bg-red-150'
@@ -629,7 +623,7 @@ function generateSelSetButtons() {
     // Delete
     const $deleteSelectionSetButton = document.createElement('button')
     $deleteSelectionSetButton.className =
-      'hidden border rounded text-black bg-red-200 px-5 ml-5 hover:bg-red-150'
+      'delete-button hidden border rounded text-black bg-red-200 px-5 ml-5 hover:bg-red-150'
 
     const deleteSelectionSetIcon = document.createElement('i')
     deleteSelectionSetIcon.className = 'fa-solid fa-trash'

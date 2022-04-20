@@ -56,6 +56,7 @@ import {
 } from './Changes/SelectionSetChanges'
 
 import CuttingPlaneWrapper, { CuttingPlaneJson } from './CuttingPlane'
+import {AttachSelectionSetChange} from "./Changes/View/AttachSelectionSetChange";
 
 interface AssetJson {
   url: string
@@ -71,12 +72,12 @@ interface ProjectJson {
   materialAssignments: Record<string, number>
 }
 
-export class IPC_3d extends HTMLElement {
+export class Ipd3d extends HTMLElement {
   private scene: Scene
   private renderer: GLRenderer
 
   public selectionManager: SelectionManager
-  private undoRedoManager: UndoRedoManager
+  public undoRedoManager: UndoRedoManager
   private assets: CADAsset[] = []
   public views: View[] = []
   public cuttingPlanes: CuttingPlaneWrapper[] = []
@@ -84,7 +85,8 @@ export class IPC_3d extends HTMLElement {
 
   public hiddenParts: TreeItem[] = []
   public activeView?: View
-  private highlightedItem?: TreeItem
+  public currentSelectionSet?: SelectionSet
+  public highlightedItem?: TreeItem
 
   private rectangleSelectionHotKey: string = ''
   private rectangleSelectionOn: boolean = false
@@ -97,12 +99,16 @@ export class IPC_3d extends HTMLElement {
   private materialAssignments: Record<string, number> = {}
 
   picking = false
-  private callouts: BillboardItem[] = []
+  public callouts: BillboardItem[] = []
 
   private highlightColor = new Color(0.8, 0.2, 0.2, 0.3)
   private _selectionColor = new Color(1, 0.8, 0, 0.5)
 
   private eventEmitter = new EventEmitter()
+
+  // Undo redo management
+  private undoLimit?: number
+  private undoCounter: number = 0
 
   constructor() {
     super()
@@ -162,7 +168,9 @@ export class IPC_3d extends HTMLElement {
       renderer: this.renderer,
       selectionManager: this.selectionManager
     })
-    this.setRectangleSelectionColor(new Color(0.2, 0.2, 0.2))
+    this.setRectangleSelectionColor(
+        new Color(0.2, 0.2, 0.2).toHex()
+    )
 
     // ////////////////////////////////////////////
     // HotKeys
@@ -330,6 +338,18 @@ export class IPC_3d extends HTMLElement {
     this.activateInitialView()
   }
 
+  // Undo Limit
+  private increaseUndoCounter() {
+    this.undoCounter += 1
+  }
+
+  private decreaseUndoCounter() {
+    if (this.undoCounter > 0)
+    {
+      this.undoCounter -= 1
+    }
+  }
+
   // Items / Selection
 
   /*
@@ -373,11 +393,14 @@ export class IPC_3d extends HTMLElement {
 // //////////////////////////////
 // Public functions
 
-  public getSelectionColor(): Color {
-    return this._selectionColor
+  public getSelectionColor(): string {
+    return this._selectionColor.toHex()
   }
 
-  public setSelectionColor(color: Color) {
+  public setSelectionColor(hexColorString: string) {
+    const color = new Color()
+    color.setFromHex(hexColorString)
+
     this._selectionColor = color
   }
 
@@ -390,7 +413,10 @@ export class IPC_3d extends HTMLElement {
   }
 
   // Selection Tool (Rectangle/Camera manipulator)
-  public setRectangleSelectionColor(color: Color) {
+  public setRectangleSelectionColor(hexColorString: string) {
+    const color = new Color()
+    color.setFromHex(hexColorString)
+
     this.rectangleSelectionManipulator
         .selectionRectMat.getParameter('BaseColor')!.value = color
   }
@@ -416,7 +442,6 @@ export class IPC_3d extends HTMLElement {
       .setPositionAndTarget(new Vec3(1200, 1200, 1200), new Vec3(0, 0, 0))
 
     this.scene.getRoot().removeAllChildren()
-    this.scene.setupGrid(1000, 10)
 
     this.assets = []
     this.views = []
@@ -425,7 +450,7 @@ export class IPC_3d extends HTMLElement {
     this.materialAssignments = {}
 
     this.createInitialView()
-    
+
     this.undoRedoManager.flush()
 
     this.eventEmitter.emit('viewsListChanged')
@@ -456,7 +481,10 @@ export class IPC_3d extends HTMLElement {
     })
   }
 
-  public setSceneBackgroundColor(color: Color) {
+  public setSceneBackgroundColor(hexColorString: string) {
+    const color = new Color()
+    color.setFromHex(hexColorString)
+
     this.renderer.getViewport()
         .backgroundColorParam.value = color
   }
@@ -464,7 +492,7 @@ export class IPC_3d extends HTMLElement {
 
   // Initial View
   public activateInitialView() {
-    this.selectionManager.clearSelection(false)
+    // this.selectionManager.clearSelection(false)
 
     if (this.activeView !== this.initialView) {
       this.eventEmitter.emit('viewDeactivated')
@@ -482,7 +510,7 @@ export class IPC_3d extends HTMLElement {
   }
 
   // Views
-  public createView(view?: View, name?: string) {
+  public createView(name?: string, view?: View) {
     const viewName = name ? name : 'View' + this.views.length
 
     const newView = new View(viewName, this.scene)
@@ -514,7 +542,7 @@ export class IPC_3d extends HTMLElement {
 
   public duplicateView(fromViewIndex: number) {
     const view = this.views[fromViewIndex]
-    this.createView(view, view.name + '-duplicated')
+    this.createView( view.name + '-duplicated', view)
   }
 
   public renameView(index: number, newName: string) {
@@ -528,7 +556,7 @@ export class IPC_3d extends HTMLElement {
   }
 
   public activateView(index: number) {
-    this.selectionManager.clearSelection(false)
+    // this.selectionManager.clearSelection(false)
 
     if (this.activeView === this.initialView) {
       this.eventEmitter.emit('initialViewDeactivated')
@@ -558,6 +586,16 @@ export class IPC_3d extends HTMLElement {
 
       this.eventEmitter.emit('viewCameraChanged', this.activeView.name)
     }
+  }
+
+  public deactivateView() {
+    this.selectionManager.clearSelection(false)
+    if (this.activeView === this.initialView) {
+      this.eventEmitter.emit('initialViewDeactivated')
+    } else {
+      this.eventEmitter.emit('viewDeactivated')
+    }
+    this.activeView = undefined
   }
 
   public frameView() {
@@ -637,21 +675,36 @@ export class IPC_3d extends HTMLElement {
     const selectionSet = this.selectionSets[index]
     const set = new Set(selectionSet.items)
     this.selectionManager.setSelection(set, false)
+
+    this.currentSelectionSet = selectionSet
     this.eventEmitter.emit('selectionSetActivated', selectionSet.name)
   }
 
   public deactivateSelectionSet() {
     this.selectionManager.clearSelection(false)
+    this.currentSelectionSet = undefined
     this.eventEmitter.emit('selectionSetDeactivated')
   }
 
-  public activateSelectionSetInActiveView(selectionSet: SelectionSet) {
+  public attachSelectionSetToActiveView(selectionSet: SelectionSet) {
     if (this.activeView) {
-      this.activeView.setSelectionSet(
-          selectionSet.getId(),
-          selectionSet.name
-      )
-      this.eventEmitter.emit('selectionSetActivatedInView', this.activeView)
+      const change = new AttachSelectionSetChange(this.activeView, selectionSet)
+
+      this.activeView.attachSelectionSet(selectionSet)
+
+      this.undoRedoManager.addChange(change)
+      this.eventEmitter.emit('selectionSetAttachedToCurrentView', this.currentView)
+    }
+  }
+
+  public detachSelectionSetToActiveView(selectionSet: SelectionSet) {
+    if (this.activeView) {
+      const change = new AttachSelectionSetChange(this.activeView, selectionSet, true)
+
+      this.activeView.detachSelectionSet(selectionSet)
+
+      this.undoRedoManager.addChange(change)
+      this.eventEmitter.emit('selectionSetDeactivatedInView', this.currentView)
     }
   }
   // /////////////////////////////////////////
@@ -858,16 +911,6 @@ export class IPC_3d extends HTMLElement {
       })
 
       Promise.all(promises).then(() => {
-        this.initialView.loadJson(projectJson.initialView)
-        this.initialView.activate(this.renderer.getViewport().getCamera())
-        this.views = []
-        projectJson.views.forEach((viewJson: ViewJson) => {
-          const view = new View('', this.scene)
-          view.loadJson(viewJson)
-          this.views.push(view)
-        })
-        this.eventEmitter.emit('viewsListChanged')
-
         this.selectionSets = []
         projectJson.selectionSets.forEach(
           (selectionSetJson: SelectionSetJson) => {
@@ -877,6 +920,20 @@ export class IPC_3d extends HTMLElement {
           }
         )
         this.eventEmitter.emit('selectionSetsListChanged')
+
+        this.initialView.loadJson(projectJson.initialView)
+        this.initialView.activate(this.renderer.getViewport().getCamera())
+        this.views = []
+        projectJson.views.forEach((viewJson: ViewJson) => {
+          const view = new View('', this.scene)
+          view.loadJson(viewJson)
+          viewJson.selectionSets?.forEach((selKey) => {
+           const selectionSet = this.selectionSets.find(selSet => selSet.getId() === selKey.id)
+            if (selectionSet) view.attachSelectionSet(selectionSet)
+          })
+          this.views.push(view)
+        })
+        this.eventEmitter.emit('viewsListChanged')
 
         projectJson.cuttingPlanes.forEach(
           (cuttingPlaneJson: CuttingPlaneJson) => {
@@ -929,15 +986,34 @@ export class IPC_3d extends HTMLElement {
   // Undo /Redo
 
   public undo() {
-    this.undoRedoManager.undo()
+    if (this.undoLimit) {
+      if (this.undoCounter < this.undoLimit) {
+        this.increaseUndoCounter()
+        this.undoRedoManager.undo()
+      } else {
+        console.log('Undo limit reached')
+      }
+    } else {
+      this.undoRedoManager.undo()
+    }
   }
 
   public redo() {
-    this.undoRedoManager.redo()
+    if (this.undoLimit) {
+      if (this.undoCounter > 0) {
+        this.decreaseUndoCounter()
+        this.undoRedoManager.redo()
+      }
+    } else {
+      this.undoRedoManager.redo()
+    }
+  }
+
+  public setUndoLimit(limit: number) {
+    this.undoLimit = limit
   }
 
   public setEnvironmentMap(zenvFilePath: string) {
-    console.log(zenvFilePath)
     const envMap = new EnvMap()
     envMap.load(zenvFilePath)
         .then(() => {
@@ -958,4 +1034,4 @@ export class IPC_3d extends HTMLElement {
   }
 }
 
-customElements.define('ipc-3d', IPC_3d)
+customElements.define('ipc-3d', Ipd3d)
