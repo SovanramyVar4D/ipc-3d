@@ -84,7 +84,7 @@ export class Ipd3d extends HTMLElement {
   public selectionSets: SelectionSet[] = []
 
   public hiddenParts: TreeItem[] = []
-  public activeView?: View
+  public currentView?: View
   public currentSelectionSet?: SelectionSet
   public highlightedItem?: TreeItem
 
@@ -211,20 +211,20 @@ export class Ipd3d extends HTMLElement {
       // @ts-ignore
       const change = event.change
       if (change instanceof SelectionXfoChange) {
-        if (this.activeView && this.activeView !== this.initialView) {
+        if (this.currentView && this.currentView !== this.initialView) {
           this.initialView.pose.storeNeutralPose(change.treeItems)
-          this.activeView.pose.storeTreeItemsPose(change.treeItems)
+          this.currentView.pose.storeTreeItemsPose(change.treeItems)
         } else {
           this.initialView.pose.storeTreeItemsPose(change.treeItems)
         }
       } else if (change instanceof ParameterValueChange) {
         const param = change.param
         if (param.getOwner() instanceof Material) return
-        if (this.activeView && this.activeView !== this.initialView) {
+        if (this.currentView && this.currentView !== this.initialView) {
           this.initialView.pose.storeParamValue(param, change.prevValue)
-          this.activeView.pose.storeParamValue(param, change.nextValue)
+          this.currentView.pose.storeParamValue(param, change.nextValue)
         } else {
-          this.initialView.pose.storeParamValue(param, change.nextValue)
+          this.initialView.pose.storeParamValue(param, change.nextValue, true)
         }
       }
     })
@@ -232,13 +232,13 @@ export class Ipd3d extends HTMLElement {
     this.undoRedoManager.on('changeUpdated', (event: Object) => {
       const change = this.undoRedoManager.getCurrentChange()
       if (change instanceof SelectionXfoChange) {
-        if (this.activeView && this.activeView !== this.initialView) {
-          this.activeView.pose.storeTreeItemsPose(change.treeItems)
+        if (this.currentView && this.currentView !== this.initialView) {
+          this.currentView.pose.storeTreeItemsPose(change.treeItems)
         }
       } else if (change instanceof ParameterValueChange) {
         const param = change.param
-        if (this.activeView && this.activeView !== this.initialView) {
-          this.activeView.pose.storeParamValue(param, change.nextValue)
+        if (this.currentView && this.currentView !== this.initialView) {
+          this.currentView.pose.storeParamValue(param, change.nextValue)
         }
       }
     })
@@ -494,14 +494,14 @@ export class Ipd3d extends HTMLElement {
   public activateInitialView() {
     // this.selectionManager.clearSelection(false)
 
-    if (this.activeView !== this.initialView) {
+    if (this.currentView !== this.initialView) {
       this.eventEmitter.emit('viewDeactivated')
     }
 
     const view = this.initialView
     view.lerpPose(this.renderer.getViewport().getCamera())
 
-    this.activeView = view
+    this.currentView = view
     this.eventEmitter.emit('initialViewActivated')
   }
 
@@ -516,7 +516,6 @@ export class Ipd3d extends HTMLElement {
     const newView = new View(viewName, this.scene)
 
     if (view) newView.copyFrom(view)
-
 
     const change = new CreateViewChange(newView, this.views, this.eventEmitter)
     newView.setCameraParams(this.renderer.getViewport().getCamera())
@@ -542,7 +541,7 @@ export class Ipd3d extends HTMLElement {
 
   public duplicateView(fromViewIndex: number) {
     const view = this.views[fromViewIndex]
-    this.createView( view.name + '-duplicated', view)
+    this.createView( view.name, view)
   }
 
   public renameView(index: number, newName: string) {
@@ -558,7 +557,7 @@ export class Ipd3d extends HTMLElement {
   public activateView(index: number) {
     // this.selectionManager.clearSelection(false)
 
-    if (this.activeView === this.initialView) {
+    if (this.currentView === this.initialView) {
       this.eventEmitter.emit('initialViewDeactivated')
     } else {
       this.eventEmitter.emit('viewDeactivated')
@@ -567,35 +566,35 @@ export class Ipd3d extends HTMLElement {
     const view = this.views[index]
     view.lerpPose(this.renderer.getViewport().getCamera(), this.initialView.pose)
 
-    this.activeView = view
+    this.currentView = view
     this.eventEmitter.emit('viewActivated', view.name)
   }
 
   public getActiveViewName(): string {
-    if (this.activeView) return this.activeView.name
+    if (this.currentView) return this.currentView.name
     return ''
   }
 
   public saveViewCamera() {
-    if (this.activeView) {
+    if (this.currentView) {
       const camera = this.renderer.getViewport().getCamera()
 
-      const change = new UpdateViewCameraChange(this.activeView, camera)
-      this.activeView.setCameraParams(camera)
+      const change = new UpdateViewCameraChange(this.currentView, camera)
+      this.currentView.setCameraParams(camera)
       this.undoRedoManager.addChange(change)
 
-      this.eventEmitter.emit('viewCameraChanged', this.activeView.name)
+      this.eventEmitter.emit('viewCameraChanged', this.currentView.name)
     }
   }
 
   public deactivateView() {
     this.selectionManager.clearSelection(false)
-    if (this.activeView === this.initialView) {
+    if (this.currentView === this.initialView) {
       this.eventEmitter.emit('initialViewDeactivated')
     } else {
       this.eventEmitter.emit('viewDeactivated')
     }
-    this.activeView = undefined
+    this.currentView = undefined
   }
 
   public frameView() {
@@ -687,10 +686,10 @@ export class Ipd3d extends HTMLElement {
   }
 
   public attachSelectionSetToActiveView(selectionSet: SelectionSet) {
-    if (this.activeView) {
-      const change = new AttachSelectionSetChange(this.activeView, selectionSet)
+    if (this.currentView) {
+      const change = new AttachSelectionSetChange(this.currentView, selectionSet)
 
-      this.activeView.attachSelectionSet(selectionSet)
+      this.currentView.attachSelectionSet(selectionSet)
 
       this.undoRedoManager.addChange(change)
       this.eventEmitter.emit('selectionSetAttachedToCurrentView', this.currentView)
@@ -698,10 +697,10 @@ export class Ipd3d extends HTMLElement {
   }
 
   public detachSelectionSetToActiveView(selectionSet: SelectionSet) {
-    if (this.activeView) {
-      const change = new AttachSelectionSetChange(this.activeView, selectionSet, true)
+    if (this.currentView) {
+      const change = new AttachSelectionSetChange(this.currentView, selectionSet, true)
 
-      this.activeView.detachSelectionSet(selectionSet)
+      this.currentView.detachSelectionSet(selectionSet)
 
       this.undoRedoManager.addChange(change)
       this.eventEmitter.emit('selectionSetDeactivatedInView', this.currentView)

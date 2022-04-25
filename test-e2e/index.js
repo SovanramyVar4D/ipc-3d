@@ -13,6 +13,12 @@ $ipc3d.on('assetLoaded', (assetName) => {
   // console.log(envMap)
   console.log('loaded', assetName)
   $ipc3d.setRectangleSelectionHotKey('r')
+
+  // update initialview viewpoint
+  $ipc3d.frameView()
+  $ipc3d.initialView.setCameraParams(
+    $ipc3d.renderer.getViewport().getCamera()
+  )
 })
 
 $ipc3d.on('selectionSetAttachedToCurrentView', (view) => {
