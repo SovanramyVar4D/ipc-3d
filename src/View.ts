@@ -8,7 +8,7 @@ interface ViewJson {
   cameraXfo: Record<string, any>
   cameraTarget: Record<string, any>
   pose: PoseJson
-  selectionSet: Record<string, string>
+  selectionSet?: Record<string, string>
 }
 
 class View {
@@ -16,19 +16,20 @@ class View {
   name = 'View'
   cameraXfo: Xfo = new Xfo()
   cameraTarget: Vec3 = new Vec3()
-  selectionSet: Record<string, string>
+  selectionSet?: Record<string, string>
 
   pose: Pose
   constructor(name: string = '', scene: Scene) {
     this.id = UUID()
     this.name = name
     this.pose = new Pose(scene)
-    this.selectionSet = {id: '', name: ''}
   }
 
   setSelectionSet(id: string, name: string) {
-    this.selectionSet.id = id
-    this.selectionSet.name = name
+    this.selectionSet = {
+      id,
+      name
+    }
   }
 
   setCameraParams(camera: Camera) {
@@ -85,14 +86,17 @@ class View {
   // Persistence
 
   saveJson(): ViewJson {
-    return {
+    let json: ViewJson = {
       id: this.id,
       name: this.name,
       cameraXfo: this.cameraXfo.toJSON(),
       cameraTarget: this.cameraTarget.toJSON(),
       pose: this.pose.saveJson(),
-      selectionSet: this.selectionSet
     }
+    if (this.selectionSet) {
+      json.selectionSet = this.selectionSet
+    }
+    return json
   }
 
   loadJson(viewJson: ViewJson) {
@@ -101,7 +105,9 @@ class View {
     this.cameraXfo.fromJSON(viewJson.cameraXfo)
     this.cameraTarget.fromJSON(viewJson.cameraTarget)
     this.pose?.loadJson(viewJson.pose)
-    this.selectionSet = viewJson.selectionSet
+    if (viewJson.selectionSet) {
+      this.selectionSet = viewJson.selectionSet
+    }
   }
 }
 
