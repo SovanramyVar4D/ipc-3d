@@ -709,8 +709,12 @@ export class Ipd3d extends HTMLElement {
   // /////////////////////////////////////////
   // Selection Management
   public hideSelection() {
+
     const set = this.selectionManager.getSelection()
     set.forEach((treeItem: TreeItem) => {
+      this.undoRedoManager.addChange(
+          new ParameterValueChange(treeItem.visibleParam,false)
+      )
       treeItem.setVisible(false)
       this.hiddenParts.push(treeItem)
     })
@@ -718,6 +722,9 @@ export class Ipd3d extends HTMLElement {
 
   public unHideAll() {
     this.hiddenParts.forEach((treeItem: TreeItem) => {
+      this.undoRedoManager.addChange(
+          new ParameterValueChange(treeItem.visibleParam,true)
+      )
       treeItem.setVisible(true)
     })
     this.hiddenParts = []
