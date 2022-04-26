@@ -385,7 +385,7 @@ function generateViewButtons() {
 
   $viewButtons.appendChild($initialViewButton)
 
-  if ($ipc3d.activeView == $ipc3d.initialView) {
+  if ($ipc3d.currentView == $ipc3d.initialView) {
     $initialViewButton.className = INITIAL_VIEW_ACTIVE_BUTTON_CLASSNAME
     $initialViewButton.querySelector('button').classList.remove('hidden')
   }
@@ -497,7 +497,7 @@ function generateViewButtons() {
           const currentElement = event.currentTarget
           const container = currentElement.closest('.selection-set-button')
           const currentSelectionSet =  $ipc3d.selectionSets.find((selSet) => selSet.name === container.textContent)
-          $ipc3d.attachSelectionSetToActiveView(currentSelectionSet)
+          $ipc3d.attachSelectionSetToCurrentView(currentSelectionSet)
 
           event.stopPropagation()
         })
