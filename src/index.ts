@@ -571,7 +571,7 @@ export class Ipd3d extends HTMLElement {
     this.eventEmitter.emit('viewActivated', view.name)
   }
 
-  public getActiveViewName(): string {
+  public getCurrentViewName(): string {
     if (this.currentView) return this.currentView.name
     return ''
   }
@@ -686,7 +686,7 @@ export class Ipd3d extends HTMLElement {
     this.eventEmitter.emit('selectionSetDeactivated')
   }
 
-  public attachSelectionSetToActiveView(selectionSet: SelectionSet) {
+  public attachSelectionSetToCurrentView(selectionSet: SelectionSet) {
     if (this.currentView) {
       const change = new AttachSelectionSetChange(this.currentView, selectionSet)
 
@@ -697,7 +697,7 @@ export class Ipd3d extends HTMLElement {
     }
   }
 
-  public detachSelectionSetToActiveView(selectionSet: SelectionSet) {
+  public detachSelectionSetToCurrentView(selectionSet: SelectionSet) {
     if (this.currentView) {
       const change = new AttachSelectionSetChange(this.currentView, selectionSet, true)
 
