@@ -73,7 +73,7 @@ interface ProjectJson {
 }
 
 export class Ipd3d extends HTMLElement {
-  private scene: Scene
+  public scene: Scene
   private renderer: GLRenderer
 
   public selectionManager: SelectionManager
@@ -449,8 +449,6 @@ export class Ipd3d extends HTMLElement {
     this.materials = []
     this.materialAssignments = {}
 
-    this.createInitialView()
-
     this.undoRedoManager.flush()
 
     this.eventEmitter.emit('viewsListChanged')
@@ -467,6 +465,7 @@ export class Ipd3d extends HTMLElement {
 
       cadAsset.load(url, context).then(() => {
         this.renderer.frameAll()
+        this.createInitialView()
       })
 
       cadAsset.geomLibrary.once('loaded', () => {
@@ -511,7 +510,9 @@ export class Ipd3d extends HTMLElement {
 
   // Views
   public createView(name?: string, view?: View) {
-    const viewName = name ? name : 'View' + this.views.length
+    const viewName = name || (name && name.match(/^\s*$/) === null)
+        ? name
+        : 'View' + (view ? this.views.length + 1 : this.views.length)
 
     const newView = new View(viewName, this.scene)
 
@@ -541,7 +542,7 @@ export class Ipd3d extends HTMLElement {
 
   public duplicateView(fromViewIndex: number) {
     const view = this.views[fromViewIndex]
-    this.createView( view.name, view)
+    this.createView('',view)
   }
 
   public renameView(index: number, newName: string) {
@@ -709,7 +710,7 @@ export class Ipd3d extends HTMLElement {
   // /////////////////////////////////////////
   // Selection Management
   public hideSelection() {
-
+    if (this.currentView === this.initialView) return
     const set = this.selectionManager.getSelection()
     set.forEach((treeItem: TreeItem) => {
       this.undoRedoManager.addChange(
