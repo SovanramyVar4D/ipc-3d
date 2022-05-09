@@ -43,6 +43,7 @@ class View {
       this.selectionSets.splice(selIndex, 1)
 
       if (this.selectionSets.length < 1) this.selectionSets = undefined
+
     }
   }
 
@@ -112,6 +113,7 @@ class View {
 
   saveJson(): ViewJson {
     const json: ViewJson = {
+
       id: this.id,
       name: this.name,
       cameraXfo: this.cameraXfo.toJSON(),
