@@ -35,17 +35,13 @@ class ViewSelectionVisibilityChange extends Change {
 
             if (!this.viewIsInitialView()) {
                 this.initialView.pose.storeParamValue(visibleParam, !visibility, true)
-                this.initialView.updateHiddenPartsList()
             }
 
-
             this.view.pose.storeParamValue(visibleParam, visibility)
-            this.view.updateHiddenPartsList()
 
             if (applyToAllViews) {
                 this.viewsList.forEach((view) => {
                     view.pose.storeParamValue(visibleParam, visibility)
-                    view.updateHiddenPartsList()
                 })
             }
         })

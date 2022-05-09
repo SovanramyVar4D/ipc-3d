@@ -10,10 +10,10 @@ interface ViewJson {
   cameraXfo: Record<string, any>
   cameraTarget: Record<string, any>
   pose: PoseJson
-  selectionSets?: SelectionSetKey[]
+  selectionSets?: SelectionSetIdent[]
 }
 
-interface SelectionSetKey {
+interface SelectionSetIdent {
   id: string
   name: string
 }
@@ -24,7 +24,6 @@ class View {
   cameraXfo: Xfo = new Xfo()
   cameraTarget: Vec3 = new Vec3()
   selectionSets?: SelectionSet[] = []
-  hiddenParts: TreeItem[] = []
 
   pose: Pose
   constructor(name: string = '', private scene: Scene) {
@@ -104,26 +103,8 @@ class View {
     this.pose.copyFrom(view.pose)
   }
 
-  public updateHiddenPartsList() {
-    this.hiddenParts = this.getHiddenPartsFromPose()
-  }
-
-  private getHiddenPartsFromPose(): TreeItem[] {
-    const hiddenPartsList = []
-    for (let key in this.pose.values) {
-      const visibleParam = this.pose.params[key]
-      const isVisible = this.pose.values[key]
-
-      const partPath = (<TreeItem>visibleParam.getOwner()).getPath()
-
-      if (visibleParam instanceof BooleanParameter
-          && visibleParam.getName() === 'Visible'
-          && !isVisible) {
-        const part: TreeItem = <TreeItem>this.scene.getRoot().resolvePath(partPath)
-        hiddenPartsList.push(part)
-      }
-    }
-    return hiddenPartsList
+  public getHiddenParts() {
+    return this.pose.getHiddenParts()
   }
 
   // /////////////////////////////////////////
@@ -139,10 +120,11 @@ class View {
     }
 
     if (this.selectionSets && this.selectionSets.length > 0)
-      json.selectionSets = this.selectionSets?.map((sel) => <SelectionSetKey>{
-        id: sel.saveJson().id,
-        name: sel.saveJson().name
-      })
+      json.selectionSets = this.selectionSets?.map(
+          (sel) => <SelectionSetIdent>{
+            id: sel.saveJson().id,
+            name: sel.saveJson().name
+          })
     return json
   }
 
@@ -152,7 +134,6 @@ class View {
     this.cameraXfo.fromJSON(viewJson.cameraXfo)
     this.cameraTarget.fromJSON(viewJson.cameraTarget)
     this.pose?.loadJson(viewJson.pose)
-    this.hiddenParts = this.getHiddenPartsFromPose()
   }
 }
 

@@ -150,6 +150,24 @@ class Pose {
     }, timeStep)
   }
 
+  getHiddenParts(): TreeItem[] {
+    const hiddenPartsList = []
+    for (let key in this.values) {
+      const visibleParam = this.params[key]
+      const isVisible = this.values[key]
+
+      const partPath = (<TreeItem>visibleParam.getOwner()).getPath()
+
+      if (visibleParam instanceof BooleanParameter
+          && visibleParam.getName() === 'Visible'
+          && !isVisible) {
+        const part: TreeItem = <TreeItem>this.scene.getRoot().resolvePath(partPath)
+        hiddenPartsList.push(part)
+      }
+    }
+    return hiddenPartsList
+  }
+
   // /////////////////////////////////////////
   // Persistence
 

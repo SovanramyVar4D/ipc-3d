@@ -65,11 +65,11 @@ interface AssetJson {
 interface ProjectJson {
   assets: AssetJson[]
   initialView: ViewJson
-  views: ViewJson[]
-  selectionSets: SelectionSetJson[]
-  cuttingPlanes: CuttingPlaneJson[]
-  materials: Record<string, any>[]
-  materialAssignments: Record<string, number>
+  views?: ViewJson[]
+  selectionSets?: SelectionSetJson[]
+  cuttingPlanes?: CuttingPlaneJson[]
+  materials?: Record<string, any>[]
+  materialAssignments?: Record<string, number>
 }
 
 export class Ipd3d extends HTMLElement {
@@ -755,7 +755,10 @@ export class Ipd3d extends HTMLElement {
             this.currentView!,
             this.initialView,
             this.views,
-            this.currentView!.hiddenParts,
+            this.currentView! === this.initialView
+                ? this.initialView.getHiddenParts()
+                : this.currentView!.getHiddenParts().filter(
+                    (part) => !this.initialView.getHiddenParts().includes(part)),
             true
         )
     )
@@ -913,31 +916,38 @@ export class Ipd3d extends HTMLElement {
     const projectJson: ProjectJson = {
       assets: [],
       initialView: this.initialView.saveJson(),
-      views: [],
-      selectionSets: [],
-      cuttingPlanes: [],
-      materials: [],
-      materialAssignments: this.materialAssignments
     }
     this.assets.forEach((asset: CADAsset) => {
       const assetJson: AssetJson = {
         url: asset.url
       }
-
       projectJson.assets.push(assetJson)
     })
-    this.views.forEach((view: View) => {
-      projectJson.views.push(view.saveJson())
-    })
-    this.selectionSets.forEach((selectionSet: SelectionSet) => {
-      projectJson.selectionSets.push(selectionSet.saveJson())
-    })
-    this.cuttingPlanes.forEach((cuttingPlane: CuttingPlaneWrapper) => {
-      projectJson.cuttingPlanes.push(cuttingPlane.saveJson())
-    })
-    this.materials.forEach((material: Material) => {
-      projectJson.materials.push(material.toJSON())
-    })
+    if (this.views && this.views.length > 0) {
+      projectJson.views = this.views.map((view) => view.saveJson()
+      )
+    }
+
+    if (this.selectionSets && this.selectionSets.length > 0) {
+      projectJson.selectionSets = this.selectionSets.map(
+          (selectionSet) => selectionSet.saveJson()
+      )
+    }
+
+    if (this.cuttingPlanes && this.cuttingPlanes.length > 0) {
+      projectJson.cuttingPlanes = this.cuttingPlanes.map(
+          (cuttingPlane) => cuttingPlane.saveJson()
+      )
+    }
+
+    if (this.materials && this.materials.length > 0) {
+      projectJson.materials = this.materials.map(
+          (material) => material.toJSON()
+      )
+    }
+    if (this.materialAssignments && this.materialAssignments.length > 0) {
+      projectJson.materialAssignments = this.materialAssignments
+    }
     return projectJson
   }
 
@@ -951,59 +961,71 @@ export class Ipd3d extends HTMLElement {
 
       Promise.all(promises).then(() => {
         this.selectionSets = []
-        projectJson.selectionSets.forEach(
-          (selectionSetJson: SelectionSetJson) => {
-            const sel = new SelectionSet('', [], this.scene)
-            sel.loadJson(selectionSetJson)
-            this.selectionSets.push(sel)
-          }
-        )
-        this.eventEmitter.emit('selectionSetsListChanged')
+        if (projectJson.selectionSets) {
+          projectJson.selectionSets.forEach(
+              (selectionSetJson: SelectionSetJson) => {
+                const sel = new SelectionSet('', [], this.scene)
+                sel.loadJson(selectionSetJson)
+                this.selectionSets.push(sel)
+              }
+          )
+          this.eventEmitter.emit('selectionSetsListChanged')
+        }
 
         this.initialView.loadJson(projectJson.initialView)
         this.initialView.activate(this.renderer.getViewport().getCamera())
+
         this.views = []
-        projectJson.views.forEach((viewJson: ViewJson) => {
-          const view = new View('', this.scene)
-          view.loadJson(viewJson)
-          viewJson.selectionSets?.forEach((selKey) => {
-           const selectionSet = this.selectionSets.find(selSet => selSet.getId() === selKey.id)
-            if (selectionSet) view.attachSelectionSet(selectionSet)
+        if (projectJson.views) {
+          projectJson.views.forEach((viewJson: ViewJson) => {
+            const view = new View('', this.scene)
+            view.loadJson(viewJson)
+            viewJson.selectionSets?.forEach((selKey) => {
+              const selectionSet = this.selectionSets.find(selSet => selSet.getId() === selKey.id)
+              if (selectionSet) view.attachSelectionSet(selectionSet)
+            })
+            this.views.push(view)
           })
-          this.views.push(view)
-        })
-        this.eventEmitter.emit('viewsListChanged')
-
-        projectJson.cuttingPlanes.forEach(
-          (cuttingPlaneJson: CuttingPlaneJson) => {
-            const cuttingPlane = new CuttingPlaneWrapper(this.scene, '', [])
-            cuttingPlane.loadJson(cuttingPlaneJson)
-            this.cuttingPlanes.push(cuttingPlane)
-          }
-        )
-        this.eventEmitter.emit('cuttingPlaneListChanged')
-
-        projectJson.materials.forEach((materialJson: Record<string, any>) => {
-          const material = new StandardSurfaceMaterial()
-          material.fromJSON(materialJson)
-          this.materials.push(material)
-        })
-
-        let index = 0
-        for (let key in projectJson.materialAssignments) {
-          const path = JSON.parse(key)
-          console.log(index, projectJson.materialAssignments[key])
-          const material = this.materials[projectJson.materialAssignments[key]]
-          const item = this.scene.getRoot().resolvePath(path)
-          if (item instanceof GeomItem && material) {
-            item.materialParam.value = material
-          }
-          index++
+          this.eventEmitter.emit('viewsListChanged')
         }
-        this.materialAssignments = projectJson.materialAssignments
 
-        this.eventEmitter.emit('materialsListChanged')
+        this.cuttingPlanes = []
+        if (projectJson.cuttingPlanes) {
+          projectJson.cuttingPlanes.forEach(
+              (cuttingPlaneJson: CuttingPlaneJson) => {
+                const cuttingPlane = new CuttingPlaneWrapper(this.scene, '', [])
+                cuttingPlane.loadJson(cuttingPlaneJson)
+                this.cuttingPlanes.push(cuttingPlane)
+              }
+          )
+          this.eventEmitter.emit('cuttingPlaneListChanged')
+        }
 
+        this.materials = []
+        if (projectJson.materials) {
+          projectJson.materials.forEach((materialJson: Record<string, any>) => {
+            const material = new StandardSurfaceMaterial()
+            material.fromJSON(materialJson)
+            this.materials.push(material)
+          })
+        }
+
+        if (projectJson.materialAssignments) {
+          let index = 0
+          for (let key in projectJson.materialAssignments) {
+            const path = JSON.parse(key)
+            console.log(index, projectJson.materialAssignments[key])
+            const material = this.materials[projectJson.materialAssignments[key]]
+            const item = this.scene.getRoot().resolvePath(path)
+            if (item instanceof GeomItem && material) {
+              item.materialParam.value = material
+            }
+            index++
+          }
+          this.materialAssignments = projectJson.materialAssignments
+
+          this.eventEmitter.emit('materialsListChanged')
+        }
         resolve()
       })
     })
