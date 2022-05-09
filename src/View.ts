@@ -1,6 +1,8 @@
-import {Camera, MathFunctions, Scene, Vec3, Xfo} from '@zeainc/zea-engine'
+import {BooleanParameter, Camera, MathFunctions, Parameter, Scene, TreeItem, Vec3, Xfo} from '@zeainc/zea-engine'
 import {Pose, PoseJson} from './Pose'
 import {UUID} from "./Utils";
+import {SelectionSet} from "./SelectionSet";
+import {filter} from "cypress/types/minimatch";
 
 interface ViewJson {
   id: string
@@ -8,7 +10,12 @@ interface ViewJson {
   cameraXfo: Record<string, any>
   cameraTarget: Record<string, any>
   pose: PoseJson
-  selectionSet?: Record<string, string>
+  selectionSets?: SelectionSetIdent[]
+}
+
+interface SelectionSetIdent {
+  id: string
+  name: string
 }
 
 class View {
@@ -16,19 +23,27 @@ class View {
   name = 'View'
   cameraXfo: Xfo = new Xfo()
   cameraTarget: Vec3 = new Vec3()
-  selectionSet?: Record<string, string>
+  selectionSets?: SelectionSet[] = []
 
   pose: Pose
-  constructor(name: string = '', scene: Scene) {
+  constructor(name: string = '', private scene: Scene) {
     this.id = UUID()
     this.name = name
     this.pose = new Pose(scene)
   }
 
-  setSelectionSet(id: string, name: string) {
-    this.selectionSet = {
-      id,
-      name
+  attachSelectionSet(selectionSet: SelectionSet) {
+    if (!this.selectionSets) this.selectionSets = []
+    this.selectionSets.push(selectionSet)
+  }
+
+  detachSelectionSet(selectionSet: SelectionSet) {
+    if (this.selectionSets) {
+      const selIndex = this.selectionSets.indexOf(selectionSet)
+      this.selectionSets.splice(selIndex, 1)
+
+      if (this.selectionSets.length < 1) this.selectionSets = undefined
+
     }
   }
 
@@ -38,6 +53,13 @@ class View {
   }
 
   activate(camera: Camera, neutralPose?: Pose) {
+    camera.globalXfoParam.value = this.cameraXfo
+    const dist = this.cameraXfo.tr.distanceTo(this.cameraTarget)
+    camera.setFocalDistance(dist)
+    this.pose.activate(neutralPose)
+  }
+
+  lerpPose(camera: Camera, neutralPose?: Pose) {
     // camera.globalXfoParam.value = this.cameraXfo.clone()
 
     const startXfo = camera.globalXfoParam.value.clone()
@@ -78,24 +100,33 @@ class View {
   copyFrom(view: View) {
     this.cameraTarget = view.cameraTarget.clone()
     this.cameraXfo = view.cameraXfo.clone()
-    this.selectionSet = view.selectionSet
+    this.selectionSets = view.selectionSets
     this.pose.copyFrom(view.pose)
+  }
+
+  public getHiddenParts() {
+    return this.pose.getHiddenParts()
   }
 
   // /////////////////////////////////////////
   // Persistence
 
   saveJson(): ViewJson {
-    let json: ViewJson = {
+    const json: ViewJson = {
+
       id: this.id,
       name: this.name,
       cameraXfo: this.cameraXfo.toJSON(),
       cameraTarget: this.cameraTarget.toJSON(),
-      pose: this.pose.saveJson(),
+      pose: this.pose.saveJson()
     }
-    if (this.selectionSet) {
-      json.selectionSet = this.selectionSet
-    }
+
+    if (this.selectionSets && this.selectionSets.length > 0)
+      json.selectionSets = this.selectionSets?.map(
+          (sel) => <SelectionSetIdent>{
+            id: sel.saveJson().id,
+            name: sel.saveJson().name
+          })
     return json
   }
 
@@ -105,9 +136,6 @@ class View {
     this.cameraXfo.fromJSON(viewJson.cameraXfo)
     this.cameraTarget.fromJSON(viewJson.cameraTarget)
     this.pose?.loadJson(viewJson.pose)
-    if (viewJson.selectionSet) {
-      this.selectionSet = viewJson.selectionSet
-    }
   }
 }
 
