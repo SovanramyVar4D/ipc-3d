@@ -38,14 +38,14 @@ import {
 import './ParamEditor'
 
 import { View, ViewJson } from './View'
-import { Pose, PoseJson } from './Pose'
 import { SelectionSet, SelectionSetJson } from './SelectionSet'
 
 import {
   CreateViewChange,
   DeleteViewChange,
   RenameViewChange,
-  UpdateViewCameraChange
+  UpdateViewCameraChange,
+  ViewSelectionVisibilityChange
 } from './Changes/ViewChanges'
 
 import {
@@ -83,7 +83,6 @@ export class Ipd3d extends HTMLElement {
   public cuttingPlanes: CuttingPlaneWrapper[] = []
   public selectionSets: SelectionSet[] = []
 
-  public hiddenParts: TreeItem[] = []
   public currentView?: View
   public currentSelectionSet?: SelectionSet
   public highlightedItem?: TreeItem
@@ -242,6 +241,31 @@ export class Ipd3d extends HTMLElement {
         }
       }
     })
+
+    this.undoRedoManager.on('changeUndone', (event: Object) => {
+      const change = this.undoRedoManager.__redoStack[this.undoRedoManager.__redoStack.length - 1]
+      if (change instanceof ViewSelectionVisibilityChange
+      || change instanceof UpdateViewCameraChange)
+      {
+        const view = change.view
+        if (view === this.initialView)
+          this.activateInitialView(false)
+        else this.activateView(this.views.indexOf(view), false)
+      }
+    })
+
+    this.undoRedoManager.on('changeRedone', (event: Object) => {
+      const change = this.undoRedoManager.__undoStack[this.undoRedoManager.__undoStack.length - 1]
+      if (change instanceof ViewSelectionVisibilityChange
+          || change instanceof UpdateViewCameraChange)
+      {
+        const view = change.view
+        if (view === this.initialView)
+          this.activateInitialView(false)
+        else this.activateView(this.views.indexOf(view), false)
+      }
+    })
+
 
     // Disabling the highlighting as it is distracting.
     this.renderer.getViewport().on('pointerMove', (event: ZeaPointerEvent) => {
@@ -490,7 +514,7 @@ export class Ipd3d extends HTMLElement {
 
 
   // Initial View
-  public activateInitialView() {
+  public activateInitialView(lerpPose: boolean = true) {
     // this.selectionManager.clearSelection(false)
 
     if (this.currentView !== this.initialView) {
@@ -498,7 +522,7 @@ export class Ipd3d extends HTMLElement {
     }
 
     const view = this.initialView
-    view.lerpPose(this.renderer.getViewport().getCamera())
+    if (lerpPose) view.lerpPose(this.renderer.getViewport().getCamera())
 
     this.currentView = view
     this.eventEmitter.emit('initialViewActivated')
@@ -555,7 +579,7 @@ export class Ipd3d extends HTMLElement {
     this.eventEmitter.emit('viewsListChanged')
   }
 
-  public activateView(index: number) {
+  public activateView(index: number, lerpPose: boolean = true) {
     // this.selectionManager.clearSelection(false)
 
     if (this.currentView === this.initialView) {
@@ -565,7 +589,7 @@ export class Ipd3d extends HTMLElement {
     }
 
     const view = this.views[index]
-    view.lerpPose(this.renderer.getViewport().getCamera(), this.initialView.pose)
+    if (lerpPose) view.lerpPose(this.renderer.getViewport().getCamera(), this.initialView.pose)
 
     this.currentView = view
     this.eventEmitter.emit('viewActivated', view.name)
@@ -710,25 +734,33 @@ export class Ipd3d extends HTMLElement {
   // /////////////////////////////////////////
   // Selection Management
   public hideSelection() {
-    if (this.currentView === this.initialView) return
-    const set = this.selectionManager.getSelection()
-    set.forEach((treeItem: TreeItem) => {
-      this.undoRedoManager.addChange(
-          new ParameterValueChange(treeItem.visibleParam,false)
-      )
-      treeItem.setVisible(false)
-      this.hiddenParts.push(treeItem)
-    })
+    const selection = Array.from(this.selectionManager.getSelection())
+
+    this.undoRedoManager.addChange(
+        new ViewSelectionVisibilityChange(
+            this.currentView!,
+            this.initialView,
+            this.views,
+            selection,
+            false
+        )
+    )
+    this.selectionManager.clearSelection(false)
+    this.currentView!.pose.activate()
   }
 
   public unHideAll() {
-    this.hiddenParts.forEach((treeItem: TreeItem) => {
-      this.undoRedoManager.addChange(
-          new ParameterValueChange(treeItem.visibleParam,true)
-      )
-      treeItem.setVisible(true)
-    })
-    this.hiddenParts = []
+    this.undoRedoManager.addChange(
+        new ViewSelectionVisibilityChange(
+            this.currentView!,
+            this.initialView,
+            this.views,
+            this.currentView!.hiddenParts,
+            true
+        )
+    )
+    this.selectionManager.clearSelection(false)
+    this.currentView!.pose.activate()
   }
 
   // /////////////////////////////////////////

@@ -1,7 +1,8 @@
-import {Camera, MathFunctions, Scene, Vec3, Xfo} from '@zeainc/zea-engine'
+import {BooleanParameter, Camera, MathFunctions, Parameter, Scene, TreeItem, Vec3, Xfo} from '@zeainc/zea-engine'
 import {Pose, PoseJson} from './Pose'
 import {UUID} from "./Utils";
 import {SelectionSet} from "./SelectionSet";
+import {filter} from "cypress/types/minimatch";
 
 interface ViewJson {
   id: string
@@ -17,35 +18,40 @@ interface SelectionSetKey {
   name: string
 }
 
-
 class View {
   private id: string
   name = 'View'
   cameraXfo: Xfo = new Xfo()
   cameraTarget: Vec3 = new Vec3()
-  selectionSets: SelectionSet[] = []
+  selectionSets?: SelectionSet[] = []
+  hiddenParts: TreeItem[] = []
 
   pose: Pose
-  constructor(name: string = '', scene: Scene) {
+  constructor(name: string = '', private scene: Scene) {
     this.id = UUID()
     this.name = name
     this.pose = new Pose(scene)
   }
 
   attachSelectionSet(selectionSet: SelectionSet) {
+    if (!this.selectionSets) this.selectionSets = []
     this.selectionSets.push(selectionSet)
   }
 
   detachSelectionSet(selectionSet: SelectionSet) {
-    const selIndex = this.selectionSets.indexOf(selectionSet)
-    this.selectionSets.splice(selIndex, 1)
+    if (this.selectionSets) {
+      const selIndex = this.selectionSets.indexOf(selectionSet)
+      this.selectionSets.splice(selIndex, 1)
+
+      if (this.selectionSets.length < 1) this.selectionSets = undefined
+    }
   }
 
   setCameraParams(camera: Camera) {
     this.cameraXfo = camera.globalXfoParam.value.clone()
     this.cameraTarget = camera.getTargetPosition()
   }
-  
+
   activate(camera: Camera, neutralPose?: Pose) {
     camera.globalXfoParam.value = this.cameraXfo
     const dist = this.cameraXfo.tr.distanceTo(this.cameraTarget)
@@ -98,21 +104,46 @@ class View {
     this.pose.copyFrom(view.pose)
   }
 
+  public updateHiddenPartsList() {
+    this.hiddenParts = this.getHiddenPartsFromPose()
+  }
+
+  private getHiddenPartsFromPose(): TreeItem[] {
+    const hiddenPartsList = []
+    for (let key in this.pose.values) {
+      const visibleParam = this.pose.params[key]
+      const isVisible = this.pose.values[key]
+
+      const partPath = (<TreeItem>visibleParam.getOwner()).getPath()
+
+      if (visibleParam instanceof BooleanParameter
+          && visibleParam.getName() === 'Visible'
+          && !isVisible) {
+        const part: TreeItem = <TreeItem>this.scene.getRoot().resolvePath(partPath)
+        hiddenPartsList.push(part)
+      }
+    }
+    return hiddenPartsList
+  }
+
   // /////////////////////////////////////////
   // Persistence
 
   saveJson(): ViewJson {
-    return {
+    const json: ViewJson = {
       id: this.id,
       name: this.name,
       cameraXfo: this.cameraXfo.toJSON(),
       cameraTarget: this.cameraTarget.toJSON(),
-      pose: this.pose.saveJson(),
-      selectionSets: this.selectionSets?.map((sel) => <SelectionSetKey>{
+      pose: this.pose.saveJson()
+    }
+
+    if (this.selectionSets && this.selectionSets.length > 0)
+      json.selectionSets = this.selectionSets?.map((sel) => <SelectionSetKey>{
         id: sel.saveJson().id,
         name: sel.saveJson().name
       })
-    }
+    return json
   }
 
   loadJson(viewJson: ViewJson) {
@@ -121,6 +152,7 @@ class View {
     this.cameraXfo.fromJSON(viewJson.cameraXfo)
     this.cameraTarget.fromJSON(viewJson.cameraTarget)
     this.pose?.loadJson(viewJson.pose)
+    this.hiddenParts = this.getHiddenPartsFromPose()
   }
 }
 
