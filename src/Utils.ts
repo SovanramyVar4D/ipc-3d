@@ -1,6 +1,8 @@
 /*
 * Generates an unique ID
 */
+import {CADAssembly, CADPart, GeomItem, TreeItem} from "@zeainc/zea-engine";
+
 export const UUID = () => {
     function s(n: number) {
         return h((Math.random() * (1 << (n << 2))) ^ Date.now()).slice(-n)
@@ -18,5 +20,21 @@ export const UUID = () => {
         Date.now().toString(16).slice(-10) + s(2) // Use timestamp to avoid collisions
     ].join('-')
 }
+
+/*
+* Gets CADPart or CADAssembly from TreeItem
+*/
+export const filterItem = ((geomItem: TreeItem) => {
+    let item = geomItem
+    while (
+        item &&
+        !(item instanceof CADPart) &&
+        !(item instanceof CADAssembly)
+        ) {
+        item = <TreeItem>item.getOwner()
+    }
+    return item
+})
+
 
 

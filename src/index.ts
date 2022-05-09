@@ -57,6 +57,7 @@ import {
 
 import CuttingPlaneWrapper, { CuttingPlaneJson } from './CuttingPlane'
 import {AttachSelectionSetChange} from "./Changes/View/AttachSelectionSetChange";
+import {filterItem} from "./Utils";
 
 interface AssetJson {
   url: string
@@ -272,7 +273,7 @@ export class Ipd3d extends HTMLElement {
       // If the SelectionTool is on, it will draw a selection rect during pointerMove events.
       if (this.rectangleSelectionOn) return
       if (event.intersectionData) {
-        const item = this.filterItem(event.intersectionData.geomItem)
+        const item = filterItem(event.intersectionData.geomItem)
         if (item) {
           if (this.highlightedItem) {
             this.highlightedItem.removeHighlight('highlight', true)
@@ -320,8 +321,8 @@ export class Ipd3d extends HTMLElement {
           }
         }
       } else {
-        const item = this.filterItem(event.intersectionData.geomItem)
-        this.toggleSelection(item, !(<ZeaMouseEvent>event).ctrlKey)
+        const item = filterItem(event.intersectionData.geomItem)
+        this._toggleSelection(item, !(<ZeaMouseEvent>event).ctrlKey)
       }
     })
 
@@ -354,7 +355,8 @@ export class Ipd3d extends HTMLElement {
 // //////////////////////////////
 // Private functions
 
-  private createInitialView() {
+  // Initial View
+  private _createInitialView() {
     const initialView = new View('Initial View', this.scene)
     initialView.setCameraParams(this.renderer.getViewport().getCamera())
     this.initialView = initialView
@@ -362,12 +364,36 @@ export class Ipd3d extends HTMLElement {
     this.activateInitialView()
   }
 
+  // Modifiable Views
+  private _duplicateView(name: string, view: View) {
+    const defaultName = 'View' + this.views.length + 1
+
+    const viewName = name.match(/^\s*$/) === null
+        ? defaultName
+        : name
+
+    const newView = new View(viewName, this.scene)
+    newView.copyFrom(view)
+    newView.setCameraParams(this.renderer.getViewport().getCamera())
+
+    this._addView(newView)
+    this.activateView(this.views.indexOf(newView))
+  }
+
+  private _addView(newView: View) {
+    const change = new CreateViewChange(newView, this.views, this.eventEmitter)
+    this.undoRedoManager.addChange(change)
+
+    this.views.push(newView)
+    this.eventEmitter.emit('viewsListChanged')
+  }
+
   // Undo Limit
-  private increaseUndoCounter() {
+  private _increaseUndoCounter() {
     this.undoCounter += 1
   }
 
-  private decreaseUndoCounter() {
+  private _decreaseUndoCounter() {
     if (this.undoCounter > 0)
     {
       this.undoCounter -= 1
@@ -380,7 +406,7 @@ export class Ipd3d extends HTMLElement {
   * Same as SelectionManager.toggleItemSelection without undo/redo (only possible in SelectionManager.setSelection function)
   * Remark: rectangle selection emit selectionChange, is not possible to disable undo / redo with it (SelectionManager.toggleItemSelection function called).
   */
-  private toggleSelection(item: CADPart | CADAssembly, replaceSelection?: boolean | undefined) {
+  private _toggleSelection(item: CADPart | CADAssembly, replaceSelection?: boolean | undefined) {
     const selection = Array.from(this.selectionManager.getSelection())
 
     if (selection.length == 1 && selection.includes(item)) {
@@ -399,19 +425,6 @@ export class Ipd3d extends HTMLElement {
         }
       }
     }
-  }
-
-  private filterItem(geomItem: TreeItem) {
-    let item = geomItem
-    while (
-        item &&
-        !(item instanceof CADPart) &&
-        !(item instanceof CADAssembly)
-        ) {
-      // console.log(item.getName(), item.getClassName())
-      item = <TreeItem>item.getOwner()
-    }
-    return item
   }
 
 // //////////////////////////////
@@ -489,7 +502,7 @@ export class Ipd3d extends HTMLElement {
 
       cadAsset.load(url, context).then(() => {
         this.renderer.frameAll()
-        this.createInitialView()
+        this._createInitialView()
       })
 
       cadAsset.geomLibrary.once('loaded', () => {
@@ -515,8 +528,6 @@ export class Ipd3d extends HTMLElement {
 
   // Initial View
   public activateInitialView(lerpPose: boolean = true) {
-    // this.selectionManager.clearSelection(false)
-
     if (this.currentView !== this.initialView) {
       this.eventEmitter.emit('viewDeactivated')
     }
@@ -533,22 +544,15 @@ export class Ipd3d extends HTMLElement {
   }
 
   // Views
-  public createView(name?: string, view?: View) {
-    const viewName = name && name.match(/^\s*$/) === null
-        ? 'View' + (view ? this.views.length + 1 : this.views.length)
+  public createView(name: string) {
+    const defaultName = 'View' + this.views.length + 1
+    const viewName = name.match(/^\s*$/) === null
+        ? defaultName
         : name
 
     const newView = new View(viewName, this.scene)
-
-    if (view) newView.copyFrom(view)
-
-    const change = new CreateViewChange(newView, this.views, this.eventEmitter)
     newView.setCameraParams(this.renderer.getViewport().getCamera())
-    this.views.push(newView)
-
-    this.undoRedoManager.addChange(change)
-
-    this.eventEmitter.emit('viewsListChanged')
+    this._addView(newView)
 
     this.activateView(this.views.indexOf(newView))
   }
@@ -564,9 +568,9 @@ export class Ipd3d extends HTMLElement {
     this.eventEmitter.emit('viewsListChanged')
   }
 
-  public duplicateView(fromViewIndex: number, name: string = '') {
-    const view = this.views[fromViewIndex]
-    this.createView(name, view)
+  public duplicateView(baseViewIndex: number, name: string = '') {
+    const baseView = this.views[baseViewIndex]
+    this._duplicateView(name, baseView)
   }
 
   public renameView(index: number, newName: string) {
@@ -580,8 +584,6 @@ export class Ipd3d extends HTMLElement {
   }
 
   public activateView(index: number, lerpPose: boolean = true) {
-    // this.selectionManager.clearSelection(false)
-
     if (this.currentView === this.initialView) {
       this.eventEmitter.emit('initialViewDeactivated')
     } else {
@@ -612,16 +614,6 @@ export class Ipd3d extends HTMLElement {
     }
   }
 
-  public deactivateView() {
-    this.selectionManager.clearSelection(false)
-    if (this.currentView === this.initialView) {
-      this.eventEmitter.emit('initialViewDeactivated')
-    } else {
-      this.eventEmitter.emit('viewDeactivated')
-    }
-    this.currentView = undefined
-  }
-
   public frameView() {
     const selection = this.selectionManager.getSelection()
     if (selection.size == 0) this.renderer.frameAll()
@@ -634,9 +626,10 @@ export class Ipd3d extends HTMLElement {
   // Selection Sets
 
   public createSelectionSet(name?: string) {
+    const defaultName = 'SelectionSet-' + this.selectionSets.length
     const selectionSetName = name
       ? name
-      : 'SelectionSet-' + this.selectionSets.length
+      : defaultName
 
     let newSelectionSet
     const set = Array.from(this.selectionManager.getSelection())
@@ -651,8 +644,8 @@ export class Ipd3d extends HTMLElement {
       )
       this.selectionSets.push(newSelectionSet)
       this.undoRedoManager.addChange(change)
-
       this.eventEmitter.emit('selectionSetsListChanged')
+
       this.activateSelectionSet(this.selectionSets.indexOf(newSelectionSet))
     }
   }
@@ -731,6 +724,7 @@ export class Ipd3d extends HTMLElement {
       this.eventEmitter.emit('selectionSetDeactivatedInView', this.currentView)
     }
   }
+
   // /////////////////////////////////////////
   // Selection Management
   public hideSelection() {
@@ -750,15 +744,21 @@ export class Ipd3d extends HTMLElement {
   }
 
   public unHideAll() {
+    const lockedHiddenParts = this.initialView.getHiddenParts()
+
+    let partsToUnHide
+    if (this.currentView! === this.initialView)
+      partsToUnHide = lockedHiddenParts
+    else
+      partsToUnHide = this.currentView!.getHiddenParts().filter(
+        (part) => !lockedHiddenParts.includes(part))
+
     this.undoRedoManager.addChange(
         new ViewSelectionVisibilityChange(
             this.currentView!,
             this.initialView,
             this.views,
-            this.currentView! === this.initialView
-                ? this.initialView.getHiddenParts()
-                : this.currentView!.getHiddenParts().filter(
-                    (part) => !this.initialView.getHiddenParts().includes(part)),
+            partsToUnHide,
             true
         )
     )
@@ -1049,7 +1049,7 @@ export class Ipd3d extends HTMLElement {
   public undo() {
     if (this.undoLimit) {
       if (this.undoCounter < this.undoLimit) {
-        this.increaseUndoCounter()
+        this._increaseUndoCounter()
         this.undoRedoManager.undo()
       } else {
         console.log('Undo limit reached')
@@ -1062,7 +1062,7 @@ export class Ipd3d extends HTMLElement {
   public redo() {
     if (this.undoLimit) {
       if (this.undoCounter > 0) {
-        this.decreaseUndoCounter()
+        this._decreaseUndoCounter()
         this.undoRedoManager.redo()
       }
     } else {
