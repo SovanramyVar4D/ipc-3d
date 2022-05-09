@@ -74,7 +74,7 @@ interface ProjectJson {
 
 export class Ipd3d extends HTMLElement {
   public scene: Scene
-  private renderer: GLRenderer
+  private readonly renderer: GLRenderer
 
   public selectionManager: SelectionManager
   public undoRedoManager: UndoRedoManager
@@ -534,9 +534,9 @@ export class Ipd3d extends HTMLElement {
 
   // Views
   public createView(name?: string, view?: View) {
-    const viewName = name || (name && name.match(/^\s*$/) === null)
-        ? name
-        : 'View' + (view ? this.views.length + 1 : this.views.length)
+    const viewName = name && name.match(/^\s*$/) === null
+        ? 'View' + (view ? this.views.length + 1 : this.views.length)
+        : name
 
     const newView = new View(viewName, this.scene)
 
@@ -564,9 +564,9 @@ export class Ipd3d extends HTMLElement {
     this.eventEmitter.emit('viewsListChanged')
   }
 
-  public duplicateView(fromViewIndex: number) {
+  public duplicateView(fromViewIndex: number, name: string = '') {
     const view = this.views[fromViewIndex]
-    this.createView('',view)
+    this.createView(name, view)
   }
 
   public renameView(index: number, newName: string) {
