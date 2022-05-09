@@ -366,13 +366,9 @@ export class Ipd3d extends HTMLElement {
 
   // Modifiable Views
   private _duplicateView(name: string, view: View) {
-    const defaultName = 'View' + this.views.length + 1
+    if (name.trim() === '') return
 
-    const viewName = name.match(/^\s*$/) === null
-        ? defaultName
-        : name
-
-    const newView = new View(viewName, this.scene)
+    const newView = new View(name, this.scene)
     newView.copyFrom(view)
     newView.setCameraParams(this.renderer.getViewport().getCamera())
 
@@ -386,6 +382,18 @@ export class Ipd3d extends HTMLElement {
 
     this.views.push(newView)
     this.eventEmitter.emit('viewsListChanged')
+  }
+
+  // SelectionSets
+  private _addSelectionSet(selectionSet: SelectionSet) {
+    const change = new CreateSelectionSetChange(
+        selectionSet,
+        this.selectionSets,
+        this.eventEmitter
+    )
+    this.selectionSets.push(selectionSet)
+    this.undoRedoManager.addChange(change)
+    this.eventEmitter.emit('selectionSetsListChanged')
   }
 
   // Undo Limit
@@ -545,12 +553,9 @@ export class Ipd3d extends HTMLElement {
 
   // Views
   public createView(name: string) {
-    const defaultName = 'View' + this.views.length + 1
-    const viewName = name.match(/^\s*$/) === null
-        ? defaultName
-        : name
+    if (name.trim() === '') return
 
-    const newView = new View(viewName, this.scene)
+    const newView = new View(name, this.scene)
     newView.setCameraParams(this.renderer.getViewport().getCamera())
     this._addView(newView)
 
@@ -625,28 +630,17 @@ export class Ipd3d extends HTMLElement {
   // /////////////////////////////////////////
   // Selection Sets
 
-  public createSelectionSet(name?: string) {
-    const defaultName = 'SelectionSet-' + this.selectionSets.length
-    const selectionSetName = name
-      ? name
-      : defaultName
+  public createSelectionSet(name: string) {
+    if (name.trim() === '') return
 
     let newSelectionSet
     const set = Array.from(this.selectionManager.getSelection())
     if (set.length > 0) {
-      newSelectionSet = new SelectionSet(selectionSetName, set, this.scene)
+      newSelectionSet = new SelectionSet(name, set, this.scene)
     }
       if (newSelectionSet) {
-        const change = new CreateSelectionSetChange(
-        newSelectionSet,
-        this.selectionSets,
-        this.eventEmitter
-      )
-      this.selectionSets.push(newSelectionSet)
-      this.undoRedoManager.addChange(change)
-      this.eventEmitter.emit('selectionSetsListChanged')
-
-      this.activateSelectionSet(this.selectionSets.indexOf(newSelectionSet))
+        this._addSelectionSet(newSelectionSet)
+        this.activateSelectionSet(this.selectionSets.indexOf(newSelectionSet))
     }
   }
 
