@@ -79,7 +79,7 @@ class ParamEditor extends HTMLElement {
     this.shadowRoot?.appendChild($params)
 
     parameterOwner.getParameters().forEach(parameter => {
-      console.log(parameter.getName())
+      // console.log(parameter.getName())
       if (this.skipList.includes(parameter.getName())) return
 
       let found = false

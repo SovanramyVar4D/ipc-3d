@@ -3,5 +3,5 @@
 node_modules
 dist
 .idea
-/cypress/videos/
-/cypress/screenshots/
+/cypress/videos
+/cypress/screenshots

@@ -13,7 +13,7 @@
   "scripts": {
     "build": "tsdx build --format umd --name ipc3D --target node",
     "build:watch": "tsdx watch --format umd --name ipc3D --target node",
-    "test": "npm run test:unit | npm run test:int",
+    "test": "npm run test:unit",
     "_test": "tsdx test",
     "test:unit": "tsdx test /test",
     "test:int": "npm run build | npm run serve:ci | cypress run",
