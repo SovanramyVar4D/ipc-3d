@@ -1,0 +1,55 @@
+/* Tabs */
+.tab-button.active {
+    background: rgb(59 130 246 / 50%);
+}
+
+/* List buttons */
+.view-button,
+.selection-set-button {
+    display: flex;
+    width: 100%;
+    background: rgb(209 213 219);
+    padding: .5rem;
+    color: #000;
+
+    cursor: pointer;
+}
+.view-button:hover,
+.selection-set-button:hover {
+    background: rgb(243 244 246);
+    color: #000;
+}
+.view-button:hover span,
+.selection-set-button:hover span {
+}
+
+div.view-button.current,
+div.selection-set-button.current {
+    background: rgb(59 130 246 / 50%);
+    color: #fff;
+}
+
+.view-button button,
+.selection-set-button button {
+    display: none;
+}
+
+.current button {
+    display: initial;
+}
+
+
+.view-button button,
+.selection-set-button button {
+    flex: 1 0 auto;
+}
+.view-button :first-child,
+.selection-set-button :first-child {
+    width: 100%;
+    flex: 1 1 auto !important;
+}
+
+.initial-view-button {
+    border: 2px dashed #000;
+    font-weight: bold;
+}

@@ -1,7 +1,5 @@
-const DEFAULT_INACTIVE_ITEM_BUTTON_CLASSNAME = 'border rounded bg-gray-300 px-2 hover:bg-gray-100'
-const DEFAULT_ACTIVE_ITEM_BUTTON_CLASSNAME = 'border rounded text-white bg-blue-300 px-2 border-blue-500 active'
-const INITIAL_VIEW_INACTIVE_BUTTON_CLASSNAME = 'initial-view-button border rounded bg-gray-600 px-2 text-white'
-const INITIAL_VIEW_ACTIVE_BUTTON_CLASSNAME = 'initial-view-button border rounded bg-red-300 px-2 border-black-500 active'
+const CURRENT_CLASS = 'current'
+const INITIAL_VIEW_INACTIVE_BUTTON_CLASSNAME = 'view-button initial-view-button border rounded p-2'
 
 const $ipc3d = document.getElementById('ipc-3d')
 
@@ -22,10 +20,6 @@ $ipc3d.on('assetLoaded', (assetName) => {
 })
 
 $ipc3d.on('selectionSetAttachedToCurrentView', (view) => {
-  document.querySelectorAll('.selection-set-button .link-view-button').forEach((linkBtn) => {
-    linkBtn.remove()
-  })
-  displayPanel('Views')
   console.log(`SelectionSet activated in View ${view.name}`)
 })
 
@@ -38,63 +32,39 @@ $ipc3d.on('viewCameraChanged', (viewName) => {
 })
 
 $ipc3d.on('viewsListChanged', () => {
-  generateViewButtons()
+  console.log('viewsListChanged')
+  generateViewList()
 })
 
 $ipc3d.on('initialViewActivated', () => {
-  const $button = document.querySelector('div.initial-view-button')
+  console.log('initialViewActivated')
+  deactivateAll('.view-button')
+  const $button = document.querySelector('.initial-view-button')
   if ($button) {
-    $button.className = INITIAL_VIEW_ACTIVE_BUTTON_CLASSNAME
-    $button.querySelector('button').classList.remove('hidden')
+    $button.classList.add(CURRENT_CLASS)
   }
-})
-
-$ipc3d.on('initialViewDeactivated', () => {
-  const $button = document.querySelector('div.initial-view-button.active')
-  if ($button) {
-    $button.className = INITIAL_VIEW_INACTIVE_BUTTON_CLASSNAME
-    $button.querySelector('button').classList.add('hidden')
-  }
+  updateSelectionSetList()
 })
 
 $ipc3d.on('viewActivated', (data) => {
-  const $button = activateButton(data, 'div.view-button')
-  if ($button) {
-    $button.classList.add('view-button')
-    $button.querySelectorAll('button')
-      .forEach((btn) => btn.classList.remove('hidden'))
-  }
-})
-
-$ipc3d.on('viewDeactivated', () => {
-  const $button = deactivateButton('div.view-button.active')
-  if ($button) {
-    $button.classList.add('view-button')
-    $button.querySelectorAll('button')
-      .forEach((btn) => btn.classList.add('hidden'))
-  }
+  console.log('viewActivated', data)
+  deactivateAll('.view-button')
+  activateButton(data, '.view-button')
+  updateSelectionSetList()
 })
 
 $ipc3d.on('selectionSetsListChanged', () => {
-  generateSelSetButtons()
+  console.log('selectionSetsListChanged')
+  generateSelectionSetList()
+  updateSelectionSetList()
 })
 
 $ipc3d.on('selectionSetActivated', (data) => {
-  const $button = activateButton(data, 'div.selection-set-button')
-  if ($button) {
-    $button.classList.add('selection-set-button')
-    $button.querySelectorAll('button')
-      .forEach((btn) => btn.classList.remove('hidden'))
-  }
+  activateButton(data, '.selection-set-button')
 })
 
 $ipc3d.on('selectionSetDeactivated', () => {
-  const $button = deactivateButton('div.selection-set-button.active')
-  if ($button) {
-    $button.classList.add('selection-set-button')
-    $button.querySelectorAll('button')
-      .forEach((btn) => btn.classList.add('hidden'))
-  }
+  deactivateButton(`div.selection-set-button.${CURRENT_CLASS}`)
 })
 
 // ///////////////////////////////////////////////
@@ -111,7 +81,6 @@ document.getElementById('save-as').addEventListener('click', () => {
   downloadProjectFile()
 })
 
-
 document.getElementById('loadProjectFile').addEventListener('click', () => {
   // File picker
   const input = document.createElement('input')
@@ -121,18 +90,18 @@ document.getElementById('loadProjectFile').addEventListener('click', () => {
   input.onchange = (event) => {
     const projFile = event.target.files[0]
 
-    const fr = new FileReader()
+    const fileReader = new FileReader()
 
-    fr.onload = function () {
-      $ipc3d.loadJson(JSON.parse(fr.result))
+    fileReader.onload = () => {
+      $ipc3d.loadJson(JSON.parse(fileReader.result))
         .then(() => console.log('Project file loaded'))
     }
-    fr.readAsText(projFile)
+    fileReader.readAsText(projFile)
   }
   input.click()
 })
 
-document.getElementById('load').addEventListener('click', () => {
+function loadProjectFromLocalStorage () {
   // Local Storage
   const jsonStr = localStorage.getItem('ipc-project')
 
@@ -140,7 +109,12 @@ document.getElementById('load').addEventListener('click', () => {
     console.warn('No project data available')
     return
   }
-  $ipc3d.loadJson(JSON.parse(jsonStr)).then(() => {})
+  $ipc3d.loadJson(JSON.parse(jsonStr))
+    .then(() => console.log('Last project reloaded.'))
+}
+
+document.getElementById('load').addEventListener('click', () => {
+  loadProjectFromLocalStorage()
 })
 
 const urlParams = new URLSearchParams(window.location.search)
@@ -149,19 +123,22 @@ if (urlParams.has('proj')) {
   fetch(projUrl)
     .then(response => response.text())
     .then(txt => {
-      $ipc3d.loadJson(JSON.parse(txt)).then(() => {})
+      $ipc3d.loadJson(JSON.parse(txt))
+        .then(() => console.log(`Project '${projUrl}' loaded from URL`))
     })
+} else {
+  loadProjectFromLocalStorage()
 }
 
 function downloadProjectFile() {
-  const json = $ipc3d.saveJson()
-  download('ipc.proj', JSON.stringify(json))
+  const projectJson = $ipc3d.saveJson()
+  download('ipc.proj', JSON.stringify(projectJson))
 }
 
 function saveProjectOnLocalStorage() {
-  const json = $ipc3d.saveJson()
-  console.log(json)
-  localStorage.setItem('ipc-project', JSON.stringify(json))
+  const projectJson = $ipc3d.saveJson()
+  console.log('saveProjectOnLocalStorage', projectJson)
+  localStorage.setItem('ipc-project', JSON.stringify(projectJson))
 }
 
 function download(file, text) {
@@ -222,12 +199,10 @@ document.getElementById('loadAsset').addEventListener('click',  event => {
 const $assetIndicator = document.querySelector('#assetIndicator')
 
 document.getElementById('loadBike').addEventListener('click', async () => {
-  const assetName = await $ipc3d.loadAsset('data/Mountain Bike.zcad')
-  $assetIndicator.textContent = assetName
+  $assetIndicator.textContent = await $ipc3d.loadAsset('data/Mountain Bike.zcad')
 })
 document.getElementById('loadGearbox').addEventListener('click', async () => {
-  const assetName = await $ipc3d.loadAsset('data/gear_box_final_asm.stp.zcad')
-  $assetIndicator.textContent = assetName
+  $assetIndicator.textContent = await $ipc3d.loadAsset('data/gear_box_final_asm.stp.zcad')
 })
 
 /* Fit scene/parts */
@@ -255,18 +230,15 @@ document.getElementById('addCallout').addEventListener('click', () => {
   }
 })
 /* Misc */
-document
-  .getElementById('enable-handle')
-  .addEventListener('change', changeEvent => {
-    const checked = changeEvent.currentTarget.checked
-    $ipc3d.selectionManager.showHandles(checked)
-    $ipc3d.selectionManager.updateHandleVisibility()
-  })
+document.getElementById('enable-handle').addEventListener('change', changeEvent => {
+  const checked = changeEvent.currentTarget.checked
+  $ipc3d.selectionManager.showHandles(checked)
+  $ipc3d.selectionManager.updateHandleVisibility()
+})
 
 // Auto save
 let autoSaveIntervalId
-document
-  .getElementById('activate-auto-save')
+document.getElementById('activate-auto-save')
   .addEventListener('change', changeEvent => {
     const delayTextField = document.getElementById('auto-save-delay')
     delayTextField.setAttribute('disabled', 'disabled')
@@ -286,41 +258,31 @@ document
 
 // ////////////////////////////////////////////////
 //  Tabs
-function displayPanel(panel) {
-  const panels = document.querySelectorAll('.tab-panel')
-  panels.forEach((tab) => {
-    switch (panel) {
-      case 'Views':
-        if (tab.id === 'tab1') tab.style.display = ''
-        else tab.style.display = 'none'
-        break
-      case 'Tree':
-        if (tab.id === 'tab2') tab.style.display = ''
-        else tab.style.display = 'none'
-        break
-      case 'SelectionSets':
-        if (tab.id === 'tab3') tab.style.display = ''
-        else tab.style.display = 'none'
-        break
-      case 'CuttingPlanes':
-        if (tab.id === 'tab4') tab.style.display = ''
-        else tab.style.display = 'none'
-        break
+function displayPanel(tabId) {
+  document.querySelectorAll('[data-tab-id]').forEach(($button) => {
+    if ($button.getAttribute('data-tab-id') === tabId) {
+      $button.classList.add('active')
+    } else {
+      $button.classList.remove('active')
+    }
+  })
+
+  document.querySelectorAll('.tab-panel').forEach(($tab) => {
+    if ($tab.id === tabId) {
+      $tab.style.display = ''
+    } else {
+      $tab.style.display = 'none'
     }
   })
 }
-document.querySelector('#showTab1')
-  .addEventListener('click', () => displayPanel('Views'))
-
-document.querySelector('#showTab2')
-  .addEventListener('click', () => displayPanel('Tree'))
-
-document.querySelector('#showTab3')
-  .addEventListener('click', () => displayPanel('SelectionSets'))
-
-document.querySelector('#showTab4')
-  .addEventListener('click', () => displayPanel('CuttingPlanes'))
-
+document.querySelectorAll('[data-tab-id]')
+  .forEach((elem) => {
+    elem.addEventListener('click', (event) => {
+        let $tabButton = event.currentTarget
+        let tabId = $tabButton.getAttribute('data-tab-id')
+        displayPanel(tabId)
+      })
+    })
 
 // ////////////////////////////////////////////////
 //  Tree view
@@ -332,318 +294,310 @@ $treeView.setSelectionManager($ipc3d.selectionManager)
 //  Views
 
 document.getElementById('createView').addEventListener('click', () => {
-  let viewName = prompt('View Name')
-  while ($ipc3d.views.map(view => view.name).includes(viewName)) {
-    viewName = prompt(
-      'This view name already exists ! \n Please enter a new name for the View'
-    )
-  }
-  if (viewName) {
-    viewName !== '' || ' '
-      ? $ipc3d.createView(viewName)
-      : $ipc3d.createView()
+  const viewName = prompt('View Name').trim()
+  if ($ipc3d.hasViewWithName(viewName)) {
+    alert(`This view '${viewName}' already exists !`)
+  } else if (viewName === '') {
+    alert(`Invalid view name`)
+  } else {
+    $ipc3d.createView(viewName)
   }
 })
 
-function generateViewButtons() {
-  const $viewButtons = document.getElementById('viewButtons')
-  $viewButtons.replaceChildren()
-
-  // //////////////////////////////////////////
-  // Initial View (no editable/exportable view)
+function generateInitialViewButton($viewButtons) {
   const $initialViewButton = document.createElement('div')
-
   $initialViewButton.className = INITIAL_VIEW_INACTIVE_BUTTON_CLASSNAME
-  $initialViewButton.style.textAlign = 'center'
-  $initialViewButton.textContent = 'Initial View'
 
+  const $initialViewText = document.createElement('span')
+  $initialViewText.textContent = 'Initial View'
+  $initialViewButton.appendChild($initialViewText)
 
   $initialViewButton.addEventListener('click', () => {
-    const isInitialViewButtonActive = $initialViewButton.classList.contains('active')
+    const isInitialViewButtonActive = $initialViewButton.classList.contains(CURRENT_CLASS)
     if (!isInitialViewButtonActive) {
       $ipc3d.activateInitialView()
     }
   })
-  /// Options Buttons ///
-  const $optionsWrapper = document.createElement('div')
-  $optionsWrapper.style.display = 'block'
 
   // Save View Camera
   const $saveViewCameraButton = document.createElement('button')
-  $saveViewCameraButton.className = 'hidden border rounded text-black bg-yellow-200 px-5 mx-0.5 hover:bg-yellow-150'
+  $saveViewCameraButton.className = 'border rounded text-black bg-green-200 px-2'
 
   const $saveViewCameraIcon = document.createElement('i')
   $saveViewCameraIcon.className = 'fa-solid fa-video'
   $saveViewCameraButton.appendChild($saveViewCameraIcon)
 
   $saveViewCameraButton.addEventListener('click', (event) => {
+    event.stopPropagation()
     const changeCameraViewPoint = confirm("Are you sure to change the initial view camera viewpoint ?")
-    if (changeCameraViewPoint) $ipc3d.saveViewCamera()
+    if (changeCameraViewPoint) {
+      $ipc3d.saveViewCamera()
+    }
   })
-  $optionsWrapper.appendChild($saveViewCameraButton)
-  $initialViewButton.appendChild($optionsWrapper)
+  $initialViewButton.appendChild($saveViewCameraButton)
+
 
   $viewButtons.appendChild($initialViewButton)
 
-  if ($ipc3d.currentView == $ipc3d.initialView) {
-    $initialViewButton.className = INITIAL_VIEW_ACTIVE_BUTTON_CLASSNAME
-    $initialViewButton.querySelector('button').classList.remove('hidden')
-  }
+  return $initialViewButton
+}
 
-  // //////////////////////////////////////////
-  // Editable Views
-  $ipc3d.views.forEach((view, index) => {
-    const $viewButton = document.createElement('div')
-    $viewButton.className = 'view-button border rounded bg-gray-300 px-2  hover:bg-gray-100'
-    $viewButton.style.textAlign = 'center'
-    $viewButton.textContent = view.name
+function generateOneEditableViewButton (view, index) {
+  const $viewButton = document.createElement('div')
+  $viewButton.className = 'view-button border rounded bg-gray-300 px-2 hover:bg-gray-100'
 
-    $viewButton.addEventListener('click', (event) => {
-      const $activeViewButton = document.querySelector('div.view-button.active')
-       if ($activeViewButton === $viewButton) {
-         $ipc3d.activateInitialView()
-       } else {
-         $ipc3d.activateView(index)
-       }
-      event.stopPropagation()
-    })
+  const $viewButtonText = document.createElement('span')
+  $viewButtonText.textContent = view.name
+  $viewButton.appendChild($viewButtonText)
 
-    /// Options Buttons ///
-    const $optionsWrapper = document.createElement('div')
-    $optionsWrapper.style.display = 'block'
+  $viewButton.addEventListener('click', (event) => {
+    $ipc3d.activateView(index)
+    event.stopPropagation()
+  })
 
-    // Rename
-    const $RenameViewButton = document.createElement('button')
-    $RenameViewButton.className =
-      'hidden border rounded text-black bg-yellow-200 px-2 mx-0.5 hover:bg-yellow-150'
-    setTooltip($RenameViewButton, 'Rename')
+  generateEditableViewActions(view, index, $viewButton)
+  return $viewButton
+}
 
-    const renameViewIcon = document.createElement('i')
-    renameViewIcon.className = 'fa-solid fa-pen-to-square'
-    $RenameViewButton.appendChild(renameViewIcon)
+function generateEditableViewActions (view, index, $viewButton) {
+  // Rename
+  const $renameViewButton = document.createElement('button')
+  $renameViewButton.className = 'border rounded text-black bg-yellow-200 px-2 mx-0.5 hover:bg-yellow-150'
+  setTooltip($renameViewButton, 'Rename')
 
-    $RenameViewButton.addEventListener('click', event => {
-      event.stopPropagation()
-      let newName = prompt('Rename View', view.name + '-renamed')
-      while ($ipc3d.views.map(view => view.name).includes(newName)) {
-        newName = prompt(
-          `This name already exists ! \n Please enter a new name for the View \'${view.name}\'`,
-          view.name + '-renamed'
-        )
-      }
-      if (newName) $ipc3d.renameView(index, newName)
-      event.stopPropagation()
-    })
-    $optionsWrapper.appendChild($RenameViewButton)
+  const renameViewIcon = document.createElement('i')
+  renameViewIcon.className = 'fa-solid fa-pen-to-square'
+  $renameViewButton.appendChild(renameViewIcon)
 
-    // Duplicate
-    const $duplicateViewButton = document.createElement('button')
-    $duplicateViewButton.className =
-      'hidden border rounded text-black bg-yellow-200 px-2 mx-0.5 hover:bg-yellow-150'
-    setTooltip($duplicateViewButton, 'Duplicate')
-
-    const duplicateViewIcon = document.createElement('i')
-    duplicateViewIcon.className = 'fa-solid fa-clone'
-    $duplicateViewButton.appendChild(duplicateViewIcon)
-
-    $duplicateViewButton.addEventListener('click', event => {
-      event.stopPropagation()
-      $ipc3d.duplicateView(index)
-      event.stopPropagation()
-    })
-    $optionsWrapper.appendChild($duplicateViewButton)
-
-    // Save View Camera
-    const $saveViewCameraButton = document.createElement('button')
-    $saveViewCameraButton.className = 'hidden border rounded text-black bg-yellow-200 px-2 mx-0.5 hover:bg-yellow-150'
-    setTooltip($saveViewCameraButton, 'Save viewpoint')
-
-    const $saveViewCameraIcon = document.createElement('i')
-    $saveViewCameraIcon.className = 'fa-solid fa-video'
-    $saveViewCameraButton.appendChild($saveViewCameraIcon)
-
-    $saveViewCameraButton.addEventListener('click', (event) => {
-      $ipc3d.saveViewCamera()
-      event.stopPropagation()
-    })
-    $optionsWrapper.appendChild($saveViewCameraButton)
-
-    // Link SelectionSet
-    const $linkSelectionSetButton = document.createElement('button')
-    $linkSelectionSetButton.className = 'hidden border rounded text-black bg-yellow-200 px-2 mx-0.5 hover:bg-yellow-150'
-    if ($ipc3d.views[index].selectionSet === undefined) {
-      setTooltip($linkSelectionSetButton, 'Link SelectionSet')
+  $renameViewButton.addEventListener('click', event => {
+    event.stopPropagation()
+    let newName = prompt('Rename View', view.name).trim()
+    if ($ipc3d.hasViewWithName(newName)) {
+      alert(`This name already exists !`)
+    } else if (newName === '') {
+      alert(`Invalid name`)
     } else {
-      setTooltip($linkSelectionSetButton, `Linked SelectionSet : ${$ipc3d.views[index].selectionSet.name}&#013;Click to change`)
+      $ipc3d.renameView(index, newName)
+    }
+    event.stopPropagation()
+  })
+  $viewButton.appendChild($renameViewButton)
+
+  // Duplicate
+  const $duplicateViewButton = document.createElement('button')
+  $duplicateViewButton.className = 'border rounded text-black bg-yellow-200 px-2 mx-0.5 hover:bg-yellow-150'
+  setTooltip($duplicateViewButton, 'Duplicate')
+
+  const duplicateViewIcon = document.createElement('i')
+  duplicateViewIcon.className = 'fa-solid fa-clone'
+  $duplicateViewButton.appendChild(duplicateViewIcon)
+
+  $duplicateViewButton.addEventListener('click', event => {
+    event.stopPropagation()
+
+    let newName = prompt('Duplicate view', view.name).trim()
+    if ($ipc3d.hasViewWithName(newName)) {
+      alert(`This name already exists !`)
+    } else if (newName === '') {
+      alert(`Invalid name`)
+    } else {
+      $ipc3d.duplicateView(index, newName)
     }
 
-    const $linkSelectionSetIcon = document.createElement('i')
-    $linkSelectionSetIcon.className = 'fa-solid fa-link'
-    $linkSelectionSetButton.appendChild($linkSelectionSetIcon)
+  })
+  $viewButton.appendChild($duplicateViewButton)
 
-    $linkSelectionSetButton.addEventListener('click', (event) => {
-      $ipc3d.deactivateSelectionSet()
-      displayPanel("SelectionSets")
+  // Save View Camera
+  const $saveViewCameraButton = document.createElement('button')
+  $saveViewCameraButton.className = 'border rounded text-black bg-yellow-200 px-2 mx-0.5 hover:bg-yellow-150'
+  setTooltip($saveViewCameraButton, 'Save viewpoint')
 
-      document.querySelectorAll('.selection-set-button').forEach((btn) => {
-        const $linkViewBtn = document.createElement('button')
-        $linkViewBtn.className = 'hidden border rounded text-black bg-yellow-200 px-2 mx-0.5 hover:bg-yellow-150 link-view-button'
-        setTooltip($linkViewBtn, 'Link View')
+  const $saveViewCameraIcon = document.createElement('i')
+  $saveViewCameraIcon.className = 'fa-solid fa-video'
+  $saveViewCameraButton.appendChild($saveViewCameraIcon)
 
-        const $linkViewIcon = document.createElement('i')
-        $linkViewIcon.className = 'fa-solid fa-link'
+  $saveViewCameraButton.addEventListener('click', (event) => {
+    event.stopPropagation()
+    $ipc3d.saveViewCamera()
+  })
+  $viewButton.appendChild($saveViewCameraButton)
 
-        $linkViewBtn.addEventListener('click', (event) => {
-          const currentElement = event.currentTarget
-          const container = currentElement.closest('.selection-set-button')
-          const currentSelectionSet =  $ipc3d.selectionSets.find((selSet) => selSet.name === container.textContent)
-          $ipc3d.attachSelectionSetToCurrentView(currentSelectionSet)
+  // Delete
+  const $deleteViewButton = document.createElement('button')
+  $deleteViewButton.className = 'border rounded text-black bg-red-200 px-2 ml-5 hover:bg-red-150'
+  setTooltip($deleteViewButton, 'Delete')
 
-          event.stopPropagation()
-        })
-        $linkViewBtn.appendChild($linkViewIcon)
-        btn.querySelector('.delete-button').before($linkViewBtn)
-      })
-      event.stopPropagation()
-    })
+  const deleteViewIcon = document.createElement('i')
+  deleteViewIcon.className = 'fa-solid fa-trash'
+  $deleteViewButton.appendChild(deleteViewIcon)
 
-    $optionsWrapper.appendChild($linkSelectionSetButton)
+  $deleteViewButton.addEventListener('click', event => {
+    event.stopPropagation()
 
-    // Delete
-    const $deleteViewButton = document.createElement('button')
-    $deleteViewButton.className =
-      'hidden border rounded text-black bg-red-200 px-2 ml-5 hover:bg-red-150'
-    setTooltip($deleteViewButton, 'Delete')
-
-    const deleteViewIcon = document.createElement('i')
-    deleteViewIcon.className = 'fa-solid fa-trash'
-    $deleteViewButton.appendChild(deleteViewIcon)
-
-    $deleteViewButton.addEventListener('click', event => {
-      event.stopPropagation()
+    if (confirm('Confirm view deletion')) {
       $ipc3d.deleteView(index)
-    })
-    $optionsWrapper.appendChild($deleteViewButton)
+    }
+  })
+  $viewButton.appendChild($deleteViewButton)
+}
 
-    $viewButton.appendChild($optionsWrapper)
+function generateEditableViews ($viewButtons) {
+  $ipc3d.views.forEach((view, index) => {
+    const $viewButton = generateOneEditableViewButton(view, index)
     $viewButtons.appendChild($viewButton)
   })
 }
 
+function generateViewList() {
+  const $viewButtons = document.getElementById('viewButtons')
+  $viewButtons.replaceChildren() // Clear previous content
+
+  // //////////////////////////////////////////
+  // Initial View (no editable/exportable view)
+  const $initialViewButton = generateInitialViewButton($viewButtons)
+  $initialViewButton.classList.add(CURRENT_CLASS)
+
+  // //////////////////////////////////////////
+  // Editable Views
+  generateEditableViews($viewButtons)
+}
+
 // The project already has an 'initialView' so we need to display it.
-generateViewButtons()
+generateViewList()
 
 // ////////////////////////////////////////////////////
 // Selection Sets
 
 document.getElementById('createSelectionSet').addEventListener('click', () => {
-  let selectionSetName = prompt('Selection Set Name')
-  while (
-    $ipc3d.selectionSets
-      .map(selectionSet => selectionSet.name)
-      .includes(selectionSetName)
-  ) {
-    selectionSetName = prompt(
-      'This view name already exists ! \n Please enter a new name for the Selection Set'
-    )
+  let selectionSetName = prompt('Selection Set Name').trim()
+  if ($ipc3d.hasSelectionSetWithName(selectionSetName)) {
+   alert('This selection set name already exists !')
+  } else if (selectionSetName === '') {
+    alert('Invalid selection set name')
+  } else {
+    $ipc3d.createSelectionSet(selectionSetName)
   }
-  if (selectionSetName) $ipc3d.createSelectionSet(null, selectionSetName)
 })
 
-function generateSelSetButtons() {
+function generateOneSelectionSetButton (selectionSet, index) {
+  const $selectionSetButton = document.createElement('div')
+  $selectionSetButton.className = 'selection-set-button border rounded bg-gray-300 px-2 hover:bg-gray-100'
+
+  const $selectionSetText = document.createElement('span')
+  $selectionSetText.textContent = selectionSet.name
+  $selectionSetButton.appendChild($selectionSetText)
+
+  $selectionSetButton.addEventListener('click', (event) => {
+    event.stopPropagation()
+    const $activeSelectionSetButton = document.querySelector(`div.selection-set-button.${CURRENT_CLASS}`)
+    $ipc3d.deactivateSelectionSet()
+    if ($activeSelectionSetButton !== $selectionSetButton) {
+      $ipc3d.activateSelectionSet(index)
+    }
+  })
+
+  // Rename
+  const $renameSelectionSetButton = document.createElement('button')
+  $renameSelectionSetButton.className = 'border rounded text-black bg-yellow-200 px-2 mx-0.5 hover:bg-yellow-150'
+  setTooltip($renameSelectionSetButton, 'Rename')
+
+  const renameSelectionSetIcon = document.createElement('i')
+  renameSelectionSetIcon.className = 'fa-solid fa-pen-to-square'
+  $renameSelectionSetButton.appendChild(renameSelectionSetIcon)
+
+  $renameSelectionSetButton.addEventListener('click', event => {
+    event.stopPropagation()
+    const newName = prompt('Rename Selection Set', selectionSet.name).trim()
+
+    if ($ipc3d.hasSelectionSetWithName(newName)) {
+      alert(`This name already exists !`)
+    } else if (newName === '') {
+      alert(`Invalid selection set name`)
+    } else {
+      $ipc3d.renameSelectionSet(index, newName)
+    }
+  })
+  $selectionSetButton.appendChild($renameSelectionSetButton)
+
+  // Update
+  const $updateSelectionSetButton = document.createElement('button')
+  $updateSelectionSetButton.className = 'border rounded text-black bg-yellow-200 px-2 mx-0.5 hover:bg-red-150'
+  setTooltip($updateSelectionSetButton, 'Update')
+
+  const $updateSelectionSetIcon = document.createElement('i')
+  $updateSelectionSetIcon.className = 'fa-solid fa-floppy-disk'
+
+  $updateSelectionSetButton.addEventListener('click', () => {
+    $ipc3d.updateSelectionSet(index)
+    alert('SelectionSet saved !')
+  })
+
+  $updateSelectionSetButton.appendChild($updateSelectionSetIcon)
+  $selectionSetButton.appendChild($updateSelectionSetButton)
+
+  // Delete
+  const $deleteSelectionSetButton = document.createElement('button')
+  $deleteSelectionSetButton.className = 'delete-button border rounded text-black bg-red-200 px-5 ml-5 hover:bg-red-150'
+
+  const deleteSelectionSetIcon = document.createElement('i')
+  deleteSelectionSetIcon.className = 'fa-solid fa-trash'
+  $deleteSelectionSetButton.appendChild(deleteSelectionSetIcon)
+  $deleteSelectionSetButton.addEventListener('click', event => {
+    event.stopPropagation()
+    if (confirm('Confirm selection set deletion')) {
+      $ipc3d.deleteSelectionSet(index)
+    }
+  })
+  $selectionSetButton.appendChild($deleteSelectionSetButton)
+
+  // Active in view
+  const $activateSelectionSetInViewCheck = document.createElement('input')
+  $activateSelectionSetInViewCheck.type = 'checkbox'
+  $activateSelectionSetInViewCheck.className = 'delete-button border rounded text-black bg-red-200 px-5 ml-5 hover:bg-red-150'
+
+  $activateSelectionSetInViewCheck.addEventListener('click', event => {
+    event.stopPropagation()
+    if (event.currentTarget.checked) {
+      $ipc3d.attachSelectionSetToCurrentView(selectionSet)
+    } else {
+      $ipc3d.detachSelectionSetFromCurrentView(selectionSet)
+    }
+  })
+  $selectionSetButton.appendChild($activateSelectionSetInViewCheck)
+
+  if ($ipc3d.currentView) {
+    $ipc3d.currentView.hasActiveSelectionSetWithName(selectionSet.name)
+  }
+
+  return $selectionSetButton
+}
+
+function generateSelectionSetList() {
   const $selectionSetButtons = document.getElementById('selectionSetButtons')
-  $selectionSetButtons.replaceChildren()
+  $selectionSetButtons.replaceChildren() // Clear old content
 
   $ipc3d.selectionSets.forEach((selectionSet, index) => {
-    const $selectionSetButton = document.createElement('div')
-    $selectionSetButton.className = 'selection-set-button border rounded bg-gray-300 px-2 hover:bg-gray-100'
-    $selectionSetButton.style.textAlign = 'center'
-    $selectionSetButton.textContent = selectionSet.name
-
-    $selectionSetButton.addEventListener('click', (event) => {
-      const $activeSelectionSetButton = document.querySelector('div.selection-set-button.active')
-
-      if ($activeSelectionSetButton === $selectionSetButton) {
-        $ipc3d.deactivateSelectionSet()
-      } else {
-        $ipc3d.deactivateSelectionSet()
-        $ipc3d.activateSelectionSet(index)
-      }
-
-      event.stopPropagation()
-    })
-
-    // ////////////////////////////
-    // Options Buttons
-    const $optionsWrapper = document.createElement('div')
-    $optionsWrapper.style.display = 'block'
-
-    // Rename
-    const $RenameSelectionSetButton = document.createElement('button')
-    $RenameSelectionSetButton.className =
-      'hidden border rounded text-black bg-yellow-200 px-2 mx-0.5 hover:bg-yellow-150'
-    $RenameSelectionSetButton.className = 'hidden border rounded text-black bg-yellow-200 px-2 mx-0.5 hover:bg-yellow-150'
-    setTooltip($RenameSelectionSetButton, 'Rename')
-
-    const renameSelectionSetIcon = document.createElement('i')
-    renameSelectionSetIcon.className = 'fa-solid fa-pen-to-square'
-    $RenameSelectionSetButton.appendChild(renameSelectionSetIcon)
-
-    $RenameSelectionSetButton.addEventListener('click', event => {
-      let newName = prompt(
-        'Rename Selection Set',
-        selectionSet.name + '-renamed'
-      )
-      while (
-        $ipc3d.selectionSets
-          .map(selectionSet => selectionSet.name)
-          .includes(newName)
-      ) {
-        newName = prompt(
-          `This name already exists ! \n Please enter a new name for the Selection Set \'${selectionSet.name}\'`,
-          selectionSet.name + '-renamed'
-        )
-      }
-      if (newName) $ipc3d.renameSelectionSet(index, newName)
-
-      event.stopPropagation()
-    })
-    $optionsWrapper.appendChild($RenameSelectionSetButton)
-
-    // Update
-    const $updateSelectionSetButton = document.createElement('button')
-    $updateSelectionSetButton.className = 'hidden border rounded text-black bg-yellow-200 px-2 mx-0.5 hover:bg-red-150'
-    setTooltip($updateSelectionSetButton, 'Update')
-
-    const $updateSelectionSetIcon = document.createElement('i')
-    $updateSelectionSetIcon.className = 'fa-solid fa-arrows-rotate'
-
-    $updateSelectionSetButton.addEventListener('click', (event) => {
-      $ipc3d.updateSelectionSet(index)
-      alert("SelectionSet updated !")
-    })
-
-    $updateSelectionSetButton.appendChild($updateSelectionSetIcon)
-    $optionsWrapper.appendChild($updateSelectionSetButton)
-
-    // Delete
-    const $deleteSelectionSetButton = document.createElement('button')
-    $deleteSelectionSetButton.className =
-      'delete-button hidden border rounded text-black bg-red-200 px-5 ml-5 hover:bg-red-150'
-
-    const deleteSelectionSetIcon = document.createElement('i')
-    deleteSelectionSetIcon.className = 'fa-solid fa-trash'
-
-    $deleteSelectionSetButton.addEventListener('click', event => {
-      $ipc3d.deleteSelectionSet(index)
-      event.stopPropagation()
-    })
-
-    $deleteSelectionSetButton.appendChild(deleteSelectionSetIcon)
-    $optionsWrapper.appendChild($deleteSelectionSetButton)
-
-    $selectionSetButton.appendChild($optionsWrapper)
+    const $selectionSetButton = generateOneSelectionSetButton(selectionSet, index)
     $selectionSetButtons.appendChild($selectionSetButton)
+  })
+}
+
+function updateSelectionSetList() {
+  const isOnInitialView = ($ipc3d.currentView == null)
+  const $selectionSetButtons = document.querySelectorAll('.selection-set-button')
+  $selectionSetButtons.forEach(($selectionSetButton) => {
+    const selectionSetName = $selectionSetButton.querySelector('span').textContent
+    const activeCheckBox = $selectionSetButton.querySelector('input[type=checkbox]')
+
+    if (isOnInitialView) {
+      // Initial view => you can't check the boxes
+      activeCheckBox.checked = false
+      activeCheckBox.disabled = true
+    } else {
+      activeCheckBox.checked = $ipc3d.currentView.hasActiveSelectionSetWithName(selectionSetName)
+      activeCheckBox.disabled = false
+    }
+
   })
 }
 
@@ -683,24 +637,26 @@ function setTooltip($buttonElement, title) {
   $buttonElement.setAttribute('title', title)
 }
 
-function activateButton(btnText, selector) {
-  const $buttonToActivate =
-    [...document.querySelectorAll(selector)]
-      .find((btn) => btn.innerText === btnText)
-
+function deactivateAll(selector) {
+  const $buttonToActivate = [...document.querySelectorAll(selector)]
   if ($buttonToActivate) {
-    $buttonToActivate.className = DEFAULT_ACTIVE_ITEM_BUTTON_CLASSNAME
+    $buttonToActivate.forEach($button => $button.classList.remove(CURRENT_CLASS))
   }
-  return $buttonToActivate
+}
+
+function activateButton(btnText, selector) {
+  const $buttonToActivate = [...document.querySelectorAll(selector)]
+      .find((btn) => btn.innerText === btnText)
+  if ($buttonToActivate) {
+    $buttonToActivate.classList.add(CURRENT_CLASS)
+  }
 }
 
 function deactivateButton(selector) {
   const $buttonToDeactivate = document.querySelector(selector)
-
   if ($buttonToDeactivate) {
-    $buttonToDeactivate.className = DEFAULT_INACTIVE_ITEM_BUTTON_CLASSNAME
+    $buttonToDeactivate.classList.remove(CURRENT_CLASS)
   }
-  return $buttonToDeactivate
 }
 
 // ////////////////////////////////////////////////////

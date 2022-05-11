@@ -20,8 +20,9 @@
     "lint": "tsdx lint",
     "prepare": "tsdx build",
     "serve": "web-dev-server --watch --app-index test-e2e/index.html --open",
+    "serve:watch": "web-dev-server --watch --app-index test-e2e/index.html --open",
     "serve:ci": "web-dev-server --app-index test-e2e/index.html",
-    "start" : "npm run build && web-dev-server --watch --app-index test-e2e/index.html"
+    "start": "npx run-p build:watch serve"
   },
   "peerDependencies": {},
   "husky": {

@@ -37,41 +37,28 @@ import {
 
 import './ParamEditor'
 
-import { View, ViewJson } from './View'
-import { SelectionSet, SelectionSetJson } from './SelectionSet'
-
-import {
-  CreateViewChange,
-  DeleteViewChange,
-  RenameViewChange,
-  UpdateViewCameraChange,
-  ViewSelectionVisibilityChange
-} from './Changes/ViewChanges'
+import {View} from './View'
+import {SelectionSet, SelectionSetJson} from './SelectionSet'
 
 import {
   CreateSelectionSetChange,
+  CreateViewChange,
   DeleteSelectionSetChange,
+  DeleteViewChange,
   RenameSelectionSetChange,
-  UpdateSelectionSetChange
-} from './Changes/SelectionSetChanges'
+  RenameViewChange,
+  UpdateSelectionSetChange,
+  UpdateViewCameraChange,
+  ViewSelectionVisibilityChange
+} from './Changes'
 
-import CuttingPlaneWrapper, { CuttingPlaneJson } from './CuttingPlane'
+import CuttingPlaneWrapper, {CuttingPlaneJson} from './CuttingPlane'
 import {AttachSelectionSetChange} from "./Changes/View/AttachSelectionSetChange";
 import {filterItem} from "./Utils";
+import {ProjectJson} from './types/ProjectJson'
+import {AssetJson} from './types/AssetJson'
+import {ViewJson} from './types/ViewJson'
 
-interface AssetJson {
-  url: string
-}
-
-interface ProjectJson {
-  assets: AssetJson[]
-  initialView: ViewJson
-  views?: ViewJson[]
-  selectionSets?: SelectionSetJson[]
-  cuttingPlanes?: CuttingPlaneJson[]
-  materials?: Record<string, any>[]
-  materialAssignments?: Record<string, number>
-}
 
 export class Ipd3d extends HTMLElement {
   public scene: Scene
@@ -229,7 +216,7 @@ export class Ipd3d extends HTMLElement {
       }
     })
 
-    this.undoRedoManager.on('changeUpdated', (event: Object) => {
+    this.undoRedoManager.on('changeUpdated', () => {
       const change = this.undoRedoManager.getCurrentChange()
       if (change instanceof SelectionXfoChange) {
         if (this.currentView && this.currentView !== this.initialView) {
@@ -243,27 +230,27 @@ export class Ipd3d extends HTMLElement {
       }
     })
 
-    this.undoRedoManager.on('changeUndone', (event: Object) => {
+    this.undoRedoManager.on('changeUndone', () => {
       const change = this.undoRedoManager.__redoStack[this.undoRedoManager.__redoStack.length - 1]
-      if (change instanceof ViewSelectionVisibilityChange
-      || change instanceof UpdateViewCameraChange)
-      {
+      if (change instanceof ViewSelectionVisibilityChange || change instanceof UpdateViewCameraChange) {
         const view = change.view
-        if (view === this.initialView)
+        if (view === this.initialView){
           this.activateInitialView(false)
-        else this.activateView(this.views.indexOf(view), false)
+        } else {
+          this.activateView(this.views.indexOf(view), false)
+        }
       }
     })
 
-    this.undoRedoManager.on('changeRedone', (event: Object) => {
+    this.undoRedoManager.on('changeRedone', () => {
       const change = this.undoRedoManager.__undoStack[this.undoRedoManager.__undoStack.length - 1]
-      if (change instanceof ViewSelectionVisibilityChange
-          || change instanceof UpdateViewCameraChange)
-      {
+      if (change instanceof ViewSelectionVisibilityChange || change instanceof UpdateViewCameraChange) {
         const view = change.view
-        if (view === this.initialView)
+        if (view === this.initialView) {
           this.activateInitialView(false)
-        else this.activateView(this.views.indexOf(view), false)
+        } else {
+          this.activateView(this.views.indexOf(view), false)
+        }
       }
     })
 
@@ -402,8 +389,7 @@ export class Ipd3d extends HTMLElement {
   }
 
   private _decreaseUndoCounter() {
-    if (this.undoCounter > 0)
-    {
+    if (this.undoCounter > 0) {
       this.undoCounter -= 1
     }
   }
@@ -450,8 +436,7 @@ export class Ipd3d extends HTMLElement {
   }
 
   public setSelectionFillParamValue(transparency: number) {
-    this.selectionManager.selectionGroup.highlightFillParam.value =
-        transparency
+    this.selectionManager.selectionGroup.highlightFillParam.value = transparency
 
     const selection = Array.from(this.selectionManager.getSelection())
     this.selectionManager.setSelection(new Set(selection), false)
@@ -529,17 +514,13 @@ export class Ipd3d extends HTMLElement {
     const color = new Color()
     color.setFromHex(hexColorString)
 
-    this.renderer.getViewport()
-        .backgroundColorParam.value = color
+    this.renderer.getViewport().backgroundColorParam.value = color
   }
 
 
   // Initial View
   public activateInitialView(lerpPose: boolean = true) {
-    if (this.currentView !== this.initialView) {
-      this.eventEmitter.emit('viewDeactivated')
-    }
-
+    console.log('activateInitialView')
     const view = this.initialView
     if (lerpPose) view.lerpPose(this.renderer.getViewport().getCamera())
 
@@ -547,19 +528,19 @@ export class Ipd3d extends HTMLElement {
     this.eventEmitter.emit('initialViewActivated')
   }
 
-  public getInitialView(): View {
-    return this.initialView
+  public isInitialView (): boolean {
+    return (this.currentView == null) || (this.currentView == this.initialView)
   }
 
   // Views
-  public createView(name: string) {
-    if (name.trim() === '') return
-
+  public createView(name: string): View {
     const newView = new View(name, this.scene)
     newView.setCameraParams(this.renderer.getViewport().getCamera())
     this._addView(newView)
 
     this.activateView(this.views.indexOf(newView))
+
+    return newView
   }
 
   public deleteView(index: number) {
@@ -589,22 +570,18 @@ export class Ipd3d extends HTMLElement {
   }
 
   public activateView(index: number, lerpPose: boolean = true) {
-    if (this.currentView === this.initialView) {
-      this.eventEmitter.emit('initialViewDeactivated')
-    } else {
-      this.eventEmitter.emit('viewDeactivated')
-    }
-
+    console.log('activateView', index)
     const view = this.views[index]
-    if (lerpPose) view.lerpPose(this.renderer.getViewport().getCamera(), this.initialView.pose)
+    if (lerpPose) {
+      view.lerpPose(this.renderer.getViewport().getCamera(), this.initialView.pose)
+    }
 
     this.currentView = view
     this.eventEmitter.emit('viewActivated', view.name)
   }
 
-  public getCurrentViewName(): string {
-    if (this.currentView) return this.currentView.name
-    return ''
+  public hasViewWithName(viewName: string): boolean {
+    return this.views.some((view: View) => view.name == viewName)
   }
 
   public saveViewCamera() {
@@ -621,8 +598,9 @@ export class Ipd3d extends HTMLElement {
 
   public frameView() {
     const selection = this.selectionManager.getSelection()
-    if (selection.size == 0) this.renderer.frameAll()
-    else {
+    if (selection.size == 0) {
+      this.renderer.frameAll()
+    } else {
       this.renderer.getViewport().frameView(Array.from(selection))
     }
   }
@@ -630,18 +608,20 @@ export class Ipd3d extends HTMLElement {
   // /////////////////////////////////////////
   // Selection Sets
 
-  public createSelectionSet(name: string) {
-    if (name.trim() === '') return
-
+  public createSelectionSet(name: string): SelectionSet {
     let newSelectionSet
     const set = Array.from(this.selectionManager.getSelection())
     if (set.length > 0) {
       newSelectionSet = new SelectionSet(name, set, this.scene)
-    }
       if (newSelectionSet) {
         this._addSelectionSet(newSelectionSet)
         this.activateSelectionSet(this.selectionSets.indexOf(newSelectionSet))
+      }
+    } else {
+      alert('No item for selection set')
     }
+    // @ts-ignore
+    return newSelectionSet
   }
 
   public deleteSelectionSet(index: number) {
@@ -697,6 +677,12 @@ export class Ipd3d extends HTMLElement {
     this.eventEmitter.emit('selectionSetDeactivated')
   }
 
+  public hasSelectionSetWithName(selectionSetName: string): boolean {
+    return this.selectionSets.some((selectionSet: SelectionSet) => selectionSet.name == selectionSetName)
+  }
+
+  // View <=> SelectionSet
+
   public attachSelectionSetToCurrentView(selectionSet: SelectionSet) {
     if (this.currentView) {
       const change = new AttachSelectionSetChange(this.currentView, selectionSet)
@@ -708,7 +694,7 @@ export class Ipd3d extends HTMLElement {
     }
   }
 
-  public detachSelectionSetToCurrentView(selectionSet: SelectionSet) {
+  public detachSelectionSetFromCurrentView(selectionSet: SelectionSet) {
     if (this.currentView) {
       const change = new AttachSelectionSetChange(this.currentView, selectionSet, true)
 
@@ -741,11 +727,12 @@ export class Ipd3d extends HTMLElement {
     const lockedHiddenParts = this.initialView.getHiddenParts()
 
     let partsToUnHide
-    if (this.currentView! === this.initialView)
+    if (this.isInitialView()) {
       partsToUnHide = lockedHiddenParts
-    else
+    } else {
       partsToUnHide = this.currentView!.getHiddenParts().filter(
-        (part) => !lockedHiddenParts.includes(part))
+          (part) => !lockedHiddenParts.includes(part))
+    }
 
     this.undoRedoManager.addChange(
         new ViewSelectionVisibilityChange(
@@ -763,7 +750,7 @@ export class Ipd3d extends HTMLElement {
   // /////////////////////////////////////////
   // Cutting Planes
 
-  public addCuttingPlane() {
+  public addCuttingPlane():CuttingPlaneWrapper {
     const selection = this.selectionManager.getSelection()
     const cuttingPlane = new CuttingPlaneWrapper(
       this.scene,
@@ -778,6 +765,8 @@ export class Ipd3d extends HTMLElement {
         false
     )
     this.eventEmitter.emit('cuttingPlaneListChanged')
+
+    return cuttingPlane
   }
 
   public activateCuttingPlane(index: number) {
@@ -789,7 +778,7 @@ export class Ipd3d extends HTMLElement {
   // /////////////////////////////////////////
   // Materials
 
-  public addNewMaterial() {
+  public addNewMaterial():Material {
     const material = new StandardSurfaceMaterial(
       'Material' + this.materials.length
     )
@@ -797,6 +786,8 @@ export class Ipd3d extends HTMLElement {
     material.edgeColorParam.value = new Color(0, 0, 0)
     this.materials.push(material)
     this.eventEmitter.emit('materialsListChanged')
+
+    return material
   }
 
   public assignMaterialToSelection(materialIndex: number) {
@@ -946,86 +937,102 @@ export class Ipd3d extends HTMLElement {
   }
 
   public loadJson(projectJson: ProjectJson): Promise<void> {
+    console.info('LOAD Project')
     this.newProject()
     return new Promise<void>(resolve => {
-      const promises: Promise<string>[] = []
-      projectJson.assets.forEach((assetJson: AssetJson) => {
-        promises.push(this.loadAsset(assetJson.url))
-      })
-
-      Promise.all(promises).then(() => {
-        this.selectionSets = []
-        if (projectJson.selectionSets) {
-          projectJson.selectionSets.forEach(
-              (selectionSetJson: SelectionSetJson) => {
-                const sel = new SelectionSet('', [], this.scene)
-                sel.loadJson(selectionSetJson)
-                this.selectionSets.push(sel)
-              }
-          )
-          this.eventEmitter.emit('selectionSetsListChanged')
-        }
-
-        this.initialView.loadJson(projectJson.initialView)
-        this.initialView.activate(this.renderer.getViewport().getCamera())
-
-        this.views = []
-        if (projectJson.views) {
-          projectJson.views.forEach((viewJson: ViewJson) => {
-            const view = new View('', this.scene)
-            view.loadJson(viewJson)
-            viewJson.selectionSets?.forEach((selKey) => {
-              const selectionSet = this.selectionSets.find(selSet => selSet.getId() === selKey.id)
-              if (selectionSet) view.attachSelectionSet(selectionSet)
-            })
-            this.views.push(view)
-          })
-          this.eventEmitter.emit('viewsListChanged')
-        }
-
-        this.cuttingPlanes = []
-        if (projectJson.cuttingPlanes) {
-          projectJson.cuttingPlanes.forEach(
-              (cuttingPlaneJson: CuttingPlaneJson) => {
-                const cuttingPlane = new CuttingPlaneWrapper(this.scene, '', [])
-                cuttingPlane.loadJson(cuttingPlaneJson)
-                this.cuttingPlanes.push(cuttingPlane)
-              }
-          )
-          this.eventEmitter.emit('cuttingPlaneListChanged')
-        }
-
-        this.materials = []
-        if (projectJson.materials) {
-          projectJson.materials.forEach((materialJson: Record<string, any>) => {
-            const material = new StandardSurfaceMaterial()
-            material.fromJSON(materialJson)
-            this.materials.push(material)
-          })
-        }
-
-        if (projectJson.materialAssignments) {
-          let index = 0
-          for (let key in projectJson.materialAssignments) {
-            const path = JSON.parse(key)
-            console.log(index, projectJson.materialAssignments[key])
-            const material = this.materials[projectJson.materialAssignments[key]]
-            const item = this.scene.getRoot().resolvePath(path)
-            if (item instanceof GeomItem && material) {
-              item.materialParam.value = material
-            }
-            index++
-          }
-          this.materialAssignments = projectJson.materialAssignments
-
-          this.eventEmitter.emit('materialsListChanged')
-        }
+      this.loadAssetsFromProject(projectJson).then(() => {
+        this.initSelectionSetsFromProject(projectJson)
+        this.initViewsFromProject(projectJson)
+        this.initCuttingPlanesFromProject(projectJson)
+        this.initMaterialsFromJson(projectJson)
         resolve()
       })
     })
   }
 
-  // /////////////////////////////////////////
+  private loadAssetsFromProject(projectJson: ProjectJson) {
+    const promises = projectJson.assets.map((assetJson: AssetJson) => {
+      return this.loadAsset(assetJson.url)
+    })
+    return Promise.all(promises)
+  }
+
+  private initMaterialsFromJson(projectJson: ProjectJson) {
+    this.materials = []
+    if (projectJson.materials) {
+      projectJson.materials.forEach((materialJson: Record<string, any>) => {
+        const material = new StandardSurfaceMaterial()
+        material.fromJSON(materialJson)
+        this.materials.push(material)
+      })
+    }
+
+    if (projectJson.materialAssignments) {
+      let index = 0
+      for (let key in projectJson.materialAssignments) {
+        const path = JSON.parse(key)
+        console.log(index, projectJson.materialAssignments[key])
+        const material = this.materials[projectJson.materialAssignments[key]]
+        const item = this.scene.getRoot().resolvePath(path)
+        if (item instanceof GeomItem && material) {
+          item.materialParam.value = material
+        }
+        index++
+      }
+      this.materialAssignments = projectJson.materialAssignments
+
+      this.eventEmitter.emit('materialsListChanged')
+    }
+  }
+
+  private initCuttingPlanesFromProject(projectJson: ProjectJson) {
+    this.cuttingPlanes = []
+    if (projectJson.cuttingPlanes) {
+      projectJson.cuttingPlanes.forEach(
+          (cuttingPlaneJson: CuttingPlaneJson) => {
+            const cuttingPlane = new CuttingPlaneWrapper(this.scene, '', [])
+            cuttingPlane.loadJson(cuttingPlaneJson)
+            this.cuttingPlanes.push(cuttingPlane)
+          }
+      )
+      this.eventEmitter.emit('cuttingPlaneListChanged')
+    }
+  }
+
+  private initViewsFromProject(projectJson: ProjectJson) {
+    this.initialView.loadJson(projectJson.initialView)
+    this.initialView.activate(this.renderer.getViewport().getCamera())
+
+    this.views = []
+    if (projectJson.views) {
+      projectJson.views.forEach((viewJson: ViewJson) => {
+        const view = new View('', this.scene)
+        view.loadJson(viewJson)
+        viewJson.selectionSets?.forEach((selKey) => {
+          const selectionSet = this.selectionSets.find(selSet => selSet.getId() === selKey.id)
+          if (selectionSet) view.attachSelectionSet(selectionSet)
+        })
+        this.views.push(view)
+      })
+      this.eventEmitter.emit('viewsListChanged')
+    }
+  }
+
+  private initSelectionSetsFromProject(projectJson: ProjectJson) {
+    this.selectionSets = []
+    if (projectJson.selectionSets) {
+      projectJson.selectionSets.forEach(
+          (selectionSetJson: SelectionSetJson) => {
+            const sel = new SelectionSet('', [], this.scene)
+            sel.loadJson(selectionSetJson)
+            this.selectionSets.push(sel)
+          }
+      )
+      this.eventEmitter.emit('selectionSetsListChanged')
+    }
+  }
+
+// /////////////////////////////////////////
   // Events
 
   public on(eventName: string, listener?: (event: any) => void): number {

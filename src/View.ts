@@ -1,31 +1,18 @@
-import {BooleanParameter, Camera, MathFunctions, Parameter, Scene, TreeItem, Vec3, Xfo} from '@zeainc/zea-engine'
-import {Pose, PoseJson} from './Pose'
+import {Camera, MathFunctions, Scene, Vec3, Xfo} from '@zeainc/zea-engine'
+import {Pose} from './Pose'
 import {UUID} from "./Utils";
 import {SelectionSet} from "./SelectionSet";
-import {filter} from "cypress/types/minimatch";
+import {ViewJson} from './types/ViewJson'
+import {SelectionSetIdent} from './types/SelectionSetIdentJson'
 
-interface ViewJson {
-  id: string
-  name: string
-  cameraXfo: Record<string, any>
-  cameraTarget: Record<string, any>
-  pose: PoseJson
-  selectionSets?: SelectionSetIdent[]
-}
-
-interface SelectionSetIdent {
-  id: string
-  name: string
-}
-
-class View {
+export class View {
   private id: string
   name = 'View'
   cameraXfo: Xfo = new Xfo()
   cameraTarget: Vec3 = new Vec3()
-  selectionSets?: SelectionSet[] = []
-
+  selectionSets?: SelectionSet[]
   pose: Pose
+
   constructor(name: string = '', private scene: Scene) {
     this.id = UUID()
     this.name = name
@@ -33,7 +20,9 @@ class View {
   }
 
   attachSelectionSet(selectionSet: SelectionSet) {
-    if (!this.selectionSets) this.selectionSets = []
+    if (!this.selectionSets) {
+      this.selectionSets = []
+    }
     this.selectionSets.push(selectionSet)
   }
 
@@ -41,9 +30,17 @@ class View {
     if (this.selectionSets) {
       const selIndex = this.selectionSets.indexOf(selectionSet)
       this.selectionSets.splice(selIndex, 1)
+      if (this.selectionSets.length === 0) {
+        this.selectionSets = undefined
+      }
+    }
+  }
 
-      if (this.selectionSets.length < 1) this.selectionSets = undefined
-
+  hasActiveSelectionSetWithName(selectionSetName: string): boolean {
+    if (!this.selectionSets) {
+      return false
+    } else {
+      return this.selectionSets.some((selectionSet: SelectionSet) => selectionSet.name == selectionSetName)
     }
   }
 
@@ -60,8 +57,6 @@ class View {
   }
 
   lerpPose(camera: Camera, neutralPose?: Pose) {
-    // camera.globalXfoParam.value = this.cameraXfo.clone()
-
     const startXfo = camera.globalXfoParam.value.clone()
     startXfo.ori.alignWith(this.cameraXfo.ori)
     const startTarget = camera.getTargetPosition()
@@ -88,9 +83,6 @@ class View {
       camera.globalXfoParam.value = xfo
       camera.setFocalDistance(dist)
 
-      // const cameraPos = startXfo.tr.lerp(this.cameraXfo.tr, t)
-      // camera.setPositionAndTarget(cameraPos, cameraTarg)
-
       if (stepId == steps) clearInterval(id)
     }, timeStep)
 
@@ -113,7 +105,6 @@ class View {
 
   saveJson(): ViewJson {
     const json: ViewJson = {
-
       id: this.id,
       name: this.name,
       cameraXfo: this.cameraXfo.toJSON(),
@@ -121,12 +112,12 @@ class View {
       pose: this.pose.saveJson()
     }
 
-    if (this.selectionSets && this.selectionSets.length > 0)
-      json.selectionSets = this.selectionSets?.map(
-          (sel) => <SelectionSetIdent>{
-            id: sel.saveJson().id,
-            name: sel.saveJson().name
-          })
+    if (this.selectionSets && this.selectionSets.length > 0) {
+      json.selectionSets = this.selectionSets.map((sel: SelectionSet) => <SelectionSetIdent> {
+        id: sel.getId(),
+        name: sel.name
+      })
+    }
     return json
   }
 
@@ -139,4 +130,3 @@ class View {
   }
 }
 
-export { View, ViewJson }

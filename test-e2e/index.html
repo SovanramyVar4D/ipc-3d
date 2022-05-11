@@ -8,6 +8,7 @@
       href="/node_modules/@fortawesome/fontawesome-free/css/all.css"
       rel="stylesheet"
     />
+    <link href="./styles.css" rel="stylesheet"/>
 
     <title>3D IPC</title>
 
@@ -173,7 +174,8 @@
           <div class="TabBar">
             <button
               id="showTab1"
-              class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
+              data-tab-id="tab1"
+              class="tab-button border rounded bg-gray-300 px-2 hover:bg-gray-100 active"
               data-bs-toggle="tooltip" data-bs-placement="bottom" title="Views"
             >
               <i class="fa-solid fa-images"></i>
@@ -181,7 +183,8 @@
             </button>
             <button
               id="showTab2"
-              class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
+              data-tab-id="tab2"
+              class="tab-button border rounded bg-gray-300 px-2 hover:bg-gray-100"
               data-bs-toggle="tooltip" data-bs-placement="bottom" title="Tree"
             >
               <i class="fa-solid fa-folder-tree"></i>
@@ -189,7 +192,8 @@
             </button>
             <button
               id="showTab3"
-              class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
+              data-tab-id="tab3"
+              class="tab-button border rounded bg-gray-300 px-2 hover:bg-gray-100"
               data-bs-toggle="tooltip" data-bs-placement="bottom" title="Selection Sets"
           >
               <i class="fa-solid fa-cubes"></i>
@@ -197,7 +201,8 @@
             </button>
             <button
               id="showTab4"
-              class="border rounded bg-gray-300 px-2 hover:bg-gray-100"
+              data-tab-id="tab4"
+              class="tab-button border rounded bg-gray-300 px-2 hover:bg-gray-100"
               data-bs-toggle="tooltip" data-bs-placement="bottom" title="Cut Planes"
             >
               <i class="fa-solid fa-scissors"></i>
