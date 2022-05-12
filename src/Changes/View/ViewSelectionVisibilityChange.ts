@@ -31,19 +31,21 @@ class ViewSelectionVisibilityChange extends Change {
 
     private applyVisibility(visibility: boolean, applyToAllViews = false) {
         this.selection.forEach((treeItem) => {
-            const visibleParam = treeItem.visibleParam
+            treeItem.traverse((item) => {
+                const visibleParam = item.visibleParam
 
-            if (!this.viewIsInitialView()) {
-                this.initialView.pose.storeParamValue(visibleParam, !visibility, true)
-            }
+                if (!this.viewIsInitialView()) {
+                    this.initialView.pose.storeParamValue(visibleParam, !visibility, true)
+                }
 
-            this.view.pose.storeParamValue(visibleParam, visibility)
+                this.view.pose.storeParamValue(visibleParam, visibility)
 
-            if (applyToAllViews) {
-                this.viewsList.forEach((view) => {
-                    view.pose.storeParamValue(visibleParam, visibility)
-                })
-            }
+                if (applyToAllViews) {
+                    this.viewsList.forEach((view) => {
+                        view.pose.storeParamValue(visibleParam, visibility)
+                    })
+                }
+            }, true)
         })
     }
 
