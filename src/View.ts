@@ -97,7 +97,7 @@ export class View {
   }
 
   public getHiddenParts() {
-    return this.pose.getHiddenParts()
+    return this.pose.resolveHiddenParts()
   }
 
   // /////////////////////////////////////////

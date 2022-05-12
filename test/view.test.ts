@@ -59,7 +59,7 @@ describe('View', () => {
     expect(view.selectionSets).toBeUndefined()
   });
 
-  it('Should copy a view and its set selectionSets', () => {
+  it('Should copy a view and its selectionSets', () => {
     // GIVEN
     const scene = new Scene()
     let selectionSet = new SelectionSet('FakeSelectionSet', [], scene)
