@@ -150,7 +150,7 @@ class Pose {
     }, timeStep)
   }
 
-  getHiddenParts(): TreeItem[] {
+  resolveHiddenParts(): TreeItem[] {
     const hiddenPartsList = []
     for (let key in this.values) {
       const visibleParam = this.params[key]

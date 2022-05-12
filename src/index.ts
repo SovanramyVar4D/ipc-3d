@@ -11,6 +11,7 @@ import {
   FlatSurfaceMaterial,
   GeomItem,
   GLRenderer,
+  InstanceItem,
   Label,
   Lines,
   Material,
@@ -29,6 +30,7 @@ import {
 
 import {
   ParameterValueChange,
+  SelectionChange,
   SelectionManager,
   SelectionTool,
   SelectionXfoChange,
@@ -58,6 +60,7 @@ import {filterItem} from "./Utils";
 import {ProjectJson} from './types/ProjectJson'
 import {AssetJson} from './types/AssetJson'
 import {ViewJson} from './types/ViewJson'
+import {ZeaTreeView} from '@zeainc/zea-tree-view'
 
 
 export class Ipd3d extends HTMLElement {
@@ -97,6 +100,8 @@ export class Ipd3d extends HTMLElement {
   private undoLimit?: number
   private undoCounter: number = 0
 
+  public treeView: ZeaTreeView = <ZeaTreeView>document.querySelector('#treeView')
+
   constructor() {
     super()
 
@@ -134,6 +139,10 @@ export class Ipd3d extends HTMLElement {
       }
     )
     this.setSelectionFillParamValue(this._selectionColor.a)
+
+    // set zeaTreeView
+    this.treeView.setSelectionManager(this.selectionManager)
+    this.treeView.setTreeItem(this.scene.getRoot())
 
     // this.selectionManager.on('selectionChanged', (event: any) => {
     //   console.log('selectionChanged', event)
@@ -197,22 +206,48 @@ export class Ipd3d extends HTMLElement {
     this.undoRedoManager.on('changeAdded', (event: Object) => {
       // @ts-ignore
       const change = event.change
-      if (change instanceof SelectionXfoChange) {
-        if (this.currentView && this.currentView !== this.initialView) {
-          this.initialView.pose.storeNeutralPose(change.treeItems)
-          this.currentView.pose.storeTreeItemsPose(change.treeItems)
-        } else {
-          this.initialView.pose.storeTreeItemsPose(change.treeItems)
+
+      if (change instanceof SelectionChange) {
+        const undoStack = this.undoRedoManager.__undoStack;
+        const storedChange = undoStack.find((undoStackChange) => undoStackChange === change)
+        if (storedChange) {
+          undoStack.splice(undoStack.indexOf(storedChange), 1)
         }
+      }
+
+      if (change instanceof SelectionXfoChange) {
+        this.handleSelectionXfoChange(change)
       } else if (change instanceof ParameterValueChange) {
         const param = change.param
-        if (param.getOwner() instanceof Material) return
-        if (this.currentView && this.currentView !== this.initialView) {
-          this.initialView.pose.storeParamValue(param, change.prevValue)
-          this.currentView.pose.storeParamValue(param, change.nextValue)
-        } else {
-          this.initialView.pose.storeParamValue(param, change.nextValue, true)
+        const parameterOwner = param.getOwner()
+
+        if (parameterOwner instanceof Material) return
+
+        if (parameterOwner instanceof InstanceItem) {
+          const treeItem: TreeItem = parameterOwner
+          const setVisible = <boolean>param.value
+
+          const newChange = new ViewSelectionVisibilityChange(
+              this.currentView!,
+              this.initialView,
+              this.views,
+              [treeItem],
+              setVisible
+          )
+          change.addSecondaryChange(newChange)
+          if (!setVisible) this.selectionManager.clearSelection(false)
         }
+
+
+
+
+        // if (this.currentView && this.currentView !== this.initialView) {
+        //   this.initialView.pose.storeParamValue(param, change.prevValue)
+        //   this.currentView.pose.storeParamValue(param, change.nextValue)
+        // } else {
+        //   this.initialView.pose.storeParamValue(param, change.nextValue)
+        //   this.initialView.pose.activate()
+        // }
       }
     })
 
@@ -338,6 +373,14 @@ export class Ipd3d extends HTMLElement {
   }
 
 
+  private handleSelectionXfoChange(change: SelectionXfoChange) {
+    if (this.currentView && this.currentView !== this.initialView) {
+      this.initialView.pose.storeNeutralPose(change.treeItems)
+      this.currentView.pose.storeTreeItemsPose(change.treeItems)
+    } else {
+      this.initialView.pose.storeTreeItemsPose(change.treeItems)
+    }
+  }
 
 // //////////////////////////////
 // Private functions

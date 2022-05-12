@@ -286,9 +286,8 @@ document.querySelectorAll('[data-tab-id]')
 
 // ////////////////////////////////////////////////
 //  Tree view
-const $treeView = document.querySelector('#treeView')
-$treeView.setTreeItem($ipc3d.scene.getRoot())
-$treeView.setSelectionManager($ipc3d.selectionManager)
+//const $treeView = document.querySelector('#treeView')
+
 
 // ////////////////////////////////////////////////
 //  Views

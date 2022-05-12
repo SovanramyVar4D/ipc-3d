@@ -1902,10 +1902,10 @@
   dependencies:
     lodash-es "^4.17.21"
 
-"@zeainc/zea-tree-view@0.1.3-next.3":
-  version "0.1.3-next.3"
-  resolved "https://registry.yarnpkg.com/@zeainc/zea-tree-view/-/zea-tree-view-0.1.3-next.3.tgz#10502fef3fe1e078036eb36bd60a01ef5bdbd9c8"
-  integrity sha512-Hx2NnteDFfLyTTAE0CEvhWajqzT8MMtDifm7kkdWLTGdQ/rCruOXmckwVC6/2yKBJKdnDZCL/iO9cKmf5iFvqg==
+"@zeainc/zea-tree-view@^0.1.5":
+  version "0.1.5"
+  resolved "https://registry.yarnpkg.com/@zeainc/zea-tree-view/-/zea-tree-view-0.1.5.tgz#b3e2f396ec745c2dbb831d76908a2eb6a7632319"
+  integrity sha512-xrPJUmlRF0JKuRnV1kDj3cf65C4fmsDT9jUgxeENnFTt/H+3fTx/eLb0vUSbKyYDI7wy1vlIpzPbglJeS3mtgw==
 
 "@zeainc/zea-ux@4.0.5-d5bff18":
   version "4.0.5-d5bff18"
