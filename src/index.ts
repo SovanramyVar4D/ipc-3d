@@ -338,6 +338,14 @@ export class Ipd3d extends HTMLElement {
   }
 
 
+  private handleSelectionXfoChange(change: SelectionXfoChange) {
+    if (this.currentView && this.currentView !== this.initialView) {
+      this.initialView.pose.storeNeutralPose(change.treeItems)
+      this.currentView.pose.storeTreeItemsPose(change.treeItems)
+    } else {
+      this.initialView.pose.storeTreeItemsPose(change.treeItems)
+    }
+  }
 
 // //////////////////////////////
 // Private functions
